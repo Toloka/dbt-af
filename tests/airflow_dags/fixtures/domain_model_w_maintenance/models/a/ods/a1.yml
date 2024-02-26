@@ -1,0 +1,15 @@
+# This information is a Trade Secret of Toloka
+
+version: 2
+
+models:
+  - name: a1
+    config:
+      maintenance:
+        ttl:
+          key: created_at
+          expiration_timeout: 10
+        optimize_table: true
+        persist_docs: true
+        vacuum_table: true
+        deduplicate_table: true

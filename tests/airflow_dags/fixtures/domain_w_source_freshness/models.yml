@@ -1,0 +1,5 @@
++description: |
+  domain with one model that depends on source. Source has freshness check
+
+a:
+  +tags: 'a'

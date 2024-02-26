@@ -1,0 +1,8 @@
+# This information is a Trade Secret of Toloka
+
+version: 2
+
+models:
+  - name: a1
+    config:
+      dbt_target: "fake_k8s_cluster"

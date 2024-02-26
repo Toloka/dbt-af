@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: dmn_jaffle_shop.stg.customers
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null

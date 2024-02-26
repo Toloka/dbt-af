@@ -1,0 +1,8 @@
++description: |
+  first domain has a small test and another domain depends on the first
+  A1@hourly(+small test) -> B1@daily
+
+a:
+  +tags: 'a'
+b:
+  +tags: 'b'

@@ -1,0 +1,10 @@
++description: |
+  two different domains in parallel
+  
+  A1 -> A2
+  B1 -> B2
+
+a:
+  +tags: "a"
+b:
+  +tags: "b"

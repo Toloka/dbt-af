@@ -1,0 +1,12 @@
++description: |
+  one domain depends on two source domains
+  A1 -> +
+        + -> C1
+  B1 -> +
+
+a:
+  +tags: 'a'
+b:
+  +tags: 'b'
+c:
+  +tags: 'c'

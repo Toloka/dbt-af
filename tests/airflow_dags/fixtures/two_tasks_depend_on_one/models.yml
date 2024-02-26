@@ -1,0 +1,6 @@
++description: |
+  two destinations from one source in one single domain
+  
+        +--> A2
+    A1 -+
+        +--> A3

@@ -1,0 +1,11 @@
+version: 2
+
+models:
+  - name: a1
+    config:
+      schedule: '@hourly'
+    columns:
+      - name: id
+        description: "The primary key for this table"
+        tests:
+          - not_null

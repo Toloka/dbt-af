@@ -1,0 +1,8 @@
++description: |
+  first domain has multischeduling and another one depends on it
+  A1@hourly -> A2@daily -> B1@hourly
+
+a:
+  +tags: 'a'
+b:
+  +tags: 'b'

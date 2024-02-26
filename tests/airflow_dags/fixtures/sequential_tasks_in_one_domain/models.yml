@@ -1,0 +1,11 @@
++columns:
+  - name: _etl_updated_dttm
+    description: "[tech] row etl datetime"
+
+sequential_tasks_in_one_domain:
+  a:
+    +tags: "A"
+    +domain: "A"
+    +description: |
+      Domain with three models in chain
+      a1 -> a2 -> a3

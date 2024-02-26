@@ -1,0 +1,7 @@
+[tool.pytest.ini_options]
+
+[tool.pytest_env]
+AIRFLOW_UNIQUE_NAME = "airflow_dbt_af_tests"
+airflow_dbt_af_tests-databricks_default_host = "https://test.azuredatabricks.net"
+airflow_dbt_af_tests-databricks_default_sql_http_path = "sql/protocolv1/o/0/1010101010101010.db"
+airflow_dbt_af_tests-databricks-clusters = "{}"

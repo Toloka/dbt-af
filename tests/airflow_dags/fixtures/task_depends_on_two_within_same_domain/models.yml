@@ -1,0 +1,6 @@
++description: |
+  two sources with one destionation in a single domain
+  
+  A1 -+
+      +--> A3
+  A2 -+

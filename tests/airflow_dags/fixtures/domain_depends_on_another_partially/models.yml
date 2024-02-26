@@ -1,0 +1,12 @@
++description: |
+  node in a middle of a domain dag depends on nodes in another domain
+  
+     + -> A2 -> +
+  A1 +          + -> B2
+     + -------> +
+                |
+  B1 + -------> +
+a:
+  +tags: 'b'
+b:
+  +tags: 'b'

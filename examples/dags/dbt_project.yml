@@ -1,0 +1,53 @@
+name: 'dbt_af_project'
+
+config-version: 2
+version: '0.1'
+
+profile: 'default'
+
+model-paths: [
+  "jaffle_shop/dbt/models",
+  "advanced_jaffle_shop/dbt/models"
+]
+seed-paths: [
+  "jaffle_shop/dbt/seeds",
+  "advanced_jaffle_shop/dbt/seeds"
+]
+test-paths: [
+  "jaffle_shop/dbt/tests",
+  "advanced_jaffle_shop/dbt/tests"
+]
+analysis-paths: [
+  "jaffle_shop/dbt/analysis",
+  "advanced_jaffle_shop/dbt/analysis"
+]
+macro-paths: [
+  "macros",
+  "jaffle_shop/dbt/macros",
+  "advanced_jaffle_shop/dbt/macros"
+]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+  - "logs"
+
+require-dbt-version: [ ">=1.0.0", "<2.0.0" ]
+
+models:
+  dbt_af_project:
+    materialized: table
+    staging:
+      materialized: view
+
+    sql_cluster: "dev"
+    daily_sql_cluster: "dev"
+    py_cluster: "dev"
+    bf_cluster: "dev"
+
+seeds:
+  sql_cluster: "dev"
+  daily_sql_cluster: "dev"
+  py_cluster: "dev"
+  bf_cluster: "dev"

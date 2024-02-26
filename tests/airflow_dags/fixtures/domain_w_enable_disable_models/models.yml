@@ -1,0 +1,7 @@
++description: |
+  one domain with two models. First model is enabled, second is disabled
+  enabled model ==> flag `enable_from_dttm` is set
+  disabled model ==> flag `disable_from_dttm` is not set
+
+a:
+  +tags: 'a'

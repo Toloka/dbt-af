@@ -1,0 +1,9 @@
++description: |
+  three domains of several tasks in a chain
+  (a1 -> a2) -> (b1 -> b2) -> (b1)
+a:
+  +tags: "a"
+b:
+  +tags: "b"
+c:
+  +tags: "c"
