@@ -37,6 +37,9 @@ jobs:
     needs:
       - build
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/dbt-af
     permissions:
       id-token: write
 
@@ -48,6 +51,3 @@ jobs:
 
       - name: Push build artifacts to PyPi
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: ${{ secrets.PYPI_USERNAME }}
-          password: ${{ secrets.PYPI_PASSWORD }}
