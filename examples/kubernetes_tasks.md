@@ -57,6 +57,7 @@ The possible template of the script could be like this:
 ```python
 import os
 import typer
+import pandas as pd
 from typing import Optional
 
 
@@ -64,6 +65,8 @@ from typing import Optional
 # here we need to define all refs that are used in the model
 def model(dbt, session):
     dbt.ref('your.model.name')
+    
+    return pd.DataFrame()  # it's required to return DataFrame in dbt python models
 
 def main(
     model_config_b64: Optional[str] = os.getenv('MODEL_CONFIG_B64'),
@@ -97,3 +100,13 @@ The only difference is that you have to set up `dbt_target` parameter in config
 1. The pod will be created in the same k8s cluster.
 2. Only resource limits for pods are supported.
 3. For now, only azure authentication is supported. If you want to pass `aadpodidbinding` to the pod, use `K8sConfig` in the main `dbt-af` config (see [K8sConfig](../dbt_af/conf/config.py)).
+
+
+## List of Examples
+1. [Basic Project](basic_project.md): a single domain, small tests, and a single target.
+2. [Advanced Project](advanced_project.md): several domains, medium and large tests, and different targets.
+3. [Dependencies management](dependencies_management.md): how to manage dependencies between models in different domains.
+4. [Manual scheduling](manual_scheduling.md): domains with manual scheduling.
+5. [Maintenance and source freshness](maintenance_and_source_freshness.md): how to manage maintenance tasks and source freshness.
+7. [Integration with other tools](integration_with_other_tools.md): how to integrate dbt-af with other tools.
+8. [\[Preview\] Extras and scripts](extras_and_scripts.md): available extras and scripts.

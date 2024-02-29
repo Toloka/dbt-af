@@ -42,6 +42,7 @@ pytest-mock = "*"
 dbt-postgres = "^1.7"
 dbt-databricks = "^1.7"
 databricks-cli = "^0.18"
+pre-commit = "^3.6.2"
 
 [tool.poetry.extras]
 mcd = ["airflow-mcd", "pycarlo"]

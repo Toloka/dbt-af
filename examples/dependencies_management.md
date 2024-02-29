@@ -58,3 +58,13 @@ config:
 ```
 
 > :warning: This setting could generate a lot of tasks in your DAG. Be cautious here! If you still want to use this, consider updating number of slots in `dbt_sensor_pool` pool.
+
+
+## List of Examples
+1. [Basic Project](basic_project.md): a single domain, small tests, and a single target.
+2. [Advanced Project](advanced_project.md): several domains, medium and large tests, and different targets.
+4. [Manual scheduling](manual_scheduling.md): domains with manual scheduling.
+5. [Maintenance and source freshness](maintenance_and_source_freshness.md): how to manage maintenance tasks and source freshness.
+6. [Kubernetes tasks](kubernetes_tasks.md): how to run dbt models in Kubernetes.
+7. [Integration with other tools](integration_with_other_tools.md): how to integrate dbt-af with other tools.
+8. [\[Preview\] Extras and scripts](extras_and_scripts.md): available extras and scripts.

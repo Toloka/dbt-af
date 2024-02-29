@@ -47,7 +47,7 @@ Essentially, we will create a project that has this structure:
 
 We use one `dbt_project.yml` file and one `profiles.yml` file to manage the different etl services. ETL service is a
 logically separated part of the project that has its own dbt models, seeds, and tests. Each ETL service must be run
-independently of the others, maybe event in separate Airflow instance.
+independently of the others, maybe even in separate Airflow instance.
 
 ## Cross-domain dependencies
 
@@ -144,3 +144,11 @@ config:
   dbt_target: large_dev
 ```
 
+## List of Examples
+1. [Basic Project](basic_project.md): a single domain, small tests, and a single target.
+3. [Dependencies management](dependencies_management.md): how to manage dependencies between models in different domains.
+4. [Manual scheduling](manual_scheduling.md): domains with manual scheduling.
+5. [Maintenance and source freshness](maintenance_and_source_freshness.md): how to manage maintenance tasks and source freshness.
+6. [Kubernetes tasks](kubernetes_tasks.md): how to run dbt models in Kubernetes.
+7. [Integration with other tools](integration_with_other_tools.md): how to integrate dbt-af with other tools.
+8. [\[Preview\] Extras and scripts](extras_and_scripts.md): available extras and scripts.
