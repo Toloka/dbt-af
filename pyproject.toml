@@ -4,9 +4,9 @@ version = "0.1.1"
 description = "Distibuted dbt runs on Apache Airflow"
 authors = [
     "Nikita Yurasov <nikitayurasov@toloka.ai>",
-    "Igor Safonov igsaf@toloka.ai",
-    "Evgeny Ermakov jkermakov@toloka.ai",
-    "Leonid Kozhinov lkozhinov@toloka.ai",
+    "Igor Safonov <igsaf@toloka.ai>",
+    "Evgeny Ermakov <jkermakov@toloka.ai>",
+    "Leonid Kozhinov <lkozhinov@toloka.ai>",
 ]
 readme = "README.md"
 license = "Apache-2.0"
