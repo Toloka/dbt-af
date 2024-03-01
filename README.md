@@ -1,8 +1,11 @@
-[![PyPI version](https://badge.fury.io/py/dbt-af.svg)](https://badge.fury.io/py/dbt-af)
+[![PyPI - Version](https://img.shields.io/pypi/v/dbt-af)](https://pypi.org/project/dbt-af/)
 [![GitHub Build](https://github.com/Toloka/dbt-af/workflows/Tests/badge.svg)](https://github.com/Toloka/dbt-af/actions)
 
 [![License](https://img.shields.io/:license-Apache%202-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.txt)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dbt-af.svg)](https://pypi.org/project/dbt-af/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/dbt-af)](https://pypi.org/project/dbt-af/)
+
+[![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 # dbt-af: distributed run of dbt models using Airflow
