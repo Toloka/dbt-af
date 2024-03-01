@@ -1,4 +1,4 @@
-[![PyPI version](https://badge.fury.io/py/dbt-af.svg)](https://badge.fury.io/py/dbt-af)
+[![PyPI - Version](https://img.shields.io/pypi/v/dbt-af)](https://pypi.org/project/dbt-af/)
 [![GitHub Build](https://github.com/Toloka/dbt-af/workflows/Tests/badge.svg)](https://github.com/Toloka/dbt-af/actions)
 
 [![License](https://img.shields.io/:license-Apache%202-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.txt)
