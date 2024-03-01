@@ -1,9 +1,19 @@
 [tool.poetry]
 name = "dbt-af"
-version = "0.1.0"
+version = "0.1.1"
 description = "Distibuted dbt runs on Apache Airflow"
-authors = ["Nikita Yurasov <nikitayurasov@toloka.ai>"]
+authors = [
+    "Nikita Yurasov <nikitayurasov@toloka.ai>",
+    "Igor Safonov igsaf@toloka.ai",
+    "Evgeny Ermakov jkermakov@toloka.ai",
+    "Leonid Kozhinov lkozhinov@toloka.ai",
+]
 readme = "README.md"
+license = "Apache-2.0"
+homepage = "https://github.com/Toloka/dbt-af"
+repository = "https://github.com/Toloka/dbt-af"
+documentation = "https://github.com/Toloka/dbt-af/blob/main/examples/README.md"
+keywords = ["python", "airflow", "dbt"]
 packages = [
     { include = "dbt_af" },
     { include = "dbt_af_functional_tests" },
