@@ -394,14 +394,14 @@ class DbtSourceFreshnessSensor(PythonSensor):
         source_name: str,
         source_identifier: str,
         dbt_af_config: Config,
-        target_environment: str,
+        target_environment: str = None,
         wait_timeout: int = None,
         **kwargs,
     ):
         self.env = env
         self.source_name = source_name
         self.source_identifier = source_identifier
-        self.target_environment = target_environment
+        self.target_environment = target_environment or dbt_af_config.dbt_default_targets.default_for_tests_target
         self.dbt_af_config = dbt_af_config
 
         if kwargs.get('retries') and wait_timeout:
