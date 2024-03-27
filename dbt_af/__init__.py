@@ -5,4 +5,4 @@ __all__ = [
 
 __version__ = '0.4.0'
 
-from . import conf, dags
+from . import conf, dags  # noqa

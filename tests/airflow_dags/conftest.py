@@ -43,9 +43,9 @@ def config():
 def prepare_env_for_test():
     # fmt: off
     env_vars = {
-        'DBT_CATALOG': "dummy",
-        'DBT_SCHEMA': "dummy",
-        'DBT_TOKEN': "dummy",
+        'DBT_CATALOG': 'dummy',
+        'DBT_SCHEMA': 'dummy',
+        'DBT_TOKEN': 'dummy',
         'DBT_HTTP_PATH': 'dummy',
         'DBT_HOST': 'dummy',
         'DBT_TARGET_ENV': 'dev',
@@ -181,7 +181,7 @@ class TmpManifest(TestManifest):
 
         if dbt_command_result.exit_code != 0:
             exception = indent(dbt_command_result.stdout, ' ' * 4)
-            raise RuntimeError("Could not compile dbt. Error:\n" + exception)
+            raise RuntimeError('Could not compile dbt. Error:\n' + exception)
 
         # read manifest
         with open((target_dir / 'manifest.json')) as fin:

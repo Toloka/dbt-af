@@ -33,7 +33,8 @@ class DdtBaseOperator(BashOperator):
 
     def generate_bash(self, **kwargs) -> str:
         return (
-            self._patch_path_to_dbt_bash(**kwargs) + ' cd $PATH_TO_DBT  && dbt {debug} {cli} '
+            self._patch_path_to_dbt_bash(**kwargs)
+            + ' cd $PATH_TO_DBT  && dbt {debug} {cli} '
             '--profiles-dir $DBT_PROFILES_DIR '
             '--project-dir $PATH_TO_DBT '
             '--target {target_environment}'.format(**kwargs)

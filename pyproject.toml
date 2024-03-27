@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dbt-af"
-version = "0.4.0"
+version = "0.4.1"
 description = "Distibuted dbt runs on Apache Airflow"
 authors = [
     "Nikita Yurasov <nikitayurasov@toloka.ai>",
@@ -22,13 +22,13 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
-attrs = "^23.1"
+attrs = "~23.1"
 apache-airflow = ">=2.6,<2.8.0"
-pydantic = "^1.10.7"
+pydantic = "~1.10.7"
 apache-airflow-providers-cncf-kubernetes = ">=7.0.0"
-cachetools = "^5.3"
-typer = "^0.9"
-dbt-core = "^1.7"
+cachetools = "~5.3"
+typer = "~0.9"
+dbt-core = "~1.7"
 pendulum = "^2"
 
 pytest = { version = "*", optional = true }
@@ -36,23 +36,22 @@ pytest-env = { version = "*", optional = true }
 pytest-socket = { version = "*", optional = true }
 pytest-mock = { version = "*", optional = true }
 
-airflow-mcd = { version = "^0.2", optional = true }
-pycarlo = { version = "^0.8", optional = true }
+airflow-mcd = { version = "~0.2", optional = true }
+pycarlo = { version = "~0.8", optional = true }
 
-dbt-postgres = { version = "^1.7", optional = true }
+dbt-postgres = { version = "~1.7", optional = true }
 
 [tool.poetry.group.dev.dependencies]
-isort = "^5.12"
-black = { extras = ["d"], version = "^23.7" }
+isort = "~5.12"
+black = "~23.7"
+ruff = "^0.3"
 twine = "*"
 pytest = "^8"
 pytest-env = "*"
 pytest-socket = "*"
 pytest-mock = "*"
-dbt-postgres = "^1.7"
-dbt-databricks = "^1.7"
-databricks-cli = "^0.18"
-pre-commit = "^3.6.2"
+dbt-postgres = "~1.7"
+pre-commit = "3.6.2"
 
 [tool.poetry.extras]
 mcd = ["airflow-mcd", "pycarlo"]

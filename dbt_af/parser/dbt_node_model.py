@@ -261,7 +261,7 @@ class DbtNode(pydantic.BaseModel):
 
     @property
     def materialized(self):
-        return self.config.materialized if self.resource_type == 'model' else ""
+        return self.config.materialized if self.resource_type == 'model' else ''
 
     @property
     def test_type(self):
@@ -286,7 +286,6 @@ class DbtNode(pydantic.BaseModel):
         return None
 
     def target_environment(self, default_dbt_targets: DbtDefaultTargetsConfig) -> str:
-        # TODO: this shouldn't be open sourced
         if self.config.dbt_target:
             return self.config.dbt_target
 

@@ -27,7 +27,6 @@ class DbtBranchOperator(BranchPythonOperator):
 
 def create_decision_path_function(node_config: DbtNodeConfig, node_name: str) -> Callable:
     def decide_which_path(**kwargs) -> List[str]:
-        # TODO: refactor this very carefully
         is_enable = True
         if node_config.enable_from_dttm:
             if str(kwargs['data_interval_end']) < node_config.enable_from_dttm:

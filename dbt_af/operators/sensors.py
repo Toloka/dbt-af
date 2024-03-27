@@ -43,7 +43,8 @@ def daily_on_hourly(
     Daily task with schedule Y X * * * waits for hourly task with schedule Z * * * *. Daily task will have example
     data interval [2023-07-13TXX:YY:00, 2023-07-14TXX:YY:00] and hourly task will have data interval
     [2023-07-13TXX:YY:00 + 23h + Z minutes, 2023-07-13TXX:YY:00 + 24h + Z minutes] for WaitPolicy.last (default) and
-    [2023-07-13TXX:YY:00 + i hours + Z minutes, 2023-07-13TXX:YY:00 + (i+1) hours + Z minutes] (i=0..23) for WaitPolicy.all
+    [2023-07-13TXX:YY:00 + i hours + Z minutes, 2023-07-13TXX:YY:00 + (i+1) hours + Z minutes] (i=0..23)
+    for WaitPolicy.all
 
     Execution date is always the start of the data interval.
     """
