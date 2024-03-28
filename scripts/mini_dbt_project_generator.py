@@ -13,7 +13,7 @@ cli = typer.Typer()
 
 @cli.command()
 def generate_mini_dbt_projects(manifest_path: str, dbt_project_path: str, result_path: str):
-    generate_mini_dbt_template(dbt_project_path, result_path, "mini_dbt_template")
+    generate_mini_dbt_template(dbt_project_path, result_path, 'mini_dbt_template')
 
     with open(manifest_path) as fin:
         manifest = json.load(fin)
@@ -24,7 +24,7 @@ def generate_mini_dbt_projects(manifest_path: str, dbt_project_path: str, result
         # copy template
 
         shutil.copytree(
-            Path(result_path, "mini_dbt_template"),
+            Path(result_path, 'mini_dbt_template'),
             Path(result_path, node.resource_name),
         )
 
@@ -44,22 +44,22 @@ def generate_mini_dbt_projects(manifest_path: str, dbt_project_path: str, result
             to_path.mkdir(parents=True, exist_ok=True)
 
             # copy all sql
-            for file in from_path.glob("*.sql"):
+            for file in from_path.glob('*.sql'):
                 shutil.copy(file, to_path)
 
             # copy all py
-            for file in from_path.glob("*.py"):
+            for file in from_path.glob('*.py'):
                 shutil.copy(file, to_path)
 
             # copy all yml
-            for file in from_path.glob("*.yml"):
+            for file in from_path.glob('*.yml'):
                 shutil.copy(file, to_path)
 
     return graph
 
 
 def generate_mini_dbt_template(dbt_project_path, result_path, mini_dbt_node_template):
-    with open(Path(dbt_project_path, "dbt_project.yml")) as fin:
+    with open(Path(dbt_project_path, 'dbt_project.yml')) as fin:
         dbt_project = yaml.safe_load(fin)
 
     Path(result_path, mini_dbt_node_template).mkdir(parents=True, exist_ok=True)

@@ -1,5 +1,5 @@
+from .main import cli  # noqa
+
 __all__ = [
     'cli',
 ]
-
-from .main import cli

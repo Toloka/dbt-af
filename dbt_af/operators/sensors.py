@@ -43,7 +43,8 @@ def daily_on_hourly(
     Daily task with schedule Y X * * * waits for hourly task with schedule Z * * * *. Daily task will have example
     data interval [2023-07-13TXX:YY:00, 2023-07-14TXX:YY:00] and hourly task will have data interval
     [2023-07-13TXX:YY:00 + 23h + Z minutes, 2023-07-13TXX:YY:00 + 24h + Z minutes] for WaitPolicy.last (default) and
-    [2023-07-13TXX:YY:00 + i hours + Z minutes, 2023-07-13TXX:YY:00 + (i+1) hours + Z minutes] (i=0..23) for WaitPolicy.all
+    [2023-07-13TXX:YY:00 + i hours + Z minutes, 2023-07-13TXX:YY:00 + (i+1) hours + Z minutes] (i=0..23)
+    for WaitPolicy.all
 
     Execution date is always the start of the data interval.
     """
@@ -393,14 +394,14 @@ class DbtSourceFreshnessSensor(PythonSensor):
         source_name: str,
         source_identifier: str,
         dbt_af_config: Config,
-        target_environment: str,
+        target_environment: str = None,
         wait_timeout: int = None,
         **kwargs,
     ):
         self.env = env
         self.source_name = source_name
         self.source_identifier = source_identifier
-        self.target_environment = target_environment
+        self.target_environment = target_environment or dbt_af_config.dbt_default_targets.default_for_tests_target
         self.dbt_af_config = dbt_af_config
 
         if kwargs.get('retries') and wait_timeout:

@@ -60,7 +60,8 @@ class DbtProjectConfig:
     Config for dbt project.
 
     :param dbt_project_name: name of dbt project; refer to field `name` in dbt_project.yml
-    :param dbt_models_path: path to dbt models; it's used in k8s operators to find raw models code # TODO: read from dbt_project.yml
+    # TODO: read from dbt_project.yml
+    :param dbt_models_path: path to dbt models; it's used in k8s operators to find raw models code
     :param dbt_project_path: path to directory with dbt_project.yml
     :param dbt_profiles_path: path to directory with profiles.yml
     :param dbt_target_path: path to directory where compiled files (e.g. compiled models and tests) will be written
@@ -109,9 +110,9 @@ class DbtDefaultTargetsConfig:
     default_backfill_target: str = attrs.field(default=None)
 
     def __attrs_post_init__(self):
-        object.__setattr__(self, "default_for_tests_target", self.default_for_tests_target or self.default_target)
-        object.__setattr__(self, "default_maintenance_target", self.default_maintenance_target or self.default_target)
-        object.__setattr__(self, "default_backfill_target", self.default_backfill_target or self.default_target)
+        object.__setattr__(self, 'default_for_tests_target', self.default_for_tests_target or self.default_target)
+        object.__setattr__(self, 'default_maintenance_target', self.default_maintenance_target or self.default_target)
+        object.__setattr__(self, 'default_backfill_target', self.default_backfill_target or self.default_target)
 
 
 @attrs.define(frozen=True)

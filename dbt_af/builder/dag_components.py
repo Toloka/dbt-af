@@ -299,7 +299,6 @@ class DagModel(DagComponent):
                     env=self.model_task.env,
                     source_name=source_dep.source_name,
                     source_identifier=source_dep.identifier,
-                    target_environment=self.target_environment,
                     dbt_af_config=self.domain_dag.config,
                 )
 

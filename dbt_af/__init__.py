@@ -3,6 +3,6 @@ __all__ = [
     'conf',
 ]
 
-__version__ = '0.4.0'
+__version__ = '0.4.1'
 
-from . import conf, dags
+from . import conf, dags  # noqa

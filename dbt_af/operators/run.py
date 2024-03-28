@@ -82,5 +82,5 @@ class DbtTest(DbtBaseActionOperator):
             max_active_tis_per_dag=None,
             target_environment=dbt_af_config.dbt_default_targets.default_for_tests_target,
             overlap=True,
-            **kwargs
+            **kwargs,
         )

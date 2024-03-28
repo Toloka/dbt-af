@@ -105,7 +105,7 @@ class DbtAfGraph:
             node = DbtNode(**node_info)
             node.set_target_details(project_profile, config.dbt_default_targets)
             if node.resource_type in ('test', 'model', 'snapshot', 'seed'):
-                # TODO: fix etl_service to sensors
+                # TODO: add sensors for models in different etl services
                 if etl_service_name and not node.is_at_etl_service(etl_service_name):
                     continue
                 nodes.append(node)
@@ -219,7 +219,6 @@ class DbtAfGraph:
 
         self._bind_medium_tests()
 
-        # TODO: ~~kill~~ refactor me
         return (
             list(self._models.values())
             + list(self._medium_tests.values())

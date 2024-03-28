@@ -12,7 +12,6 @@ def _get_resource_id(client: 'Client', metastore_name: str) -> str:
     copy function from https://github.com/mvfolino68/pycarlo-examples/blob/main/dbt/dbt.py#L16
     """
 
-    # TODO: refactor me
     from pycarlo.core import Query
 
     query = Query()
