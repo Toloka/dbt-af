@@ -1,6 +1,9 @@
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, root_validator
+try:
+    from pydantic.v1 import BaseModel, Field, root_validator
+except ModuleNotFoundError:
+    from pydantic import BaseModel, Field, root_validator
 
 KUBERNETES_TARGET_TYPE = 'kubernetes'
 

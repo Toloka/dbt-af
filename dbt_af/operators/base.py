@@ -5,7 +5,11 @@ from datetime import timedelta
 from tempfile import TemporaryDirectory
 from typing import Dict, Optional
 
-import pydantic
+try:
+    import pydantic.v1 as pydantic
+except ModuleNotFoundError:
+    import pydantic
+
 from airflow.operators.bash import BashOperator
 from airflow.utils.context import Context
 
