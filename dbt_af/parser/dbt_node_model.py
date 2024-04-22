@@ -4,7 +4,11 @@ from pathlib import Path
 from typing import Any, DefaultDict, Dict, List, Optional, Union
 
 import pendulum
-import pydantic
+
+try:
+    import pydantic.v1 as pydantic
+except ModuleNotFoundError:
+    import pydantic
 
 from dbt_af.common.constants import DOMAIN_DAG_START_DATE_FMT
 from dbt_af.common.scheduling import BaseScheduleTag, ScheduleTag

@@ -1,7 +1,10 @@
 import os
 from typing import Any, Dict, List, Optional
 
-import pydantic
+try:
+    import pydantic.v1 as pydantic
+except ModuleNotFoundError:
+    import pydantic
 
 
 class _FreshnessAfterModel(pydantic.BaseModel):

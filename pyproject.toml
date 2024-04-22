@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dbt-af"
-version = "0.4.1"
+version = "0.4.2"
 description = "Distibuted dbt runs on Apache Airflow"
 authors = [
     "Nikita Yurasov <nikitayurasov@toloka.ai>",
@@ -24,7 +24,7 @@ packages = [
 python = ">=3.10,<4.0"
 attrs = "~23.1"
 apache-airflow = ">=2.6,<2.8.0"
-pydantic = "~1.10.7"
+pydantic = ">=1.10,<3.0.0"
 apache-airflow-providers-cncf-kubernetes = ">=7.0.0"
 cachetools = "~5.3"
 typer = "~0.9"
