@@ -2,3 +2,5 @@
 logs/
 
 **/__pycache__/**
+
+.coverage*
