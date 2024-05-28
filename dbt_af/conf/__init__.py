@@ -1,4 +1,11 @@
-from .config import Config, DbtDefaultTargetsConfig, DbtProjectConfig, K8sConfig, MCDIntegrationConfig  # noqa
+from dbt_af.conf.config import (
+    Config,
+    DbtDefaultTargetsConfig,
+    DbtProjectConfig,
+    K8sConfig,
+    MCDIntegrationConfig,
+    TableauIntegrationConfig,
+)
 
 __all__ = [
     'Config',
@@ -6,4 +13,5 @@ __all__ = [
     'DbtProjectConfig',
     'K8sConfig',
     'MCDIntegrationConfig',
+    'TableauIntegrationConfig',
 ]

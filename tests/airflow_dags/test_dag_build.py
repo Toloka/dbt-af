@@ -506,3 +506,36 @@ def test_dags_dags_domain_model_w_maintenance_has_correct_dags(dags_domain_model
         'vacuum_table__a__maintenance.dbt_vacuum_table__a1',
         'vacuum_table__a__maintenance.dbt_vacuum_table__a2',
     ]
+
+
+def test_task_with_tableau_integration_has_correct_dags(dags_task_with_tableau_integration):
+    from dbt_af.parser.dbt_node_model import TableauRefreshResourceType, TableauRefreshTaskConfig
+
+    dags = dags_task_with_tableau_integration
+    assert sorted(dags) == ['a__backfill', 'a__hourly']
+
+    assert sorted(dags['a__hourly'].task_ids) == ['a1__group.a1', 'a1__group.tableau_refresh__a1']
+    assert nodes_operator_names(dags['a__hourly'].tasks) == {
+        'a1__group.a1': 'DbtRun',
+        'a1__group.tableau_refresh__a1': 'TableauExtractsRefreshOperator',
+    }
+    assert node_ids(dags['a__hourly'].task_dict['a1__group.a1'].upstream_list) == []
+    assert node_ids(dags['a__hourly'].task_dict['a1__group.a1'].downstream_list) == ['a1__group.tableau_refresh__a1']
+
+    tableau_refresh_tasks_observed = [
+        task.dict() for task in dags['a__hourly'].task_dict['a1__group.tableau_refresh__a1'].tableau_refresh_tasks
+    ]
+    tableau_refresh_tasks_expected = [
+        TableauRefreshTaskConfig(
+            resource_name='workbook_name',
+            project_name='project_name',
+            resource_type=TableauRefreshResourceType.workbook,
+        ).dict(),
+        TableauRefreshTaskConfig(
+            resource_name='datasource_name',
+            project_name='project_name',
+            resource_type=TableauRefreshResourceType.datasource,
+        ).dict(),
+    ]
+
+    assert tableau_refresh_tasks_observed == tableau_refresh_tasks_expected

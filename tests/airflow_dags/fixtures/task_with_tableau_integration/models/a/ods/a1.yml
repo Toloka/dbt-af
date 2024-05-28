@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: a1
+    config:
+      schedule: '@hourly'
+      tableau_refresh_tasks:
+        - resource_name: workbook_name
+          project_name: project_name
+          resource_type: workbook
+
+        - resource_name: datasource_name
+          project_name: project_name
+          resource_type: datasource
+    columns:
+      - name: id
+        description: "The primary key for this table"

@@ -11,6 +11,7 @@ from dbt_af.operators.branch import DbtBranchOperator, create_decision_path_func
 from dbt_af.operators.kubernetes_pod import DbtKubernetesPodOperator
 from dbt_af.operators.run import DbtRun, DbtSeed, DbtSnapshot, DbtTest
 from dbt_af.operators.sensors import AfExecutionDateFn, DbtExternalSensor, DbtSourceFreshnessSensor
+from dbt_af.operators.supplemental import TableauExtractsRefreshOperator
 from dbt_af.parser.dbt_node_model import DbtNode, DbtNodeConfig
 from dbt_af.parser.dbt_profiles import KubernetesTarget
 from dbt_af.parser.dbt_source_model import DbtSource
@@ -183,7 +184,7 @@ class DagComponent:
     def _create_task_group(self) -> Optional[TaskGroup]:
         """
         Create a task group for the model if it has external dependencies or small tests. If waits for all external
-        dependencies are built per domain, task group is not needed
+        dependencies are built per domain, a task group is not needed
         """
         if (
             not self._small_tests
@@ -191,6 +192,7 @@ class DagComponent:
             and not self._get_source_deps_with_freshness_check()
             and not self.node_config.enable_from_dttm
             and not self.node_config.disable_from_dttm
+            and not self.node_config.tableau_refresh_tasks
         ):
             return None
 
@@ -304,6 +306,17 @@ class DagModel(DagComponent):
 
                 delayed_deps(source_wait) >> delayed_deps(self.model_task)
 
+    def _init_supplemental_dependencies_af(self, delayed_deps: DagDelayedDependencyRegistry):
+        if self.dbt_node.config.tableau_refresh_tasks:
+            tableau_refresh_task = TableauExtractsRefreshOperator(
+                task_id=f'tableau_refresh__{self.safe_name}',
+                task_group=self.task_group,
+                dag=self.domain_dag.af_dag,
+                tableau_refresh_tasks=self.dbt_node.config.tableau_refresh_tasks,
+                dbt_af_config=self.domain_dag.config,
+            )
+            delayed_deps(self.model_task) >> delayed_deps(tableau_refresh_task)
+
     def init_af(self):
         """
         Initialize all Airflow components for the dbt-model and it's dependencies
@@ -321,6 +334,7 @@ class DagModel(DagComponent):
 
             self._init_dependencies_af(delayed_deps)
             self._init_source_dependencies_af(delayed_deps)
+            self._init_supplemental_dependencies_af(delayed_deps)
 
 
 class DagSnapshot(DagModel):
