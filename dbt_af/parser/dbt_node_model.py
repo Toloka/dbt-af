@@ -80,17 +80,9 @@ class DbtAFMaintenanceConfig(pydantic.BaseModel):
         return maintenance_types
 
 
-class TableauRefreshResourceType(enum.Enum):
+class TableauRefreshResourceType(str, enum.Enum):
     workbook = 'workbook'
     datasource = 'datasource'
-
-    def __str__(self):
-        return self.value
-
-    def __eq__(self, other: object):
-        if not isinstance(other, (TableauRefreshResourceType, str)):
-            return NotImplemented
-        return str(self) == str(other)
 
 
 class TableauRefreshTaskConfig(pydantic.BaseModel):

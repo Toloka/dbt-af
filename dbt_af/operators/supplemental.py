@@ -17,9 +17,6 @@ class TableauExtractsRefreshOperator(PythonOperator):
         if not is_tableau_installed():
             raise ImportError('tableauserverclient is not installed. Please install it to use this operator.')
 
-        self.tableau_refresh_tasks = tableau_refresh_tasks
-        self.dbt_af_config = dbt_af_config
-
         super().__init__(
             python_callable=tableau_extracts_refresh,
             op_kwargs={
