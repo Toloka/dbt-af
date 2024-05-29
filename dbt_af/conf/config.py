@@ -55,6 +55,61 @@ class MCDIntegrationConfig:
 
 
 @attrs.define(frozen=True)
+class TableauIntegrationConfig:
+    """
+    Config for Tableau integration.
+    There are two ways to authenticate:
+        - with username and password
+        - with token name and personal access token (PAT)
+    You can use only one of them. If both are specified, then username and password will be used.
+
+    :param server_address: The address of the Tableau Server or Tableau Online instance.
+
+    :param username: The name of the user whose credentials will be used to sign in
+    :param password: The password of the user.
+    :param user_id_to_impersonate: Specifies the id (not the name) of the user to sign in as.
+
+    :param token_name: The personal access token name.
+    :param pat: The personal access token.
+
+    :param site_id: This corresponds to the contentUrl attribute in the Tableau REST API.
+        The site_id is the portion of the URL that follows the /site/ in the URL. For example,
+        “MarketingTeam” is the site_id in the following URL MyServer/#/site/MarketingTeam/projects.
+        To specify the default site on Tableau Server, you can use an empty string '' (single quotes, no space).
+        For Tableau Cloud, you must provide a value for the site_id.
+    """
+
+    server_address: str = attrs.field(validator=attrs.validators.instance_of(str))
+
+    username: Optional[str] = attrs.field(
+        default=None,
+        validator=attrs.validators.optional(attrs.validators.instance_of(str)),
+    )
+    password: Optional[str] = attrs.field(
+        default=None,
+        validator=attrs.validators.optional(attrs.validators.instance_of(str)),
+    )
+    user_id_to_impersonate: Optional[str] = attrs.field(
+        default=None,
+        validator=attrs.validators.optional(attrs.validators.instance_of(str)),
+    )
+
+    token_name: Optional[str] = attrs.field(
+        default=None,
+        validator=attrs.validators.optional(attrs.validators.instance_of(str)),
+    )
+    pat: Optional[str] = attrs.field(
+        default=None,
+        validator=attrs.validators.optional(attrs.validators.instance_of(str)),
+    )
+
+    site_id: Optional[str] = attrs.field(
+        default=None,
+        validator=attrs.validators.optional(attrs.validators.instance_of(str)),
+    )
+
+
+@attrs.define(frozen=True)
 class DbtProjectConfig:
     """
     Config for dbt project.
@@ -158,15 +213,18 @@ class Config:
     model_dependencies: ModelDependenciesSection = attrs.field(factory=ModelDependenciesSection)
     include_single_model_manual_dag: bool = attrs.field(default=True)
 
-    # airflow specific params
+    # airflow-specific params
     max_active_dag_runs: int = attrs.field(default=50)
     af_dag_description: str = attrs.field(default='https://www.buymeacoffee.com/tolokadataplatform')
     dag_start_date: pendulum.datetime = attrs.field(default=pendulum.datetime(2023, 10, 1, 0, 0, 0, tz='UTC'))
     is_dev: bool = attrs.field(default=False)
     use_dbt_target_specific_pools: bool = attrs.field(default=True)
 
-    # mcd
+    # Monte Carlo Data integration
     mcd: Optional[MCDIntegrationConfig] = attrs.field(default=None)
+
+    # Tableau integration
+    tableau: Optional[TableauIntegrationConfig] = attrs.field(default=None)
 
     # k8s
     k8s: K8sConfig = attrs.field(factory=K8sConfig)

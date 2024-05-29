@@ -12,7 +12,7 @@
 
 ## Overview
 
-_dbt-af_ is a tool that allows you to run dbt models in a distributed manner using Airflow.
+**_dbt-af_** is a tool that allows you to run dbt models in a distributed manner using Airflow.
 It acts as a wrapper around the Airflow DAG,
 allowing you to run the models independently while preserving their dependencies.
 
@@ -20,14 +20,18 @@ allowing you to run the models independently while preserving their dependencies
 
 ### Why?
 
-1. _dbt-af_ is [domain-driven](https://www.datamesh-architecture.com/#what-is-data-mesh).
+1. **_dbt-af_** is [domain-driven](https://www.datamesh-architecture.com/#what-is-data-mesh).
    It is designed to separate models from different domains into different DAGs.
    This allows you to run models from different domains in parallel.
-2. _dbt-af_ brings scheduling to dbt. You can schedule your dbt models to run at a specific time.
-3. _dbt-af_ is an ETL-driven tool.
+2. **_dbt-af_** is **dbt-first** solution.
+   It is designed to make analytics' life easier.
+   End-users could even not know that Airflow is used to schedule their models.
+   dbt-model's config is an entry point for all your settings and customizations.
+3. **_dbt-af_** brings scheduling to dbt. From `@monthly` to `@hourly` and even [more](examples/manual_scheduling.md).
+4. **_dbt-af_** is an ETL-driven tool.
    You can separate your models into tiers or ETL stages
    and build graphs showing the dependencies between models within each tier or stage.
-4. _dbt-af_ brings additional features to use different dbt targets simultaneously, different tests scenarios, and
+5. **_dbt-af_** brings additional features to use different dbt targets simultaneously, different tests scenarios, and
    maintenance tasks.
 
 ## Installation
@@ -68,7 +72,7 @@ for dag_name, dag in dags.items():
     globals()[dag_name] = dag
 ```
 
-In _dbt_project.yml_ you need to set up default targets for all nodes in your project 
+In _dbt_project.yml_ you need to set up default targets for all nodes in your project
 (see [example](examples/dags/dbt_project.yml)):
 
 ```yaml
@@ -80,8 +84,22 @@ bf_cluster: "dev"
 
 This will create Airflow DAGs for your dbt project.
 
+## Features
+
+1. **_dbt-af_** is essentially designed to work with large projects (1000+ models).
+   When dealing with a significant number of dbt objects across different domains,
+   it becomes crucial to have all DAGs auto-generated.
+   **_dbt-af_** takes care of this by generating all the necessary DAGs for your dbt project and structuring them by
+   domains.
+2. Each dbt run is separated into a different Airflow task. All tasks receive a date interval from the Airflow DAG
+   context. By using the passed date interval in your dbt models, you ensure the *idempotency* of your dbt runs.
+3. _**dbt-af**_ lowers the entry threshold for non-infrastructure team members.
+   This means that analytics professionals, data scientists,
+   and data engineers can focus on their dbt models and important business logic
+   rather than spending time on Airflow DAGs.
+
 ## Project Information
 
 - [Docs](examples/README.md)
 - [PyPI](https://pypi.org/project/dbt-af/)
-- Contributing
+- [Contributing](CONTRIBUTING.md)

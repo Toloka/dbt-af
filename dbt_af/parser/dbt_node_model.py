@@ -80,6 +80,17 @@ class DbtAFMaintenanceConfig(pydantic.BaseModel):
         return maintenance_types
 
 
+class TableauRefreshResourceType(str, enum.Enum):
+    workbook = 'workbook'
+    datasource = 'datasource'
+
+
+class TableauRefreshTaskConfig(pydantic.BaseModel):
+    resource_name: str
+    project_name: str
+    resource_type: TableauRefreshResourceType
+
+
 class DbtNodeConfig(pydantic.BaseModel):
     enabled: bool
     alias: Optional[str]
@@ -126,7 +137,9 @@ class DbtNodeConfig(pydantic.BaseModel):
 
     dbt_target: Optional[str] = pydantic.Field(default='')
 
-    maintenance: Optional[DbtAFMaintenanceConfig] = pydantic.Field(default_factory=DbtAFMaintenanceConfig)
+    maintenance: DbtAFMaintenanceConfig = pydantic.Field(default_factory=DbtAFMaintenanceConfig)
+
+    tableau_refresh_tasks: Optional[List[TableauRefreshTaskConfig]] = pydantic.Field(default_factory=list)
 
     class Config:
         arbitrary_types_allowed = True

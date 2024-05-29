@@ -460,3 +460,9 @@ def dags_domain_w_task_in_kubernetes(compiled_main_dags):
 def dags_domain_model_w_maintenance(compiled_main_dags):
     with compiled_main_dags('domain_model_w_maintenance') as dags:
         yield dags
+
+
+@pytest.fixture
+def dags_task_with_tableau_integration(compiled_main_dags):
+    with compiled_main_dags('task_with_tableau_integration') as dags:
+        yield dags
