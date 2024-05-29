@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dbt-af"
-version = "0.5.0"
+version = "0.5.1"
 description = "Distibuted dbt runs on Apache Airflow"
 authors = [
     "Nikita Yurasov <nikitayurasov@toloka.ai>",
@@ -29,7 +29,6 @@ apache-airflow-providers-cncf-kubernetes = ">=7.0.0"
 cachetools = "~5.3"
 typer = "~0.9"
 dbt-core = "^1.7"
-pendulum = "^2"
 
 pytest = { version = "*", optional = true }
 pytest-env = { version = "*", optional = true }
@@ -39,7 +38,7 @@ pytest-mock = { version = "*", optional = true }
 airflow-mcd = { version = "^0.2", optional = true }
 pycarlo = { version = "^0.8", optional = true }
 
-tableauserverclient = { version = "^0.30", optional = true }
+tableauserverclient = { version = "^0.25", optional = true }
 
 dbt-postgres = { version = "^1.7", optional = true }
 
