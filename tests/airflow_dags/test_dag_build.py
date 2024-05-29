@@ -523,7 +523,8 @@ def test_task_with_tableau_integration_has_correct_dags(dags_task_with_tableau_i
     assert node_ids(dags['a__hourly'].task_dict['a1__group.a1'].downstream_list) == ['a1__group.tableau_refresh__a1']
 
     tableau_refresh_tasks_observed = [
-        task.dict() for task in dags['a__hourly'].task_dict['a1__group.tableau_refresh__a1'].tableau_refresh_tasks
+        task.dict()
+        for task in dags['a__hourly'].task_dict['a1__group.tableau_refresh__a1'].op_kwargs['tableau_refresh_tasks']
     ]
     tableau_refresh_tasks_expected = [
         TableauRefreshTaskConfig(

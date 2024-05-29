@@ -5,16 +5,19 @@ from cachetools import TTLCache, cachedmethod
 from cachetools.keys import hashkey
 
 from dbt_af.integrations.tableau.auth import get_tableau_auth_object
-from dbt_af.parser.dbt_node_model import TableauRefreshResourceType
+from dbt_af.integrations.tableau.exceptions import (
+    FailedTableauRefreshTasksException,
+    UnknownTableauResourceTypeException,
+)
+from dbt_af.parser.dbt_node_model import TableauRefreshResourceType, TableauRefreshTaskConfig
 
 if TYPE_CHECKING:
     import tableauserverclient
 
     from dbt_af.conf import Config
-    from dbt_af.parser.dbt_node_model import TableauRefreshTaskConfig
 
 
-class TableauExtractsRegistry:
+class _TableauExtractsRegistry:
     def __init__(self, server: 'tableauserverclient.Server'):
         self.server = server
 
@@ -47,7 +50,7 @@ class TableauExtractsRegistry:
             case TableauRefreshResourceType.datasource:
                 return self._get_datasources_id_mapping()[(project_name, resource_name)]
             case _:
-                raise ValueError(f'Unknown resource type: {resource_type}')
+                raise UnknownTableauResourceTypeException(f'Unknown resource type: {resource_type}')
 
 
 def tableau_extracts_refresh(tableau_refresh_tasks: 'list[TableauRefreshTaskConfig]', dbt_af_config: 'Config') -> None:
@@ -57,18 +60,27 @@ def tableau_extracts_refresh(tableau_refresh_tasks: 'list[TableauRefreshTaskConf
     tableau_server = tsc.Server(server_address=dbt_af_config.tableau.server_address, use_server_version=True)
     tableau_server.auth.sign_in(tableau_auth)
 
-    extracts_registry = TableauExtractsRegistry(tableau_server)
+    extracts_registry = _TableauExtractsRegistry(tableau_server)
 
+    failed_tasks: list[TableauRefreshTaskConfig] = []
     for refresh_task in tableau_refresh_tasks:
-        resource_id = extracts_registry.get_resource_id(
-            refresh_task.resource_type,
-            refresh_task.project_name,
-            refresh_task.resource_name,
-        )
-        match refresh_task.resource_type:
-            case TableauRefreshResourceType.workbook:
-                tableau_server.workbooks.refresh(resource_id)
-            case TableauRefreshResourceType.datasource:
-                tableau_server.datasources.refresh(resource_id)
-            case _:
-                raise ValueError(f'Unknown resource type: {refresh_task.resource_type}')
+        try:
+            resource_id = extracts_registry.get_resource_id(
+                refresh_task.resource_type,
+                refresh_task.project_name,
+                refresh_task.resource_name,
+            )
+            match refresh_task.resource_type:
+                case TableauRefreshResourceType.workbook:
+                    tableau_server.workbooks.refresh(resource_id)
+                case TableauRefreshResourceType.datasource:
+                    tableau_server.datasources.refresh(resource_id)
+                case _:
+                    raise UnknownTableauResourceTypeException(f'Unknown resource type: {refresh_task.resource_type}')
+        except UnknownTableauResourceTypeException:
+            failed_tasks.append(refresh_task)
+
+    if not failed_tasks:
+        return
+
+    raise FailedTableauRefreshTasksException(f'Failed to refresh the following Tableau resources: {failed_tasks}')
