@@ -13,31 +13,74 @@ from click.testing import CliRunner
 from dbt.cli import dbt_cli
 
 from dbt_af.builder.dbt_af_builder import DbtAfGraph, DbtNode
-from dbt_af.conf import Config, DbtDefaultTargetsConfig, DbtProjectConfig
+from dbt_af.conf import (
+    Config,
+    DbtDefaultTargetsConfig,
+    DbtProjectConfig,
+    K8sConfig,
+    MCDIntegrationConfig,
+    TableauIntegrationConfig,
+)
 
 # Project specific hack to catch as many error as possible
 DBT_FIXTURES_DIR = Path(__file__).parent.absolute() / 'fixtures'
 
 
 @pytest.fixture
-def config():
-    return Config(
-        dbt_project=DbtProjectConfig(
-            dbt_project_name='dwh',
-            dbt_models_path='.',
-            dbt_project_path='.',
-            dbt_profiles_path='.',
-            dbt_target_path='.',
-            dbt_log_path='.',
-            dbt_schema='.',
-        ),
-        dbt_default_targets=DbtDefaultTargetsConfig(
-            default_target='prod',
-            default_for_tests_target='prod_data_test_cluster',
-            default_maintenance_target='prod_sql_cluster',
-            default_backfill_target='prod_bf_cluster',
-        ),
-    )
+def get_config():
+    def _create_dbt_af_config(
+        target_path: Path,
+        with_mcd: bool = False,
+        with_tableau: bool = False,
+        with_k8s: bool = False,
+    ):
+        project_path = target_path.parent
+
+        mcd_config = None
+        if with_mcd:
+            mcd_config = MCDIntegrationConfig(
+                callbacks_enabled=True,
+                artifacts_export_enabled=True,
+                success_required=True,
+                metastore_name='fake_metastore_name',
+            )
+        tableau_config = None
+        if with_tableau:
+            tableau_config = TableauIntegrationConfig(
+                server_address='fake_server_address',
+                username='fake_username',
+                password='fake_password',
+                site_id='fake_site_id',
+            )
+        k8s_config = None
+        if with_k8s:
+            k8s_config = K8sConfig(
+                airflow_identity_binding_selector='fake_airflow_identity_binding_selector',
+            )
+
+        return Config(
+            dbt_project=DbtProjectConfig(
+                dbt_project_name='dwh',
+                dbt_models_path='.',
+                dbt_project_path=project_path,
+                dbt_profiles_path=project_path,
+                dbt_target_path=project_path,
+                dbt_log_path=project_path,
+                dbt_schema='.',
+            ),
+            dbt_default_targets=DbtDefaultTargetsConfig(
+                default_target='prod',
+                default_for_tests_target='prod_data_test_cluster',
+                default_maintenance_target='prod_sql_cluster',
+                default_backfill_target='prod_bf_cluster',
+            ),
+            is_dev=True,
+            mcd=mcd_config,
+            tableau=tableau_config,
+            k8s=k8s_config,
+        )
+
+    return _create_dbt_af_config
 
 
 def prepare_env_for_test():
@@ -183,11 +226,13 @@ class TmpManifest(TestManifest):
             exception = indent(dbt_command_result.stdout, ' ' * 4)
             raise RuntimeError('Could not compile dbt. Error:\n' + exception)
 
-        # read manifest
-        with open((target_dir / 'manifest.json')) as fin:
-            manifest_content = json.load(fin)
+        # # read manifest
+        # with open((target_dir / 'manifest.json')) as fin:
+        #     manifest_content = json.load(fin)
+        #
+        # return manifest_content
 
-        return manifest_content
+        return target_dir
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._tmp_dir.__exit__(exc_type, exc_val, exc_tb)
@@ -235,8 +280,8 @@ def dbt_manifest(mocker):
 
     @contextlib.contextmanager
     def _dbt_manifest(fixture_name):
-        with TmpManifest(fixture_name) as manifest_content:
-            yield manifest_content
+        with TmpManifest(fixture_name) as manifest_path:
+            yield manifest_path
 
     return _dbt_manifest
 
@@ -251,18 +296,27 @@ def dbt_profiles():
     return _dbt_profiles
 
 
-@pytest.fixture
-def compiled_dags(
-    dbt_manifest, mock_node_is_etl_service, mock_init_airflow_environment, mock_mcd_callbacks, config, socket_disabled
-):
-    @contextlib.contextmanager
-    def _dags(fixture_name):
-        with dbt_manifest(fixture_name) as manifest_content, dbt_profiles() as (profiles, profile_name):
-            from dbt_af.dags import _compile_dbt_dags
-
-            yield _compile_dbt_dags(manifest_content, profiles, profile_name, etl_service_name='dummy', config=config)
-
-    return _dags
+# @pytest.fixture
+# def compiled_dags(
+#     dbt_manifest,
+#     mock_node_is_etl_service,
+#     mock_init_airflow_environment,
+#     mock_mcd_callbacks,
+#     get_config,
+#     socket_disabled,
+# ):
+#     @contextlib.contextmanager
+#     def _dags(fixture_name):
+#         with dbt_manifest(fixture_name) as manifest_path, dbt_profiles() as (profiles, profile_name):
+#             from dbt_af.dags import _compile_dbt_dags
+#
+#             config = get_config(manifest_path)
+#             with open(manifest_path / 'manifest.json') as fin:
+#                 manifest_content = json.load(fin)
+#
+#             yield _compile_dbt_dags(manifest_content, profiles, profile_name, etl_service_name='dummy', config=config)
+#
+#     return _dags
 
 
 @pytest.fixture
@@ -272,16 +326,21 @@ def compiled_main_dags(
     mock_node_is_etl_service,
     mock_init_airflow_environment,
     mock_mcd_callbacks,
-    config,
+    get_config,
     socket_disabled,
 ):
     @contextlib.contextmanager
-    def _dags(fixture_name):
-        with dbt_manifest(fixture_name) as manifest_content, dbt_profiles() as (
+    def _dags(fixture_name, with_mcd=False, with_tableau=False, with_k8s=False):
+        with dbt_manifest(fixture_name) as manifest_path, dbt_profiles() as (
             profiles,
             profile_name,
         ):
             from dbt_af.dags import dbt_main_dags
+
+            with open(manifest_path / 'manifest.json') as fin:
+                manifest_content = json.load(fin)
+
+            config = get_config(manifest_path, with_mcd=with_mcd, with_tableau=with_tableau, with_k8s=with_k8s)
 
             graph = DbtAfGraph.from_manifest(
                 manifest_content, profiles, profile_name, etl_service_name='dummy', config=config
@@ -464,5 +523,5 @@ def dags_domain_model_w_maintenance(compiled_main_dags):
 
 @pytest.fixture
 def dags_task_with_tableau_integration(compiled_main_dags):
-    with compiled_main_dags('task_with_tableau_integration') as dags:
+    with compiled_main_dags('task_with_tableau_integration', with_tableau=True) as dags:
         yield dags

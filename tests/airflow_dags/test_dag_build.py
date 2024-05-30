@@ -1,3 +1,14 @@
+import datetime
+import logging
+import uuid
+
+import pendulum
+from airflow import DAG
+from airflow.models.taskinstance import TaskInstance
+from airflow.utils.state import DagRunState, TaskInstanceState
+from airflow.utils.types import DagRunType
+
+
 def node_ids(tasks):
     return sorted(t.node_id for t in tasks)
 
@@ -6,7 +17,40 @@ def nodes_operator_names(tasks) -> dict[str, str]:
     return {t.node_id: t.operator_name for t in tasks}
 
 
-def test_domain_depends_on_another_partially_has_correct_dags(dags_domain_depends_on_another_partially):
+def try_run_task_in_dag(dag: DAG, task_id: str):
+    start_date = pendulum.now().replace(minute=0, second=0, microsecond=0) - datetime.timedelta(hours=1)
+    end_date = start_date + datetime.timedelta(hours=1)
+    run_id = f'test_run_{uuid.uuid4()}'
+    dagrun = dag.create_dagrun(
+        run_id=run_id,
+        state=DagRunState.RUNNING,
+        execution_date=pendulum.now(),
+        data_interval=(start_date, end_date),
+        start_date=end_date,
+        run_type=DagRunType.MANUAL,
+    )
+    ti: TaskInstance = dagrun.get_task_instance(task_id=task_id)
+    ti.task = dag.get_task(task_id=task_id)
+    ti.run(ignore_ti_state=True, ignore_all_deps=True, verbose=False)
+
+    # all tasks should be in success state and all sensors should be up_for_reschedule
+    assert ti.state in (TaskInstanceState.SUCCESS, TaskInstanceState.UP_FOR_RESCHEDULE)
+
+
+def run_all_tasks_in_dag(dags: dict[str, DAG]):
+    airflow_loggers = [logger for logger in logging.Logger.manager.loggerDict if logger.startswith('airflow')]
+    for logger in airflow_loggers:
+        logging.getLogger(logger).setLevel(logging.ERROR)
+
+    for dag in dags:
+        for task_id in dags[dag].task_ids:
+            try_run_task_in_dag(dags[dag], task_id)
+
+
+def test_domain_depends_on_another_partially_has_correct_dags(
+    dags_domain_depends_on_another_partially,
+    run_airflow_tasks,
+):
     dags = dags_domain_depends_on_another_partially
 
     assert sorted(dags) == ['a__backfill', 'a__daily', 'b__backfill', 'b__daily']
@@ -30,8 +74,11 @@ def test_domain_depends_on_another_partially_has_correct_dags(dags_domain_depend
     assert node_ids(b.task_dict['b1'].upstream_list) == []
     assert node_ids(b.task_dict['b2'].upstream_list) == ['a__daily__dependencies__group.wait__a2', 'b1']
 
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
 
-def test_domain_depends_on_two_domains_has_correct_dags(dags_domain_depends_on_two_domains):
+
+def test_domain_depends_on_two_domains_has_correct_dags(dags_domain_depends_on_two_domains, run_airflow_tasks):
     dags = dags_domain_depends_on_two_domains
 
     assert sorted(dags) == ['a__backfill', 'a__daily', 'b__backfill', 'b__daily', 'c__backfill', 'c__daily']
@@ -61,8 +108,11 @@ def test_domain_depends_on_two_domains_has_correct_dags(dags_domain_depends_on_t
         'b__daily__dependencies__group.wait__b1',
     ]
 
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
 
-def test_hourly_task_with_tests_has_correct_dags(dags_hourly_task_with_tests):
+
+def test_hourly_task_with_tests_has_correct_dags(dags_hourly_task_with_tests, run_airflow_tasks):
     dags = dags_hourly_task_with_tests
 
     assert sorted(dags) == ['a__backfill', 'a__hourly', 'a__large_tests__daily']
@@ -102,8 +152,11 @@ def test_hourly_task_with_tests_has_correct_dags(dags_hourly_task_with_tests):
         'a__hourly__dependencies__group.wait__a1'
     ]
 
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
 
-def test_independent_domains_have_correct_dags(dags_independent_domains):
+
+def test_independent_domains_have_correct_dags(dags_independent_domains, run_airflow_tasks):
     dags = dags_independent_domains
 
     assert sorted(dags) == ['a__backfill', 'a__daily', 'b__backfill', 'b__daily']
@@ -129,8 +182,11 @@ def test_independent_domains_have_correct_dags(dags_independent_domains):
     assert node_ids(a_backfill.task_dict['start_work'].downstream_list) == ['a1__bf']
     assert node_ids(a_backfill.task_dict['do_nothing'].downstream_list) == []
 
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
 
-def test_sequential_domains_have_correct_dags(dags_sequential_domains):
+
+def test_sequential_domains_have_correct_dags(dags_sequential_domains, run_airflow_tasks):
     dags = dags_sequential_domains
 
     assert sorted(dags) == ['a__backfill', 'a__daily', 'b__backfill', 'b__daily', 'c__backfill', 'c__daily']
@@ -155,8 +211,11 @@ def test_sequential_domains_have_correct_dags(dags_sequential_domains):
     assert node_ids(c.task_dict['b__daily__dependencies__group.wait__b2'].upstream_list) == []
     assert node_ids(c.task_dict['c1'].upstream_list) == ['b__daily__dependencies__group.wait__b2']
 
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
 
-def test_sequential_domains_have_correct_external_sensors(dags_sequential_domains):
+
+def test_sequential_domains_have_correct_external_sensors(dags_sequential_domains, run_airflow_tasks):
     dags = dags_sequential_domains
 
     b_waits_sensor = dags['b__daily'].task_dict['a__daily__dependencies__group.wait__a2']
@@ -168,8 +227,11 @@ def test_sequential_domains_have_correct_external_sensors(dags_sequential_domain
     assert c_waits_sensor.external_dag_id == 'b__daily'
     assert c_waits_sensor.external_task_ids == ['b2']
 
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
 
-def test_sequential_tasks_in_one_domain_have_correct_dags(dags_sequential_tasks_in_one_domain):
+
+def test_sequential_tasks_in_one_domain_have_correct_dags(dags_sequential_tasks_in_one_domain, run_airflow_tasks):
     dags = dags_sequential_tasks_in_one_domain
 
     assert sorted(dags) == ['a__backfill', 'a__daily']
@@ -182,8 +244,11 @@ def test_sequential_tasks_in_one_domain_have_correct_dags(dags_sequential_tasks_
     assert node_ids(a.task_dict['a2'].upstream_list) == ['a1']
     assert node_ids(a.task_dict['a3'].upstream_list) == ['a2']
 
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
 
-def test_two_domains_depend_on_another_have_correct_dags(dags_two_domains_depend_on_another):
+
+def test_two_domains_depend_on_another_have_correct_dags(dags_two_domains_depend_on_another, run_airflow_tasks):
     dags = dags_two_domains_depend_on_another
 
     assert sorted(dags) == ['a__backfill', 'a__daily', 'b__backfill', 'b__daily', 'c__backfill', 'c__daily']
@@ -206,8 +271,11 @@ def test_two_domains_depend_on_another_have_correct_dags(dags_two_domains_depend
     assert node_ids(c.task_dict['a__daily__dependencies__group.wait__a1'].upstream_list) == []
     assert node_ids(c.task_dict['c1'].upstream_list) == ['a__daily__dependencies__group.wait__a1']
 
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
 
-def test_two_domains_depend_on_two_have_correct_dags(dags_two_domains_depend_on_two):
+
+def test_two_domains_depend_on_two_have_correct_dags(dags_two_domains_depend_on_two, run_airflow_tasks):
     dags = dags_two_domains_depend_on_two
 
     assert sorted(dags) == [
@@ -260,8 +328,14 @@ def test_two_domains_depend_on_two_have_correct_dags(dags_two_domains_depend_on_
         'b__daily__dependencies__group.wait__b1',
     ]
 
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
 
-def test_task_depends_on_two_within_same_domain_has_correct_dags(dags_task_depends_on_two_within_same_domain):
+
+def test_task_depends_on_two_within_same_domain_has_correct_dags(
+    dags_task_depends_on_two_within_same_domain,
+    run_airflow_tasks,
+):
     dags = dags_task_depends_on_two_within_same_domain
 
     assert sorted(dags) == ['a__backfill', 'a__daily']
@@ -274,8 +348,11 @@ def test_task_depends_on_two_within_same_domain_has_correct_dags(dags_task_depen
     assert node_ids(a.task_dict['a2'].upstream_list) == []
     assert node_ids(a.task_dict['a3'].upstream_list) == ['a1', 'a2']
 
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
 
-def test_two_tasks_depend_on_one_have_correct_dags(dags_two_tasks_depend_on_one):
+
+def test_two_tasks_depend_on_one_have_correct_dags(dags_two_tasks_depend_on_one, run_airflow_tasks):
     dags = dags_two_tasks_depend_on_one
 
     assert sorted(dags) == ['a__backfill', 'a__daily']
@@ -288,8 +365,11 @@ def test_two_tasks_depend_on_one_have_correct_dags(dags_two_tasks_depend_on_one)
     assert node_ids(a.task_dict['a2'].upstream_list) == ['a1']
     assert node_ids(a.task_dict['a3'].upstream_list) == ['a1']
 
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
 
-def test_two_tasks_depend_on_two_have_correct_dags(dags_two_tasks_depend_on_two):
+
+def test_two_tasks_depend_on_two_have_correct_dags(dags_two_tasks_depend_on_two, run_airflow_tasks):
     dags = dags_two_tasks_depend_on_two
 
     assert sorted(dags) == ['a__backfill', 'a__daily']
@@ -303,8 +383,11 @@ def test_two_tasks_depend_on_two_have_correct_dags(dags_two_tasks_depend_on_two)
     assert node_ids(a.task_dict['a3'].upstream_list) == ['a1', 'a2']
     assert node_ids(a.task_dict['a4'].upstream_list) == ['a1', 'a2']
 
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
 
-def test_domain_with_different_schedule_has_correct_dags(dags_domain_with_different_schedule):
+
+def test_domain_with_different_schedule_has_correct_dags(dags_domain_with_different_schedule, run_airflow_tasks):
     dags = dags_domain_with_different_schedule
 
     assert sorted(dags) == ['a__backfill', 'a__daily', 'a__hourly']
@@ -323,9 +406,12 @@ def test_domain_with_different_schedule_has_correct_dags(dags_domain_with_differ
     assert node_ids(a_hourly.task_dict['a__daily__dependencies__group.wait__a2'].upstream_list) == []
     assert node_ids(a_hourly.task_dict['a3'].upstream_list) == ['a__daily__dependencies__group.wait__a2']
 
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
+
 
 def test_domain_depends_on_another_with_multischeduling_has_correct_dags(
-    dags_domain_depends_on_another_with_multischeduling,
+    dags_domain_depends_on_another_with_multischeduling, run_airflow_tasks
 ):
     dags = dags_domain_depends_on_another_with_multischeduling
 
@@ -349,8 +435,13 @@ def test_domain_depends_on_another_with_multischeduling_has_correct_dags(
     assert node_ids(b_hourly.task_dict['a__daily__dependencies__group.wait__a2'].upstream_list) == []
     assert node_ids(b_hourly.task_dict['b1'].upstream_list) == ['a__daily__dependencies__group.wait__a2']
 
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
 
-def test_domain_depends_on_another_with_test_has_correct_dags(dags_domain_depends_on_another_with_test):
+
+def test_domain_depends_on_another_with_test_has_correct_dags(
+    dags_domain_depends_on_another_with_test, run_airflow_tasks
+):
     dags = dags_domain_depends_on_another_with_test
 
     assert sorted(dags) == ['a__backfill', 'a__hourly', 'b__backfill', 'b__daily']
@@ -374,8 +465,11 @@ def test_domain_depends_on_another_with_test_has_correct_dags(dags_domain_depend
     assert b_waits_sensor.external_dag_id == 'a__hourly'
     assert b_waits_sensor.external_task_ids == ['a1__group.a1__end']
 
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
 
-def test_domain_with_enabled_disabled_models_has_correct_dags(dags_domain_w_enable_disable_models):
+
+def test_domain_with_enabled_disabled_models_has_correct_dags(dags_domain_w_enable_disable_models, run_airflow_tasks):
     dags = dags_domain_w_enable_disable_models
 
     assert sorted(dags) == ['a__backfill', 'a__daily']
@@ -430,8 +524,11 @@ def test_domain_with_enabled_disabled_models_has_correct_dags(dags_domain_w_enab
         'a2__bf__group.a2__bf'
     ]
 
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
 
-def test_dags_domain_w_source_freshness_has_correct_dags(dags_domain_w_source_freshness):
+
+def test_dags_domain_w_source_freshness_has_correct_dags(dags_domain_w_source_freshness, run_airflow_tasks):
     dags = dags_domain_w_source_freshness
 
     assert sorted(dags) == ['a__backfill', 'a__daily']
@@ -475,6 +572,9 @@ def test_dags_domain_w_source_freshness_has_correct_dags(dags_domain_w_source_fr
     ) == ['a1__bf__group.a1__bf']
     assert node_ids(dags['a__backfill'].task_dict['a1__bf__group.a1__bf'].downstream_list) == []
 
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
+
 
 def test_dags_domain_w_task_in_kubernetes_has_correct_dags(dags_domain_w_task_in_kubernetes):
     dags = dags_domain_w_task_in_kubernetes
@@ -492,7 +592,7 @@ def test_dags_domain_w_task_in_kubernetes_has_correct_dags(dags_domain_w_task_in
     assert nodes_operator_names(dags['b__daily'].tasks) == {'b1': 'DbtRun'}
 
 
-def test_dags_dags_domain_model_w_maintenance_has_correct_dags(dags_domain_model_w_maintenance):
+def test_dags_dags_domain_model_w_maintenance_has_correct_dags(dags_domain_model_w_maintenance, run_airflow_tasks):
     dags = dags_domain_model_w_maintenance
     assert sorted(dags) == ['a__backfill', 'a__daily', 'a__maintenance']
 
@@ -507,8 +607,11 @@ def test_dags_dags_domain_model_w_maintenance_has_correct_dags(dags_domain_model
         'vacuum_table__a__maintenance.dbt_vacuum_table__a2',
     ]
 
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
 
-def test_task_with_tableau_integration_has_correct_dags(dags_task_with_tableau_integration):
+
+def test_task_with_tableau_integration_has_correct_dags(dags_task_with_tableau_integration, run_airflow_tasks):
     from dbt_af.parser.dbt_node_model import TableauRefreshResourceType, TableauRefreshTaskConfig
 
     dags = dags_task_with_tableau_integration
@@ -540,3 +643,6 @@ def test_task_with_tableau_integration_has_correct_dags(dags_task_with_tableau_i
     ]
 
     assert tableau_refresh_tasks_observed == tableau_refresh_tasks_expected
+
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
