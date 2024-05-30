@@ -226,12 +226,6 @@ class TmpManifest(TestManifest):
             exception = indent(dbt_command_result.stdout, ' ' * 4)
             raise RuntimeError('Could not compile dbt. Error:\n' + exception)
 
-        # # read manifest
-        # with open((target_dir / 'manifest.json')) as fin:
-        #     manifest_content = json.load(fin)
-        #
-        # return manifest_content
-
         return target_dir
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -294,29 +288,6 @@ def dbt_profiles():
         yield fake_dbt_profiles, 'main_profile'
 
     return _dbt_profiles
-
-
-# @pytest.fixture
-# def compiled_dags(
-#     dbt_manifest,
-#     mock_node_is_etl_service,
-#     mock_init_airflow_environment,
-#     mock_mcd_callbacks,
-#     get_config,
-#     socket_disabled,
-# ):
-#     @contextlib.contextmanager
-#     def _dags(fixture_name):
-#         with dbt_manifest(fixture_name) as manifest_path, dbt_profiles() as (profiles, profile_name):
-#             from dbt_af.dags import _compile_dbt_dags
-#
-#             config = get_config(manifest_path)
-#             with open(manifest_path / 'manifest.json') as fin:
-#                 manifest_content = json.load(fin)
-#
-#             yield _compile_dbt_dags(manifest_content, profiles, profile_name, etl_service_name='dummy', config=config)
-#
-#     return _dags
 
 
 @pytest.fixture
