@@ -22,7 +22,9 @@ jobs:
       - name: Install project
         run: |
           poetry install --with=dev --all-extras
+      - name: Create airflow database
+        run: |
+          poetry run airflow db migrate
       - name: Test with pytest
         run: |
-          poetry run pytest -q -s -vv --log-cli-level=INFO --cov=dbt_af --cov-report=term tests
-
+          poetry run pytest -q -s -vv --log-cli-level=INFO --cov=dbt_af --cov-report=term --run-airflow-tasks tests
