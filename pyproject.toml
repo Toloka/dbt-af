@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dbt-af"
-version = "0.5.2"
+version = "0.5.3"
 description = "Distibuted dbt runs on Apache Airflow"
 authors = [
     "Nikita Yurasov <nikitayurasov@toloka.ai>",
@@ -69,8 +69,8 @@ all = [
 ]
 
 [tool.poetry.scripts]
-dbt-af-manifest-tests = { callable = "dbt_af_functional_tests:cli", extras = ["tests"] }
-mini_dbt_project_generator = { callable = "scripts.mini_dbt_project_generator:cli", extras = ["minidbt"] }
+dbt-af-manifest-tests = { callable = "dbt_af_functional_tests:cli", extras = ["tests", "all"] }
+mini_dbt_project_generator = { callable = "scripts.mini_dbt_project_generator:cli", extras = ["minidbt", "all"] }
 
 [build-system]
 requires = ["poetry-core"]
