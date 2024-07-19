@@ -9,9 +9,9 @@ def test_af_wait_name_is_less_250_chars(manifest):
             for dep in node['depends_on']['nodes']:
                 if dep.startswith('model'):
                     dep_name = manifest['nodes'][dep]['name']
+                    dep_safe_name = dep_name.replace('.', '__')
                     dep_domain_name = dep_name.split('.')[0]
-                    dep_name_safe_name = dep_name.replace('.', '__')
-                    wait_name = f'{dep_domain_name}__scheduletag__dependencies__group.wait__{dep_name_safe_name}'
+                    wait_name = f'{dep_domain_name}__scheduletag__dependencies__group.wait__{dep_safe_name}'
                     assert len(wait_name) <= 245
         elif node['resource_type'] == 'test':
             for dep in node['depends_on']['nodes']:
