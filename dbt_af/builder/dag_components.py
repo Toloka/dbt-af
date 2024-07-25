@@ -37,7 +37,7 @@ class DagComponent:
         self.model_task: Optional[DbtRun | DbtKubernetesPodOperator] = None
         self.task_group: Optional[TaskGroup] = None
         self.af_sensor_endpoint: Optional[EmptyOperator | DbtRun | DbtKubernetesPodOperator] = None
-        self._af_callbacks: dict[str, Callable] = {}
+        self._af_callbacks: dict[str, list[Optional[Callable]]] = {}
 
     @property
     def depends_on(self) -> list['DagComponent']:
@@ -47,7 +47,7 @@ class DagComponent:
     def safe_name(self) -> str:
         return self.name.replace('.', '__')
 
-    def add_af_callbacks(self, callbacks: dict[str, Callable]):
+    def add_af_callbacks(self, callbacks: dict[str, list[Optional[Callable]]]):
         self._af_callbacks.update(callbacks)
 
     def add_dependency(self, dep: 'DagComponent'):
