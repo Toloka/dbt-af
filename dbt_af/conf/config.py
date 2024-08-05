@@ -227,6 +227,7 @@ class Config:
         created for each dbt target with pattern `dbt_{target_name}`; if False, then only the default pool will be used
     :param af_callbacks: config with callback functions for airflow DAGs and tasks
     :param mcd: config for mcd integration; must be installed as extra dependency
+    :params tableau: config for Tableau integration
     :param k8s: settings for k8s operators
     """
 

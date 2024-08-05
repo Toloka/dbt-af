@@ -25,7 +25,7 @@ def get_delay_by_schedule(schedule_tag):
     return {'execution_timeout': timedelta(hours=6)}
 
 
-class DdtBaseOperator(BashOperator):
+class DbtBaseOperator(BashOperator):
     retries: int = 1
 
     @property
@@ -108,7 +108,7 @@ class DdtBaseOperator(BashOperator):
                         raise e
 
 
-class DbtConstOperator(DdtBaseOperator):
+class DbtConstOperator(DbtBaseOperator):
     def __init__(self, pool: str = DBT_COMPILE_POOL, **kwargs) -> None:
         task_id = f'dbt_{self.cli_command.replace(" ", "_")}'
         super().__init__(pool=pool, task_id=task_id, **kwargs)
@@ -184,7 +184,7 @@ class DbtModelVars(pydantic.BaseModel):
         return dict(**super().dict(**kwargs), **self.extra)
 
 
-class DbtIntervalActionOperator(DdtBaseOperator):
+class DbtIntervalActionOperator(DbtBaseOperator):
     overlap = False
 
     def execute(self, context):
