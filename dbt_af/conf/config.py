@@ -6,7 +6,7 @@ import pendulum
 
 
 @attrs.define(frozen=True)
-class AfCallbacksConfig:
+class CustomAfCallbacksConfig:
     """
     Config to define callbacks functions for airflow DAGs and tasks
 
@@ -19,14 +19,14 @@ class AfCallbacksConfig:
     :param dag_sla_miss_callback: sla miss callback function for DAG (invoked when a task misses its defined SLA)
     """
 
-    task_on_success_callback: callable = attrs.field(default=None)
-    task_on_failure_callback: callable = attrs.field(default=None)
-    task_on_retry_callback: callable = attrs.field(default=None)
-    task_on_execute_callback: callable = attrs.field(default=None)
+    task_on_success_callback: tuple[callable] = attrs.field(factory=tuple)
+    task_on_failure_callback: tuple[callable] = attrs.field(factory=tuple)
+    task_on_retry_callback: tuple[callable] = attrs.field(factory=tuple)
+    task_on_execute_callback: tuple[callable] = attrs.field(factory=tuple)
 
-    dag_on_failure_callback: callable = attrs.field(default=None)
-    dag_on_success_callback: callable = attrs.field(default=None)
-    dag_sla_miss_callback: callable = attrs.field(default=None)
+    dag_on_failure_callback: tuple[callable] = attrs.field(factory=tuple)
+    dag_on_success_callback: tuple[callable] = attrs.field(factory=tuple)
+    dag_sla_miss_callback: tuple[callable] = attrs.field(factory=tuple)
 
 
 @attrs.define(frozen=True)
@@ -246,7 +246,7 @@ class Config:
     use_dbt_target_specific_pools: bool = attrs.field(default=True)
 
     # airflow callbacks config
-    af_callbacks: Optional[AfCallbacksConfig] = attrs.field(default=None)
+    af_callbacks: Optional[CustomAfCallbacksConfig] = attrs.field(default=None)
 
     # Monte Carlo Data integration
     mcd: Optional[MCDIntegrationConfig] = attrs.field(default=None)

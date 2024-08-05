@@ -8,14 +8,14 @@ from airflow.models.param import Param
 from dbt_af.builder.dbt_af_builder import BackfillDomainDag, DbtAfGraph, get_domain_dag_start_date
 from dbt_af.common.constants import DBT_MODEL_DAG_PARAM, DEFAULT_DAG_ARGS
 from dbt_af.conf import Config
-from dbt_af.integrations.af_callbacks import prepare_callbacks
+from dbt_af.common.af_callbacks import af_custom_callbacks
 from dbt_af.operators.run import DbtRun
 
 
 def dbt_main_dags(graph: DbtAfGraph) -> dict[str, DAG]:
     af_dags = {}
 
-    dag_callbacks, task_callbacks = prepare_callbacks(graph.config)
+    dag_callbacks, task_callbacks = af_custom_callbacks(graph.config)
     domains = {node.domain_dag for node in graph.nodes}
 
     for domain_dag in domains:
@@ -57,7 +57,7 @@ def dbt_main_dags(graph: DbtAfGraph) -> dict[str, DAG]:
 def dbt_run_model_dag(config: Config) -> dict[str, DAG]:
     dag_name = 'dbt_run_model'
 
-    dag_callbacks, task_callbacks = prepare_callbacks(config)
+    dag_callbacks, task_callbacks = af_custom_callbacks(config)
     dag = DAG(
         dag_name,
         start_date=config.dag_start_date,

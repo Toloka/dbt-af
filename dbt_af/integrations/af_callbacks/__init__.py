@@ -1,5 +1,5 @@
-from .callbacks import prepare_callbacks  # noqa
+from .callbacks import prepare_custom_af_callbacks  # noqa
 
 __all__ = [
-    'prepare_callbacks',
+    'prepare_custom_af_callbacks',
 ]
