@@ -83,9 +83,9 @@ class DbtAfGraph:
         self._large_tests: dict[str, LargeTest] = {}
         self._dag_components_registry: dict[str, DagComponent] = {}
         self._medium_tests: dict[DomainDag, MediumTests] = {}
-        self._maintenance_components: dict[
-            DomainDag, dict[DbtModelMaintenanceType, MaintenanceDagComponent]
-        ] = defaultdict(dict)
+        self._maintenance_components: dict[DomainDag, dict[DbtModelMaintenanceType, MaintenanceDagComponent]] = (
+            defaultdict(dict)
+        )
 
         self.nodes: list[DagComponent] = []
 
