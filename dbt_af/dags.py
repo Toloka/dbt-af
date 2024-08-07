@@ -8,14 +8,14 @@ from airflow.models.param import Param
 from dbt_af.builder.dbt_af_builder import BackfillDomainDag, DbtAfGraph, get_domain_dag_start_date
 from dbt_af.common.constants import DBT_MODEL_DAG_PARAM, DEFAULT_DAG_ARGS
 from dbt_af.conf import Config
-from dbt_af.integrations.mcd import prepare_mcd_callbacks
+from dbt_af.common.af_callbacks import af_custom_callbacks
 from dbt_af.operators.run import DbtRun
 
 
 def dbt_main_dags(graph: DbtAfGraph) -> dict[str, DAG]:
     af_dags = {}
 
-    mcd_dag_callbacks, mcd_task_callbacks = prepare_mcd_callbacks(graph.config)
+    dag_callbacks, task_callbacks = af_custom_callbacks(graph.config)
     domains = {node.domain_dag for node in graph.nodes}
 
     for domain_dag in domains:
@@ -29,7 +29,7 @@ def dbt_main_dags(graph: DbtAfGraph) -> dict[str, DAG]:
             max_active_runs=graph.config.max_active_dag_runs,
             render_template_as_native_obj=False,
             tags=['dbt'] + domain_dag.tags,
-            **mcd_dag_callbacks,
+            **dag_callbacks,
         )
         domain_dag.af_dag = dag
         af_dags[domain_dag.dag_name] = dag
@@ -41,7 +41,7 @@ def dbt_main_dags(graph: DbtAfGraph) -> dict[str, DAG]:
         node.domain_dag.af_dag = af_dags[node.domain_dag.dag_name]
 
     for node in graph.nodes:
-        node.add_af_callbacks(mcd_task_callbacks)
+        node.add_af_callbacks(task_callbacks)
         if node.af_component is None:
             node.init_af()
 
@@ -57,7 +57,7 @@ def dbt_main_dags(graph: DbtAfGraph) -> dict[str, DAG]:
 def dbt_run_model_dag(config: Config) -> dict[str, DAG]:
     dag_name = 'dbt_run_model'
 
-    mcd_dag_callbacks, mcd_task_callbacks = prepare_mcd_callbacks(config)
+    dag_callbacks, task_callbacks = af_custom_callbacks(config)
     dag = DAG(
         dag_name,
         start_date=config.dag_start_date,
@@ -72,7 +72,7 @@ def dbt_run_model_dag(config: Config) -> dict[str, DAG]:
             'start_dttm': Param('2000-01-01T00:00:00', type='string'),
             'end_dttm': Param('2000-01-01T00:00:00', type='string'),
         },
-        **mcd_dag_callbacks,
+        **dag_callbacks,
     )
 
     target_environment = config.dbt_default_targets.default_target
@@ -82,7 +82,7 @@ def dbt_run_model_dag(config: Config) -> dict[str, DAG]:
         dag=dag,
         target_environment=target_environment,
         dbt_af_config=config,
-        **mcd_task_callbacks,
+        **task_callbacks,
     )
 
     return {dag_name: dag}

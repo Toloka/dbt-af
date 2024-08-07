@@ -261,7 +261,7 @@ def mock_mcd_callbacks(mocker):
     import dbt_af.dags as module_in_use
 
     mocker.patch(
-        f'{module_in_use.__name__}.{module_in_use.prepare_mcd_callbacks.__name__}',
+        f'{module_in_use.__name__}.{module_in_use.af_custom_callbacks.__name__}',
         return_value=(dict(), dict()),
     )
 

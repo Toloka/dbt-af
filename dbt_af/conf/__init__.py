@@ -5,6 +5,7 @@ from dbt_af.conf.config import (
     K8sConfig,
     MCDIntegrationConfig,
     TableauIntegrationConfig,
+    CustomAfCallbacksConfig
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     'K8sConfig',
     'MCDIntegrationConfig',
     'TableauIntegrationConfig',
+    'CustomAfCallbacksConfig'
 ]

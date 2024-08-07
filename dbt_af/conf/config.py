@@ -6,6 +6,30 @@ import pendulum
 
 
 @attrs.define(frozen=True)
+class CustomAfCallbacksConfig:
+    """
+    Config to define callbacks functions for airflow DAGs and tasks
+
+    :param task_on_success_callback: success callback function for task (invoked when the task succeeds)
+    :param task_on_failure_callback: failure callback function for task (invoked when the airflow task fails)
+    :param task_on_retry_callback: retry callback function for task (invoked when the task is up for retry)
+    :param task_on_execute_callback: execute callback function for task (invoked right before task begins executing)
+    :param dag_on_failure_callback: failure callback function for DAG (invoked when the airflow task fails)
+    :param dag_on_success_callback: success callback function for DAG (invoked when the task succeeds)
+    :param dag_sla_miss_callback: sla miss callback function for DAG (invoked when a task misses its defined SLA)
+    """
+
+    task_on_success_callback: tuple[callable] = attrs.field(factory=tuple)
+    task_on_failure_callback: tuple[callable] = attrs.field(factory=tuple)
+    task_on_retry_callback: tuple[callable] = attrs.field(factory=tuple)
+    task_on_execute_callback: tuple[callable] = attrs.field(factory=tuple)
+
+    dag_on_failure_callback: tuple[callable] = attrs.field(factory=tuple)
+    dag_on_success_callback: tuple[callable] = attrs.field(factory=tuple)
+    dag_sla_miss_callback: tuple[callable] = attrs.field(factory=tuple)
+
+
+@attrs.define(frozen=True)
 class DependencyWaitPolicy:
     """
     Policy to build waits for models' dependencies.
@@ -201,7 +225,9 @@ class Config:
         turn off actual dbt runs and integrations with some external systems
     :param use_dbt_target_specific_pools: whether to use dbt target specific pools; if True, then airflow pools will be
         created for each dbt target with pattern `dbt_{target_name}`; if False, then only the default pool will be used
+    :param af_callbacks: config with callback functions for airflow DAGs and tasks
     :param mcd: config for mcd integration; must be installed as extra dependency
+    :params tableau: config for Tableau integration
     :param k8s: settings for k8s operators
     """
 
@@ -219,6 +245,9 @@ class Config:
     dag_start_date: pendulum.datetime = attrs.field(default=pendulum.datetime(2023, 10, 1, 0, 0, 0, tz='UTC'))
     is_dev: bool = attrs.field(default=False)
     use_dbt_target_specific_pools: bool = attrs.field(default=True)
+
+    # airflow callbacks config
+    af_callbacks: Optional[CustomAfCallbacksConfig] = attrs.field(default=None)
 
     # Monte Carlo Data integration
     mcd: Optional[MCDIntegrationConfig] = attrs.field(default=None)
