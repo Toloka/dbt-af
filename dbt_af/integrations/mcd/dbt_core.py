@@ -1,8 +1,12 @@
 import logging
 from typing import TYPE_CHECKING, Optional
 
+from airflow.exceptions import AirflowNotFoundException
+
 if TYPE_CHECKING:
     from pycarlo.core import Client
+
+MCD_GATEWAY_DEFAULT_SESSION = 'mcd-gateway-default-session'
 
 
 def _get_resource_id(client: 'Client', metastore_name: str) -> str:
@@ -35,7 +39,11 @@ def send_dbt_artefacts_to_montecarlo(
     from pycarlo.features.dbt import DbtImporter
 
     logging.info('Sending dbt artefacts to MonteCarlo')
-    mc_client = Client(session=SessionHook(mcd_session_conn_id=SessionHook.default_conn_name).get_conn())
+    try:
+        conn = SessionHook(mcd_session_conn_id=MCD_GATEWAY_DEFAULT_SESSION).get_conn()
+    except AirflowNotFoundException:
+        conn = SessionHook(mcd_session_conn_id=SessionHook.default_conn_name).get_conn()
+    mc_client = Client(session=conn)
     resource_id = _get_resource_id(mc_client, metastore_name)
 
     DbtImporter(mc_client=mc_client).import_run(
