@@ -1,0 +1,117 @@
+version: 2
+
+macros:
+  - name: period_locker
+    description:  A macro that blocks selected period for calculation 
+    arguments:
+      - name: cooldown_size
+        type: integer
+        description: Number of dates before today you can recalc the object
+      - name: error_message
+        type: string
+        description: Error message on calculation for dates out of cooldown_size
+      - name: force_flag
+        type: boolean
+        description: Force lock
+        
+  - name: between_dttm
+    description: A macro that generate between datetimes predicate.
+    arguments:
+      - name: field
+        type: string
+        description: The name of field at between predicate; should be date or datetime
+      - name: overlap_size
+        type: integer
+        description: The size of overlap in minutes 
+      - name: direction
+        type: string
+        description: "Direction of Overlap. One of left, both, shift. 
+Left expand only left border [left-overlap_size; rigth]
+both expand both borders [left-overlap_size; rigth+overlap_size]
+Shift moves borders [left-overlap_size; rigth-overlap_size]"
+      - name: overlap_flg
+        type: boolean
+        description: Flag If overlap needed or not
+
+
+  - name: between_dt
+    description: A macro that generate between date predicate, datetime would be rounded to dates.
+    arguments:
+      - name: field
+        type: string
+        description: The name of field at between predicate; should be date or datetime (datetime will be rounded to date)
+      - name: overlap_size
+        type: integer
+        description: The size of overlap in minutes 
+      - name: direction
+        type: string
+        description: "Direction of Overlap. One of left, both, shift. 
+Left expand only left border [left-overlap_size; rigth]
+both expand both borders [left-overlap_size; rigth+overlap_size]
+Shift moves borders [left-overlap_size; rigth-overlap_size]"
+      - name: overlap_flg
+        type: boolean
+        description: Flag If overlap needed or not
+
+
+  - name:  increment_dttm_condition
+    description: A macro that generate between date predicate based on fields (date, or datetime, or both). IMPORTANT. Overlap is technical at this macro. It applied if the calculation is frontier one. It is not applied when calculation is backfill one.
+    arguments:
+      - name: dttm_field
+        type: string
+        description: The name of field between_dttm macro will be used to
+      - name: dt_field
+        type: string
+        description: The name of field between_dt macro will be used to
+      - name: overlap_size
+        type: integer
+        description: The size of overlap in minutes 
+      - name: direction
+        type: string
+        description: "Direction of Overlap. One of left, both, shift. 
+Left expand only left border [left-overlap_size; rigth]
+both expand both borders [left-overlap_size; rigth+overlap_size]
+Shift moves borders [left-overlap_size; rigth-overlap_size]"
+
+  - name:  increment_business_dttm_condition
+    description: "A macro that generate between date predicate based on fields (date, or datetime, or both). 
+    IMPORTANT. Overlap is business at this macro. It applied always if overlap_size is nore zero."
+    arguments:
+      - name: dttm_field
+        type: string
+        description: The name of field between_dttm macro will be used to
+      - name: dt_field
+        type: string
+        description: The name of field between_dt macro will be used to
+      - name: overlap_size
+        type: integer
+        description: The size of overlap in minutes 
+      - name: direction
+        type: string
+        description: "Direction of Overlap. One of left, both, shift. 
+Left expand only left border [left-overlap_size; rigth]
+both expand both borders [left-overlap_size; rigth+overlap_size]
+Shift moves borders [left-overlap_size; rigth-overlap_size]"
+
+
+  - name:  increment_universal_dttm_condition
+    description: A macro that generate between date predicate based on fields (date, or datetime, or both). 
+    arguments:
+      - name: dttm_field
+        type: string
+        description: The name of field between_dttm macro will be used to
+      - name: dt_field
+        type: string
+        description: The name of field between_dt macro will be used to
+      - name: business_overlap_size
+        type: integer
+        description: The size of overlap in minutes. IMPORTANT. Business Overlap is applied always.
+      - name: tech_overlap_size
+        type: integer
+        description: The size of overlap in minutes. IMPORTANT. Tech Overlap is applied based on the type of calc (frontier or backfill)
+      - name: direction
+        type: string
+        description: "Direction of Overlap. One of left, both, shift. 
+Left expand only left border [left-overlap_size; rigth]
+both expand both borders [left-overlap_size; rigth+overlap_size]
+Shift moves borders [left-overlap_size; rigth-overlap_size]"
