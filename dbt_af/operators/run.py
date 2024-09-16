@@ -19,7 +19,7 @@ class DbtSelectRun(DbtBaseActionOperator):
 
 
 class DbtBaseDatasetOperator(DbtBaseActionOperator):
-    def __init__(self, model_name: Optional[str], is_dataset_enable = False,  model_type: str = 'sql', **kwargs) -> None:
+    def __init__(self, model_name: Optional[str], is_dataset_enable=False, model_type: str = 'sql', **kwargs) -> None:
         if model_name and is_dataset_enable:
             # exactly one model
             dataset = Dataset(model_name)
