@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dbt-af"
-version = "0.7.2"
+version = "0.7.3"
 description = "Distibuted dbt runs on Apache Airflow"
 authors = [
     "Nikita Yurasov <nikitayurasov@toloka.ai>",

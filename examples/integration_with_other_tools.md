@@ -19,6 +19,13 @@ Install `dbt-af` with extra `mcd`. Run `pip install dbt-af[mcd]`.
 
 Follow the instructions to set up connections ([MCD docs](https://docs.getmontecarlo.com/docs/airflow)).
 
+> [!NOTE]
+> To send dbt artifacts to Monte Carlo Data, you need to configure a default connection in Airflow
+> (not Gateway Connection).
+>
+> So, if you want to use Gateway Connection for airflow callbacks and dbt artifacts export to MCD, you need to
+> specify two connections in Airflow.
+
 To set up integration of dbt runs in Airflow with your Monte Carlo Data account, you need to specify the following
 config:
 
