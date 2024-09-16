@@ -39,7 +39,7 @@ def send_dbt_artifacts_to_montecarlo(
     from pycarlo.core import Client
     from pycarlo.features.dbt import DbtImporter
 
-    logging.info('Sending dbt artefacts to MonteCarlo')
+    logging.info('Sending dbt artifacts to MonteCarlo')
 
     conn = SessionHook(mcd_session_conn_id=SessionHook.default_conn_name).get_conn()
     mc_client = Client(session=conn)
@@ -53,4 +53,4 @@ def send_dbt_artifacts_to_montecarlo(
         job_name=f'dbt_run_{model_name}',
         resource_id=resource_id,
     )
-    logging.info('Successfully sent dbt artefacts to MonteCarlo')
+    logging.info('Successfully sent dbt artifacts to MonteCarlo')

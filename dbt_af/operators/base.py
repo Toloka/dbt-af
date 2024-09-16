@@ -103,7 +103,7 @@ class DbtBaseOperator(BashOperator):
                         project_name=self.dbt_af_config.dbt_project.dbt_project_name,
                     )
                 except Exception as e:
-                    logging.warning(f'Failed to send dbt artefacts to MonteCarlo: {e}')
+                    logging.warning(f'Failed to send dbt artifacts to MonteCarlo: {e}')
                     if self.dbt_af_config.mcd.success_required:
                         raise e
 
