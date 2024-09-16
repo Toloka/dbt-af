@@ -22,10 +22,12 @@ class DbtBaseDatasetOperator(DbtBaseActionOperator):
     def __init__(self, model_name: Optional[str], is_dataset_enable=False, model_type: str = 'sql', **kwargs) -> None:
         if model_name and is_dataset_enable:
             # exactly one model
-            dataset = Dataset(model_name)
-            super().__init__(model_name=model_name, model_type=model_type, outlets=[dataset], **kwargs)
-        elif model_name and not is_dataset_enable:
-            super().__init__(model_name=model_name, model_type=model_type, **kwargs)
+            super().__init__(
+                model_name=model_name,
+                model_type=model_type,
+                outlets=[Dataset(model_name)] if is_dataset_enable else [],
+                **kwargs,
+            )
         else:
             super().__init__(model_name=DBT_MODEL_DAG_PARAM, **kwargs)
 
