@@ -1,12 +1,8 @@
 import logging
 from typing import TYPE_CHECKING, Optional
 
-from airflow.exceptions import AirflowNotFoundException
-
 if TYPE_CHECKING:
     from pycarlo.core import Client
-
-MCD_GATEWAY_DEFAULT_SESSION = 'mcd-gateway-default-session'
 
 
 def _get_resource_id(client: 'Client', metastore_name: str) -> str:
@@ -27,22 +23,25 @@ def _get_resource_id(client: 'Client', metastore_name: str) -> str:
     raise ValueError(f'Warehouse {metastore_name} not found. Found: {warehouses}')
 
 
-def send_dbt_artefacts_to_montecarlo(
+def send_dbt_artifacts_to_montecarlo(
     target_path: str,
     log_path: Optional[str],
     model_name: str,
     metastore_name: str,
     project_name: str,
 ):
+    """
+    Send dbt artifacts to MonteCarloData.
+
+    NOTE: This function requires default mcd connections (not Gateway Connection)
+    """
     from airflow_mcd.hooks import SessionHook
     from pycarlo.core import Client
     from pycarlo.features.dbt import DbtImporter
 
-    logging.info('Sending dbt artefacts to MonteCarlo')
-    try:
-        conn = SessionHook(mcd_session_conn_id=MCD_GATEWAY_DEFAULT_SESSION).get_conn()
-    except AirflowNotFoundException:
-        conn = SessionHook(mcd_session_conn_id=SessionHook.default_conn_name).get_conn()
+    logging.info('Sending dbt artifacts to MonteCarlo')
+
+    conn = SessionHook(mcd_session_conn_id=SessionHook.default_conn_name).get_conn()
     mc_client = Client(session=conn)
     resource_id = _get_resource_id(mc_client, metastore_name)
 
@@ -54,4 +53,4 @@ def send_dbt_artefacts_to_montecarlo(
         job_name=f'dbt_run_{model_name}',
         resource_id=resource_id,
     )
-    logging.info('Successfully sent dbt artefacts to MonteCarlo')
+    logging.info('Successfully sent dbt artifacts to MonteCarlo')

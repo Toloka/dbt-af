@@ -91,11 +91,11 @@ class DbtBaseOperator(BashOperator):
             super().execute(context)
 
             if self.dbt_af_config.mcd and self.dbt_af_config.mcd.artifacts_export_enabled:
-                from dbt_af.integrations.mcd import send_dbt_artefacts_to_montecarlo
+                from dbt_af.integrations.mcd import send_dbt_artifacts_to_montecarlo
 
                 latest_log_file = find_latest_log_file(context, self.dbt_af_config.dbt_project.dbt_log_path)
                 try:
-                    send_dbt_artefacts_to_montecarlo(
+                    send_dbt_artifacts_to_montecarlo(
                         target_path=tmp_target_path,
                         log_path=latest_log_file,
                         model_name=context['task'].task_id,
@@ -103,7 +103,7 @@ class DbtBaseOperator(BashOperator):
                         project_name=self.dbt_af_config.dbt_project.dbt_project_name,
                     )
                 except Exception as e:
-                    logging.warning(f'Failed to send dbt artefacts to MonteCarlo: {e}')
+                    logging.warning(f'Failed to send dbt artifacts to MonteCarlo: {e}')
                     if self.dbt_af_config.mcd.success_required:
                         raise e
 
