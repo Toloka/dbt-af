@@ -1,6 +1,7 @@
 from functools import partial
 from typing import TYPE_CHECKING
 
+from airflow.exceptions import AirflowSkipException
 from cachetools import TTLCache, cachedmethod
 from cachetools.keys import hashkey
 
@@ -77,6 +78,11 @@ def tableau_extracts_refresh(tableau_refresh_tasks: 'list[TableauRefreshTaskConf
                     tableau_server.datasources.refresh(resource_id)
                 case _:
                     raise UnknownTableauResourceTypeException(f'Unknown resource type: {refresh_task.resource_type}')
+        except tsc.ServerResponseError as sre:
+            if sre.code == '409093':
+                raise AirflowSkipException(f'{sre.code}: {sre.summary}')
+            else:
+                raise sre
         except UnknownTableauResourceTypeException:
             failed_tasks.append(refresh_task)
 

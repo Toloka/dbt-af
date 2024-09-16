@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from airflow.exceptions import AirflowSkipException
 from airflow.operators.python import PythonOperator
 
 from dbt_af.conf import Config
@@ -13,7 +14,7 @@ def _tableau_extracts_refresh_dev(*args, **kwargs) -> None:
     import logging
 
     logging.info('tableau_extracts_refresh is disabled in dev mode.')
-    return None
+    raise AirflowSkipException('tableau_extracts_refresh is disabled in dev mode.')
 
 
 class TableauExtractsRefreshOperator(PythonOperator):
