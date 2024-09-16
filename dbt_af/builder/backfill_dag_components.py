@@ -13,6 +13,7 @@ class BackfillDagModel(DagModel):
     max_active_tis_per_dag = 1
     add_external_dependencies = False
     overlap = False
+    is_dataset_enable = False
 
     def __init__(self, dbt_node: 'DbtNode', domain_dag: 'DomainDag'):
         super().__init__(dbt_node, domain_dag)

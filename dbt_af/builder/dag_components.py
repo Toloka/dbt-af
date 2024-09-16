@@ -220,6 +220,7 @@ class DagModel(DagComponent):
     runner_class = DbtRun
     add_external_dependencies = True
     overlap = True
+    is_dataset_enable = True
 
     def __init__(self, dbt_node: DbtNode, domain_dag: DomainDag):
         super().__init__(dbt_node.resource_name, domain_dag, node_config=dbt_node.config)
@@ -232,6 +233,7 @@ class DagModel(DagComponent):
         return self.runner_class(
             task_id=self.safe_name,
             model_name=self.name,
+            is_dataset_enable=self.is_dataset_enable,
             dag=self.domain_dag.af_dag,
             task_group=self.task_group,
             schedule_tag=self.domain_dag.schedule,
