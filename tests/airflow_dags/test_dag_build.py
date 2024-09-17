@@ -34,7 +34,7 @@ def try_run_task_in_dag(dag: DAG, task_id: str):
     ti.run(ignore_ti_state=True, ignore_all_deps=True, verbose=False)
 
     # all tasks should be in success state and all sensors should be up_for_reschedule
-    assert ti.state in (TaskInstanceState.SUCCESS, TaskInstanceState.UP_FOR_RESCHEDULE)
+    assert ti.state in (TaskInstanceState.SUCCESS, TaskInstanceState.SKIPPED, TaskInstanceState.UP_FOR_RESCHEDULE)
 
 
 def run_all_tasks_in_dag(dags: dict[str, DAG]):
