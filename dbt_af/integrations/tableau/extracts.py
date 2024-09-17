@@ -17,6 +17,8 @@ if TYPE_CHECKING:
 
     from dbt_af.conf import Config
 
+EXTRACT_OPERATION_ALREADY_QUEUED = '409093'
+
 
 class _TableauExtractsRegistry:
     def __init__(self, server: 'tableauserverclient.Server'):
@@ -79,10 +81,9 @@ def tableau_extracts_refresh(tableau_refresh_tasks: 'list[TableauRefreshTaskConf
                 case _:
                     raise UnknownTableauResourceTypeException(f'Unknown resource type: {refresh_task.resource_type}')
         except tsc.ServerResponseError as sre:
-            if sre.code == '409093':
+            if sre.code == EXTRACT_OPERATION_ALREADY_QUEUED:
                 raise AirflowSkipException(f'{sre.code}: {sre.summary}')
-            else:
-                raise sre
+            raise sre
         except UnknownTableauResourceTypeException:
             failed_tasks.append(refresh_task)
 
