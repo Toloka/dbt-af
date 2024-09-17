@@ -40,14 +40,14 @@ def try_run_task_in_dag(dag: DAG, task_id: str, additional_expected_ti_states: S
     assert ti.state in ti_states_to_expect
 
 
-def run_all_tasks_in_dag(dags: dict[str, DAG]):
+def run_all_tasks_in_dag(dags: dict[str, DAG], additional_expected_ti_states: Sequence[TaskInstanceState] = []):
     airflow_loggers = [logger for logger in logging.Logger.manager.loggerDict if logger.startswith('airflow')]
     for logger in airflow_loggers:
         logging.getLogger(logger).setLevel(logging.ERROR)
 
     for dag in dags:
         for task_id in dags[dag].task_ids:
-            try_run_task_in_dag(dags[dag], task_id)
+            try_run_task_in_dag(dags[dag], task_id, additional_expected_ti_states)
 
 
 def test_domain_depends_on_another_partially_has_correct_dags(
