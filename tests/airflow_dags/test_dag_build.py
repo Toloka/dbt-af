@@ -18,7 +18,7 @@ def nodes_operator_names(tasks) -> dict[str, str]:
     return {t.node_id: t.operator_name for t in tasks}
 
 
-def try_run_task_in_dag(dag: DAG, task_id: str, additional_expected_ti_states: Sequence[TaskInstanceState]):
+def try_run_task_in_dag(dag: DAG, task_id: str, additional_expected_ti_states: Sequence[TaskInstanceState] = []):
     start_date = pendulum.now().replace(minute=0, second=0, microsecond=0) - datetime.timedelta(hours=1)
     end_date = start_date + datetime.timedelta(hours=1)
     run_id = f'test_run_{uuid.uuid4()}'
