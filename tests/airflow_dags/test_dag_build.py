@@ -1,6 +1,7 @@
 import datetime
 import logging
 import uuid
+from typing import Sequence
 
 import pendulum
 from airflow import DAG
@@ -17,7 +18,7 @@ def nodes_operator_names(tasks) -> dict[str, str]:
     return {t.node_id: t.operator_name for t in tasks}
 
 
-def try_run_task_in_dag(dag: DAG, task_id: str):
+def try_run_task_in_dag(dag: DAG, task_id: str, additional_expected_ti_states: Sequence[TaskInstanceState] = []):
     start_date = pendulum.now().replace(minute=0, second=0, microsecond=0) - datetime.timedelta(hours=1)
     end_date = start_date + datetime.timedelta(hours=1)
     run_id = f'test_run_{uuid.uuid4()}'
@@ -34,17 +35,19 @@ def try_run_task_in_dag(dag: DAG, task_id: str):
     ti.run(ignore_ti_state=True, ignore_all_deps=True, verbose=False)
 
     # all tasks should be in success state and all sensors should be up_for_reschedule
-    assert ti.state in (TaskInstanceState.SUCCESS, TaskInstanceState.UP_FOR_RESCHEDULE)
+    always_expected_states = [TaskInstanceState.SUCCESS, TaskInstanceState.UP_FOR_RESCHEDULE]
+    ti_states_to_expect = always_expected_states + list(additional_expected_ti_states)
+    assert ti.state in ti_states_to_expect
 
 
-def run_all_tasks_in_dag(dags: dict[str, DAG]):
+def run_all_tasks_in_dag(dags: dict[str, DAG], additional_expected_ti_states: Sequence[TaskInstanceState] = []):
     airflow_loggers = [logger for logger in logging.Logger.manager.loggerDict if logger.startswith('airflow')]
     for logger in airflow_loggers:
         logging.getLogger(logger).setLevel(logging.ERROR)
 
     for dag in dags:
         for task_id in dags[dag].task_ids:
-            try_run_task_in_dag(dags[dag], task_id)
+            try_run_task_in_dag(dags[dag], task_id, additional_expected_ti_states)
 
 
 def test_domain_depends_on_another_partially_has_correct_dags(
@@ -645,4 +648,4 @@ def test_task_with_tableau_integration_has_correct_dags(dags_task_with_tableau_i
     assert tableau_refresh_tasks_observed == tableau_refresh_tasks_expected
 
     if run_airflow_tasks:
-        run_all_tasks_in_dag(dags)
+        run_all_tasks_in_dag(dags, additional_expected_ti_states=(TaskInstanceState.SKIPPED,))
