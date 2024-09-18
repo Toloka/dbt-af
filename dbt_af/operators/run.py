@@ -25,7 +25,14 @@ class DbtBaseDatasetOperator(DbtBaseActionOperator):
             super().__init__(
                 model_name=model_name,
                 model_type=model_type,
-                outlets=[Dataset(model_name)] if is_dataset_enable else [],
+                outlets=[Dataset(model_name)],
+                **kwargs,
+            )
+        elif model_name and not is_dataset_enable:
+            # exactly one model
+            super().__init__(
+                model_name=model_name,
+                model_type=model_type,
                 **kwargs,
             )
         else:
@@ -54,7 +61,7 @@ class DbtRun(DbtBaseDatasetOperator):
         return 'run'
 
 
-class DbtSeed(DbtBaseActionOperator):
+class DbtSeed(DbtBaseDatasetOperator):
     retries = 1
 
     @property
