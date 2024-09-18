@@ -20,19 +20,12 @@ class DbtSelectRun(DbtBaseActionOperator):
 
 class DbtBaseDatasetOperator(DbtBaseActionOperator):
     def __init__(self, model_name: Optional[str], is_dataset_enable=False, model_type: str = 'sql', **kwargs) -> None:
-        if model_name and is_dataset_enable:
+        if model_name:
             # exactly one model
             super().__init__(
                 model_name=model_name,
                 model_type=model_type,
-                outlets=[Dataset(model_name)],
-                **kwargs,
-            )
-        elif model_name and not is_dataset_enable:
-            # exactly one model
-            super().__init__(
-                model_name=model_name,
-                model_type=model_type,
+                outlets=[Dataset(model_name)] if is_dataset_enable else [],
                 **kwargs,
             )
         else:
