@@ -30,5 +30,6 @@ class TableauExtractsRefreshOperator(PythonOperator):
                 'tableau_refresh_tasks': tableau_refresh_tasks,
                 'dbt_af_config': dbt_af_config,
             },
+            **dbt_af_config.retries_config.supplemental_task_retry_policy.as_dict(),
             **kwargs,
         )

@@ -1,5 +1,4 @@
 import base64
-import datetime
 import json
 import logging
 import os
@@ -40,8 +39,6 @@ class DbtKubernetesPodOperator(KubernetesPodOperator):
 
         super().__init__(
             *args,
-            retries=self.retries,
-            retry_delay=datetime.timedelta(minutes=5),
             max_active_tis_per_dag=1,
             cmds=['bash', '-c', ' && '.join(self._prepare_docker_cmds())],
             in_cluster=True,
@@ -50,6 +47,7 @@ class DbtKubernetesPodOperator(KubernetesPodOperator):
             do_xcom_push=True,
             startup_timeout_seconds=1200,
             namespace=conf.get('kubernetes_executor', 'NAMESPACE'),
+            **dbt_af_config.retries_config.k8s_task_retry_policy.as_dict(),
             **kwargs,
         )
 

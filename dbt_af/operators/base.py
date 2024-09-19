@@ -16,7 +16,7 @@ from airflow.utils.context import Context
 from dbt_af.common.constants import DBT_COMPILE_POOL
 from dbt_af.common.scheduling import BaseScheduleTag, ScheduleTag
 from dbt_af.common.utils import find_latest_log_file, init_environment
-from dbt_af.conf import Config
+from dbt_af.conf import Config, RetryPolicy
 
 
 def get_delay_by_schedule(schedule_tag):
@@ -27,6 +27,7 @@ def get_delay_by_schedule(schedule_tag):
 
 class DbtBaseOperator(BashOperator):
     retries: int = 1
+    retry_policy: Optional[RetryPolicy] = None
 
     @property
     def cli_command(self) -> str:
@@ -65,13 +66,18 @@ class DbtBaseOperator(BashOperator):
         kwargs.update(get_delay_by_schedule(schedule_tag))
         af_pool = pool or f'dbt_{self.target_environment}' if dbt_af_config.use_dbt_target_specific_pools else None
 
+        retry_policy = (
+            self.retry_policy.as_dict()
+            if self.retry_policy is not None
+            else dbt_af_config.retries_config.default_retry_policy
+        )
         super().__init__(
             max_active_tis_per_dag=max_active_tis_per_dag,
-            retries=self.retries,
             env=init_environment(self.dbt_af_config),
             pool=af_pool,
             append_env=True,
             bash_command=self.generate_bash(**self.__dict__),
+            **retry_policy,
             **kwargs,
         )
 
