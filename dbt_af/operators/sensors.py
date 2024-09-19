@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 from datetime import timedelta
 from functools import cached_property, partial
@@ -356,7 +357,7 @@ class DbtExternalSensor(ExternalTaskSensor):
         **kwargs,
     ) -> None:
         retry_policy = dbt_af_config.retries_config.sensor_retry_policy.as_dict()
-        retry_policy['retries'] = max(_RETRIES_COUNT, kwargs.get('retries', 0), retry_policy['retries'])
+        retry_policy['retries'] = max(_RETRIES_COUNT, retry_policy['retries'])
         super().__init__(
             task_id=task_id,
             task_group=task_group,
@@ -405,9 +406,21 @@ class DbtSourceFreshnessSensor(PythonSensor):
         self.dbt_af_config = dbt_af_config
 
         retry_policy = dbt_af_config.retries_config.dbt_source_freshness_retry_policy.as_dict()
-        retry_policy['retries'] = _DEFAULT_WAIT_TIMEOUT // _DEFAULT_POKE_INTERVAL_SECONDS - 1
-        retry_policy['poke_interval'] = _DEFAULT_POKE_INTERVAL_SECONDS
-        retry_policy['timeout'] = max(_DEFAULT_WAIT_TIMEOUT, _DEFAULT_WAIT_TIMEOUT)
+        if retries := retry_policy.get('retries'):
+            logging.debug(
+                'For %s number of retries are dynamically calculated and passed value retries=%s will be ignored',
+                self.__class__.__name__,
+                retries,
+            )
+
+        _poke_interval = (
+            retry_policy.get('retry_delay').total_seconds()
+            if retry_policy.get('retry_delay')
+            else _DEFAULT_POKE_INTERVAL_SECONDS
+        )
+        retry_policy['retries'] = _DEFAULT_WAIT_TIMEOUT // _poke_interval - 1
+        retry_policy['poke_interval'] = _poke_interval
+        retry_policy['timeout'] = _DEFAULT_WAIT_TIMEOUT
 
         super().__init__(
             task_id=task_id,

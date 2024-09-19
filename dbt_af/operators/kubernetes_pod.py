@@ -21,8 +21,6 @@ PYTHON_SCRIPT_FILE = 'script.py'
 
 
 class DbtKubernetesPodOperator(KubernetesPodOperator):
-    retries = 2
-
     def __init__(
         self,
         dbt_model_name: str,

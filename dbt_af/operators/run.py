@@ -39,54 +39,55 @@ class DbtBaseDatasetOperator(DbtBaseActionOperator):
 
 
 class DbtRun(DbtBaseDatasetOperator):
-    retries = 2
-
     @property
     def cli_command(self) -> str:
         return 'run'
 
     def __init__(self, dbt_af_config: 'Config', **kwargs) -> None:
-        self.retry_policy = dbt_af_config.retries_config.dbt_run_retry_policy
-        super().__init__(dbt_af_config=dbt_af_config, **kwargs)
+        super().__init__(
+            dbt_af_config=dbt_af_config,
+            retry_policy=dbt_af_config.retries_config.dbt_run_retry_policy,
+            **kwargs,
+        )
 
 
 class DbtSeed(DbtBaseDatasetOperator):
-    retries = 1
-
     @property
     def cli_command(self) -> str:
         return 'seed'
 
     def __init__(self, dbt_af_config: 'Config', **kwargs) -> None:
-        self.retry_policy = dbt_af_config.retries_config.dbt_seed_retry_policy
-        super().__init__(dbt_af_config=dbt_af_config, **kwargs)
+        super().__init__(
+            dbt_af_config=dbt_af_config,
+            retry_policy=dbt_af_config.retries_config.dbt_seed_retry_policy,
+            **kwargs,
+        )
 
 
 class DbtSnapshot(DbtBaseDatasetOperator):
-    retries = 1
-
     @property
     def cli_command(self) -> str:
         return 'snapshot'
 
     def __init__(self, dbt_af_config: 'Config', **kwargs) -> None:
-        self.retry_policy = dbt_af_config.retries_config.dbt_snapshot_retry_policy
-        super().__init__(dbt_af_config=dbt_af_config, **kwargs)
+        super().__init__(
+            dbt_af_config=dbt_af_config,
+            retry_policy=dbt_af_config.retries_config.dbt_snapshot_retry_policy,
+            **kwargs,
+        )
 
 
 class DbtTest(DbtBaseActionOperator):
-    retries = 1
-
     @property
     def cli_command(self) -> str:
         return 'test'
 
     def __init__(self, dbt_af_config: 'Config', **kwargs) -> None:
-        self.retry_policy = dbt_af_config.retries_config.dbt_test_retry_policy
         super().__init__(
             dbt_af_config=dbt_af_config,
             max_active_tis_per_dag=None,
             target_environment=dbt_af_config.dbt_default_targets.default_for_tests_target,
+            retry_policy=dbt_af_config.retries_config.dbt_test_retry_policy,
             overlap=True,
             **kwargs,
         )
