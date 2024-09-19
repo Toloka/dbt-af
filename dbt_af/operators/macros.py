@@ -10,10 +10,15 @@ from dbt_af.parser.dbt_node_model import DbtAFMaintenanceConfig, DbtModelMainten
 
 
 class DbtRunMacroOperation(DbtIntervalActionOperator):
-    def __init__(self, **kwargs):
+    def __init__(self, dbt_af_config: Config, **kwargs):
         self.macro = self.macro_name
 
-        super().__init__(task_id=self.af_task_name, **kwargs)
+        super().__init__(
+            task_id=self.af_task_name,
+            dbt_af_config=dbt_af_config,
+            retry_policy=dbt_af_config.retries_config.macros_retry_policy,
+            **kwargs,
+        )
 
     @property
     def af_task_name(self) -> str:

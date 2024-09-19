@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 from datetime import timedelta
 from functools import cached_property, partial
@@ -288,7 +289,6 @@ EXECUTION_DATE_FN = (
     .add(ScheduleTag.daily, ScheduleTag.monthly, partial(monthly_on_daily))
 )
 
-
 EXECUTION_DATE_DEEP_FN = (
     _TaskScheduleMapping(WaitPolicy.all)
     .add(ScheduleTag.hourly, ScheduleTag.daily, [partial(daily_on_hourly, n_hours=i) for i in range(24)])
@@ -356,6 +356,8 @@ class DbtExternalSensor(ExternalTaskSensor):
         dag: 'DAG',
         **kwargs,
     ) -> None:
+        retry_policy = dbt_af_config.retries_config.sensor_retry_policy.as_dict()
+        retry_policy['retries'] = max(_RETRIES_COUNT, retry_policy['retries'])
         super().__init__(
             task_id=task_id,
             task_group=task_group,
@@ -366,13 +368,12 @@ class DbtExternalSensor(ExternalTaskSensor):
             max_active_tis_per_dag=None,
             pool=DBT_SENSOR_POOL if dbt_af_config.use_dbt_target_specific_pools else None,
             mode='reschedule',
-            retries=max(_RETRIES_COUNT, kwargs.get('retries', 0)),
             skipped_states=[State.NONE, State.SKIPPED],
             failed_states=[State.FAILED, State.UPSTREAM_FAILED],
             timeout=6 * 60 * 60,
             poke_interval=_POKE_INTERVALS_SECONDS.get(dep_schedule.name, _DEFAULT_POKE_INTERVAL_SECONDS),
-            retry_delay=datetime.timedelta(seconds=60 * 30),
             exponential_backoff=False,
+            **retry_policy,
             **kwargs,
         )
 
@@ -381,7 +382,7 @@ class DbtSourceFreshnessSensor(PythonSensor):
     """
     :param wait_timeout: maximum time (in seconds) to wait for the sensor to return True
     :param retries: number of retries that should be performed before failing the sensor.
-    :param poke_interval: time (in seconds) that the sensor should wait in between each tries
+    :param poke_interval: time (in seconds) that the sensor should wait in between each try
     """
 
     template_fields: Sequence[str] = ('templates_dict', 'op_args', 'op_kwargs', 'env')
@@ -396,7 +397,6 @@ class DbtSourceFreshnessSensor(PythonSensor):
         source_identifier: str,
         dbt_af_config: Config,
         target_environment: str = None,
-        wait_timeout: int = None,
         **kwargs,
     ):
         self.env = env
@@ -405,24 +405,30 @@ class DbtSourceFreshnessSensor(PythonSensor):
         self.target_environment = target_environment or dbt_af_config.dbt_default_targets.default_for_tests_target
         self.dbt_af_config = dbt_af_config
 
-        if kwargs.get('retries') and wait_timeout:
-            raise ValueError('You can not specify both wait_timeout and retries')
-        if not kwargs.get('retries') and not wait_timeout:
-            wait_timeout = _DEFAULT_WAIT_TIMEOUT
+        retry_policy = dbt_af_config.retries_config.dbt_source_freshness_retry_policy.as_dict()
+        if retries := retry_policy.get('retries'):
+            logging.debug(
+                'For %s number of retries are dynamically calculated and passed value retries=%s will be ignored',
+                self.__class__.__name__,
+                retries,
+            )
 
-        _poke_interval = kwargs.get('poke_interval', _DEFAULT_POKE_INTERVAL_SECONDS)
-        _retries = kwargs.get('retries', wait_timeout // _poke_interval - 1)
-        _airflow_task_timeout = max(_DEFAULT_WAIT_TIMEOUT, wait_timeout)
+        _poke_interval = (
+            retry_policy.get('retry_delay').total_seconds()
+            if retry_policy.get('retry_delay')
+            else _DEFAULT_POKE_INTERVAL_SECONDS
+        )
+        retry_policy['retries'] = _DEFAULT_WAIT_TIMEOUT // _poke_interval - 1
+        retry_policy['poke_interval'] = _poke_interval
+        retry_policy['timeout'] = _DEFAULT_WAIT_TIMEOUT
 
         super().__init__(
             task_id=task_id,
             dag=dag,
             pool=DBT_SENSOR_POOL if dbt_af_config.use_dbt_target_specific_pools else None,
-            poke_interval=_poke_interval,
-            timeout=_airflow_task_timeout,
-            retries=_retries,
             mode='reschedule',
             python_callable=self._check_freshness,
+            **retry_policy,
             **kwargs,
         )
 

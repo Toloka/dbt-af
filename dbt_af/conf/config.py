@@ -1,5 +1,6 @@
+import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import attrs
 import pendulum
@@ -208,6 +209,78 @@ class K8sConfig:
 
 
 @attrs.define(frozen=True)
+class RetryPolicy:
+    """
+    Config to configure airflow retries for one type of tasks
+    """
+
+    retries: int | None = None
+    retry_delay: datetime.timedelta | None = None
+    retry_exponential_backoff: bool | None = None
+    max_retry_delay: datetime.timedelta | float | None = None
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            _attr.name: getattr(self, _attr.name)
+            for _attr in attrs.fields(RetryPolicy)
+            if getattr(self, _attr.name) is not None
+        }
+
+
+@attrs.define(frozen=True)
+class RetriesConfig:
+    """
+    Config to parametrize different retry policies for all dbt-af dag components.
+    Default policy must be configured or used with default values.
+    Default policy will be used if task-specific policy is not specified.
+    """
+
+    default_retry_policy: RetryPolicy = attrs.field(
+        default=RetryPolicy(
+            retries=2,
+            retry_delay=datetime.timedelta(minutes=1),
+            retry_exponential_backoff=False,
+        )
+    )
+
+    # dbt specific tasks
+    dbt_run_retry_policy: RetryPolicy = attrs.field(default=None)
+    dbt_seed_retry_policy: RetryPolicy = attrs.field(default=None)
+    dbt_snapshot_retry_policy: RetryPolicy = attrs.field(default=None)
+    dbt_test_retry_policy: RetryPolicy = attrs.field(default=None)
+    dbt_source_freshness_retry_policy: RetryPolicy = attrs.field(default=None)
+
+    # dbt-af specific tasks
+    sensor_retry_policy: RetryPolicy = attrs.field(default=None)
+    k8s_task_retry_policy: RetryPolicy = attrs.field(default=None)
+    macros_retry_policy: RetryPolicy = attrs.field(default=None)
+    supplemental_task_retry_policy: RetryPolicy = attrs.field(default=None)
+
+    def __attrs_post_init__(self):
+        """
+        Substitute all unspecified policies with default one.
+        If some values in task-specific policies are not specified, they will be used from default policy
+        """
+        for _attr in attrs.fields(RetriesConfig):
+            _attr: attrs.Attribute
+            if _attr.name == 'default_retry_policy':
+                continue
+
+            policy = getattr(self, _attr.name)
+            policy: RetryPolicy | None
+            # if a policy is completely unset, it's overwritten with default policy
+            if policy is None:
+                object.__setattr__(self, _attr.name, self.default_retry_policy)
+                continue
+
+            # if some parameters of the policy are not set, they are overwritten with values from default policy
+            for _policy_attr in attrs.fields(RetryPolicy):
+                _policy_attr: attrs.Attribute
+                if getattr(policy, _policy_attr.name) is None:
+                    object.__setattr__(policy, _policy_attr.name, getattr(self.default_retry_policy, _policy_attr.name))
+
+
+@attrs.define(frozen=True)
 class Config:
     """
     Main config for dbt-af.
@@ -218,6 +291,7 @@ class Config:
     :param include_single_model_manual_dag: whether to include single model manual dag; it will create airflow dag
         without schedule, only with manual trigger and preset trigger form, where model name and date interval can be
         specified
+    :param retries_config: config with retries policies for different DAG component types
     :param max_active_dag_runs: max active dag runs for each airflow dag
     :param af_dag_description: description for airflow dags
     :param dag_start_date: default dag start date
@@ -240,8 +314,9 @@ class Config:
     include_single_model_manual_dag: bool = attrs.field(default=True)
 
     # airflow-specific params
+    retries_config: RetriesConfig = attrs.field(factory=RetriesConfig)
     max_active_dag_runs: int = attrs.field(default=50)
-    af_dag_description: str = attrs.field(default='https://www.buymeacoffee.com/tolokadataplatform')
+    af_dag_description: str = attrs.field(default='')
     dag_start_date: pendulum.datetime = attrs.field(default=pendulum.datetime(2023, 10, 1, 0, 0, 0, tz='UTC'))
     is_dev: bool = attrs.field(default=False)
     use_dbt_target_specific_pools: bool = attrs.field(default=True)

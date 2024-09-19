@@ -5,6 +5,8 @@ from dbt_af.conf.config import (
     DbtProjectConfig,
     K8sConfig,
     MCDIntegrationConfig,
+    RetriesConfig,
+    RetryPolicy,
     TableauIntegrationConfig,
 )
 
@@ -16,4 +18,6 @@ __all__ = [
     'MCDIntegrationConfig',
     'TableauIntegrationConfig',
     'CustomAfCallbacksConfig',
+    'RetriesConfig',
+    'RetryPolicy',
 ]

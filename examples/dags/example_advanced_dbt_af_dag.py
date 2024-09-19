@@ -1,7 +1,9 @@
 # LABELS: dag, airflow (it's required for airflow dag-processor)
+from datetime import timedelta
+
 import pendulum
 
-from dbt_af.conf import Config, DbtDefaultTargetsConfig, DbtProjectConfig
+from dbt_af.conf import Config, DbtDefaultTargetsConfig, DbtProjectConfig, RetriesConfig, RetryPolicy
 from dbt_af.dags import compile_dbt_af_dags
 
 # specify here all settings for your dbt project
@@ -18,6 +20,14 @@ config = Config(
     dbt_default_targets=DbtDefaultTargetsConfig(default_target='dev', default_for_tests_target='tests'),
     dag_start_date=pendulum.yesterday(),
     is_dev=False,  # set to True if you want to turn on dry-run mode
+    retries_config=RetriesConfig(
+        default_retry_policy=RetryPolicy(retries=3, retry_delay=timedelta(minutes=5)),
+        dbt_run_retry_policy=RetryPolicy(retries=10, retry_delay=timedelta(minutes=1)),
+        dbt_test_retry_policy=RetryPolicy(retries=0),
+        sensor_retry_policy=RetryPolicy(retries=30, retry_delay=timedelta(minutes=30)),
+        k8s_task_retry_policy=RetryPolicy(retry_delay=timedelta(minutes=5)),
+        supplemental_task_retry_policy=RetryPolicy(retries=0),
+    ),
 )
 
 dags = compile_dbt_af_dags(
