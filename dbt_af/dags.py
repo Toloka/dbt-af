@@ -111,13 +111,13 @@ def _compile_dbt_dags(
 def compile_dbt_af_dags(manifest_path: str, config: Config, etl_service_name: Optional[str] = None) -> dict[str, DAG]:
     """
     Compiles airflow DAGs from manifest according to provided dbt-af config.
-    It's possible to use different etl service name for different models groups in one dbt project.
+    It's possible to use different etl service names for different model groups in one dbt project.
     """
 
     with open(manifest_path) as fin:
         manifest = json.load(fin)
 
-    with open(config.dbt_project.dbt_project_path / 'profiles.yml') as fin:
+    with open(config.dbt_project.dbt_profiles_path / 'profiles.yml') as fin:
         profiles = yaml.safe_load(fin)
 
     with open(config.dbt_project.dbt_project_path / 'dbt_project.yml') as fin:
