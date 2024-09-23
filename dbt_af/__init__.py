@@ -3,7 +3,7 @@ __all__ = [
     'conf',
 ]
 
-# do not change the version, it's manged by release manager
+# note that this version is maintained by release manager - do not update them manually
 __version__ = '0.8.0'
 
 from . import conf, dags  # noqa
