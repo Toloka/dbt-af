@@ -65,7 +65,9 @@ class DbtBaseOperator(BashOperator):
         af_pool = pool or f'dbt_{self.target_environment}' if dbt_af_config.use_dbt_target_specific_pools else None
 
         retry_policy = (
-            retry_policy.as_dict() if retry_policy is not None else dbt_af_config.retries_config.default_retry_policy
+            retry_policy.as_dict()
+            if retry_policy is not None
+            else dbt_af_config.retries_config.default_retry_policy.as_dict()
         )
         super().__init__(
             max_active_tis_per_dag=max_active_tis_per_dag,

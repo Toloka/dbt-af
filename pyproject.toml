@@ -36,8 +36,8 @@ pytest-env = { version = "*", optional = true }
 pytest-socket = { version = "*", optional = true }
 pytest-mock = { version = "*", optional = true }
 
-airflow-mcd = { version = "^0.3", optional = true }
-pycarlo = { version = "^0.8", optional = true }
+airflow-mcd = { version = "^0.3.3", optional = true }
+pycarlo = { version = "^0.9", optional = true }
 
 tableauserverclient = { version = "^0.25", optional = true }
 
