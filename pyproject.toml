@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dbt-af"
-# note that this version is maintained by release manager - do not update them manually
+# note that this version is maintained by the release manager - do not update it manually
 version = "0.8.0"
 description = "Distibuted dbt runs on Apache Airflow"
 authors = [
