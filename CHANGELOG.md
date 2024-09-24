@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.8.1
+Fixes:
+- upgrade `airflow-mcd` to 0.3.3 version to fix bug with DAG callbacks
+- fix correct usage of the default retry policy if none has been passed.
+
 ## v0.8.0
 Features:
 - remove `airflow.Dataset` from backfill DAGs
