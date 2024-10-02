@@ -1,16 +1,15 @@
-import datetime
 import logging
 import os
-from datetime import timedelta
-from functools import cached_property, partial
-from typing import TYPE_CHECKING, Callable, Optional, Sequence, Tuple, Union
+from datetime import datetime
+from functools import cache, cached_property, partial
+from typing import TYPE_CHECKING, Optional, Sequence, Union
 
 from airflow.hooks.subprocess import SubprocessHook
 from airflow.models.dag import DAG
 from airflow.sensors.external_task import ExternalTaskSensor
 from airflow.sensors.python import PythonSensor
 from airflow.utils.state import State
-from dateutil.relativedelta import relativedelta
+from croniter import croniter, croniter_range
 
 from dbt_af.common.constants import DBT_SENSOR_POOL
 from dbt_af.common.scheduling import BaseScheduleTag, CronExpression, ScheduleTag
@@ -21,6 +20,7 @@ _DEFAULT_WAIT_TIMEOUT = 24 * 60 * 60
 _DEFAULT_POKE_INTERVAL_SECONDS = 30 * 60
 _RETRIES_COUNT = 30
 _POKE_INTERVALS_SECONDS = {
+    ScheduleTag.every15minutes.name: 30,
     ScheduleTag.hourly.name: 2 * 60,
     ScheduleTag.daily.name: 5 * 60,
     ScheduleTag.weekly.name: 30 * 60,
@@ -29,210 +29,6 @@ _POKE_INTERVALS_SECONDS = {
 
 if TYPE_CHECKING:
     from airflow.utils.task_group import TaskGroup
-
-
-def daily_on_hourly(
-    execution_date: datetime.datetime,
-    n_hours: int = 23,
-    upstream_cron: CronExpression = ScheduleTag.hourly.default_cron_expression,
-    **kwargs,
-):
-    """
-    Daily task with data interval [2023-01-01T00:00:00, 2023-01-02T00:00:00] waits for hourly task with data interval
-    [2023-01-01T23:00:00, 2023-01-02T00:00:00]
-
-    Daily task with schedule Y X * * * waits for hourly task with schedule Z * * * *. Daily task will have example
-    data interval [2023-07-13TXX:YY:00, 2023-07-14TXX:YY:00] and hourly task will have data interval
-    [2023-07-13TXX:YY:00 + 23h + Z minutes, 2023-07-13TXX:YY:00 + 24h + Z minutes] for WaitPolicy.last (default) and
-    [2023-07-13TXX:YY:00 + i hours + Z minutes, 2023-07-13TXX:YY:00 + (i+1) hours + Z minutes] (i=0..23)
-    for WaitPolicy.all
-
-    Execution date is always the start of the data interval.
-    """
-    return execution_date + timedelta(hours=n_hours, minutes=upstream_cron.minutes)
-
-
-def hourly_on_daily(
-    execution_date: datetime.datetime,
-    upstream_cron: CronExpression = ScheduleTag.daily.default_cron_expression,
-    **kwargs,
-):
-    """
-    Hourly task with data interval [2023-01-02T05:00:00, 2023-01-02T06:00:00] waits for daily task with data interval
-    [2023-01-01T00:00:00, 2023-01-02T00:00:00]
-    [2023-01-10T23:00:00, 2023-01-11T00:00:00] --> [2023-01-09T00:00:00, 2023-01-10T00:00:00]
-
-    Hourly task with schedule Z * * * * waits for daily task with schedule Y X * * *. Hourly task will have example
-    data interval [2023-07-13TZZ:00:00, 2023-07-13TZZ:00:00 + 1h] and daily task will have data interval
-    [2023-07-12TXX:YY:00, 2023-07-13TXX:YY:00] for WaitPolicy.<last, all>
-    """
-    return execution_date.replace(hour=upstream_cron.hours, minute=upstream_cron.minutes) - timedelta(days=1)
-
-
-def monthly_on_hourly(
-    execution_date: datetime.datetime,
-    n_days: int = 0,
-    n_hours: int = 0,
-    upstream_cron: CronExpression = ScheduleTag.hourly.default_cron_expression,
-    **kwargs,
-):
-    """
-    Monthly task with data interval [2023-01-01T00:00:00, 2023-02-01T00:00:00] waits for hourly task with data interval
-    [2023-01-31T23:00:00, 2023-02-01T00:00:00]
-
-    Monthly task with schedule Y X D * * waits for hourly task with schedule Z * * * *. Monthly task will have example
-    data interval [2023-07-DDTXX:YY:00, 2023-08-DDTXX:YY:00] and hourly task will have data interval
-    [2023-07-DDTXX:YY:00 + n_days + n_hours + Z minutes, 2023-07-DDTXX:YY:00 + (n_days + 1) + Z minutes] for
-    WaitPolicy.last and [2023-07-DDTXX:YY:00 + j days + i hours + Z minutes, 2023-07-DDTXX:YY:00 + j days + (i+1) hours
-    + Z minutes] (i=0..23, j=0..n_days) for WaitPolicy.all
-
-    days=0..days_in_month-1
-    hours=0..23
-    """
-    logical_date = execution_date + relativedelta(months=1)
-    upstream_execution_date = logical_date.replace(minute=upstream_cron.minutes) - timedelta(
-        days=n_days, hours=n_hours + 1
-    )
-    if upstream_execution_date + timedelta(hours=1) > logical_date:
-        upstream_execution_date -= timedelta(hours=1)
-    return upstream_execution_date
-
-
-def hourly_on_monthly(
-    execution_date: datetime.datetime,
-    upstream_cron: CronExpression = ScheduleTag.monthly.default_cron_expression,
-    **kwargs,
-):
-    """
-    Hourly task with data interval [2023-01-02T05:00:00, 2023-01-02T06:00:00] waits for monthly task with data interval
-    [2023-01-01T00:00:00, 2023-02-01T00:00:00]
-    [2023-01-10T23:00:00, 2023-01-11T00:00:00] --> [2023-01-01T00:00:00, 2023-02-01T00:00:00]
-
-    Hourly task with schedule Z * * * * waits for monthly task with schedule Y X D * *. Hourly task will have example
-    data interval [2023-07-DDTZZ:00:00, 2023-07-DDTZZ:00:00 + 1h] and monthly task will have data interval
-    [2023-06-DDTXX:YY:00, 2023-07-DDTXX:YY:00] for WaitPolicy.<last, all>
-    """
-    months_to_shift = 1
-    if (
-        execution_date.replace(day=upstream_cron.days, hour=upstream_cron.hours, minute=upstream_cron.minutes)
-        > execution_date
-    ):
-        months_to_shift = 2
-    return execution_date.replace(
-        day=upstream_cron.days, hour=upstream_cron.hours, minute=upstream_cron.minutes
-    ) - relativedelta(months=months_to_shift)
-
-
-def daily_on_monthly(
-    execution_date: datetime.datetime,
-    upstream_cron: CronExpression = ScheduleTag.monthly.default_cron_expression,
-    **kwargs,
-):
-    """
-    Daily task with data interval [2023-01-01T00:00:00, 2023-02-01T00:00:00] waits for monthly task with data interval
-    [2023-01-01T00:00:00, 2023-02-01T00:00:00]
-    """
-    months_to_shift = 1
-    if (
-        execution_date.replace(day=upstream_cron.days, hour=upstream_cron.hours, minute=upstream_cron.minutes)
-        > execution_date
-    ):
-        months_to_shift = 2
-    return execution_date.replace(
-        day=upstream_cron.days, hour=upstream_cron.hours, minute=upstream_cron.minutes
-    ) - relativedelta(months=months_to_shift)
-
-
-def monthly_on_daily(
-    execution_date: datetime.datetime,
-    n_days: int = 0,
-    upstream_cron: CronExpression = ScheduleTag.daily.default_cron_expression,
-    **kwargs,
-):
-    """
-    Monthly task with data interval [2023-01-01T00:00:00, 2023-02-01T00:00:00] waits for daily task with data interval
-    [2023-01-31T00:00:00, 2023-02-01T00:00:00]
-
-    Monthly task with schedule Y X D * * waits for daily task with schedule Z X * * *. Monthly task will have example
-    data interval [2023-07-DDTXX:YY:00, 2023-08-DDTXX:YY:00] and daily task will have data interval
-    [2023-07-DDTXX:YY:00 + n_days, 2023-07-DDTXX:YY:00 + n_days + 1] for WaitPolicy.last and
-    [2023-07-DDTXX:YY:00 + j days, 2023-07-DDTXX:YY:00 + (j+1) days] (j=0..n_days) for WaitPolicy.all
-
-    """
-    logical_date = execution_date + relativedelta(months=1)
-    upstream_execution_date = logical_date.replace(hour=upstream_cron.hours, minute=upstream_cron.minutes) - timedelta(
-        days=n_days + 1
-    )
-    if upstream_execution_date + timedelta(days=1) > logical_date:
-        upstream_execution_date -= timedelta(days=1)
-    return upstream_execution_date
-
-
-def weekly_on_hourly(
-    execution_date: datetime.datetime,
-    n_days: int = 6,
-    n_hours: int = 23,
-    upstream_cron: CronExpression = ScheduleTag.hourly.default_cron_expression,
-    **kwargs,
-):
-    """
-    Weekly task with schedule Z Y * * X waits for hourly task with schedule T * * * *. Weekly task will have example
-    data interval [2023-07-13TZZ:YY:00, 2023-07-20TZZ:YY:00] and hourly task will have data interval
-    [2023-07-13TYY:00:00 + 6d + 23h + T mins, 2023-07-13TYY:00:00 + 7d + T mins] for WaitPolicy.last and
-    [2023-07-13TYY:00:00 + j days + i hours + T mins, 2023-07-13TYY:00:00 + j days + (i+1) hours + T mins]
-    (i=0..23, j=0..6) for WaitPolicy.all
-    """
-    return execution_date.replace(minute=0) + timedelta(days=n_days, hours=n_hours, minutes=upstream_cron.minutes)
-
-
-def weekly_on_daily(
-    execution_date: datetime.datetime,
-    n_days: int = 6,
-    upstream_cron: CronExpression = ScheduleTag.daily.default_cron_expression,
-    **kwargs,
-):
-    """
-    Weekly task with data interval [2023-05-10TXX:YY:00, 2023-05-17TXX:YY:00] waits for daily task with data interval
-    [2023-05-16TZZ:TT:00, 2023-05-17TZZ:TT:00] for WaitPolicy.last and
-    [2023-05-10TZZ:TT:00 + j days, 2023-05-11TZZ:TT:00 + j days] (j=0..6) for WaitPolicy.all
-    """
-    return execution_date.replace(hour=0, minute=0) + timedelta(
-        days=n_days, hours=upstream_cron.hours, minutes=upstream_cron.minutes
-    )
-
-
-def daily_on_weekly(
-    execution_date: datetime.datetime,
-    upstream_cron: CronExpression = ScheduleTag.weekly.default_cron_expression,
-    **kwargs,
-):
-    """
-    Daily task with data interval [2023-01-10T00:00:00, 2023-01-11T00:00:00] waits for weekly task with data interval
-    [2023-01-02T00:00:00, 2023-01-09T00:00:00]
-    It calculates weekday of the execution date and returns Sunday of the previous week.
-
-    Daily task with schedule Y X * * * waits for weekly task with schedule Z H * * D. Daily task will have example
-    data interval [2023-07-13TXX:YY:00, 2023-07-14TXX:YY:00] and weekly task will have data interval
-    [2023-07-09THH:ZZ:00, 2023-07-16THH:ZZ:00] for WaitPolicy.<last, all>
-    """
-    return execution_date.replace(hour=upstream_cron.hours, minute=upstream_cron.minutes) - timedelta(
-        days=execution_date.weekday() + 8 - upstream_cron.weekdays
-    )
-
-
-def hourly_on_weekly(
-    execution_date: datetime.datetime,
-    upstream_cron: CronExpression = ScheduleTag.weekly.default_cron_expression,
-    **kwargs,
-):
-    """
-    Hourly task with data interval [2023-10-10T05:XX:00, 2023-10-10T06:XX:00] waits for weekly task with schedule
-    Z Y * * D. Hourly task will have example data interval [2023-10-10T05:XX:00, 2023-10-10T06:XX:00] and weekly task
-    will have data interval [2023-10-01TYY:ZZ:00 + D days, 2023-10-08TYY:ZZ:00 + D days] for WaitPolicy.<last, all>
-    """
-    return execution_date.replace(hour=upstream_cron.hours, minute=upstream_cron.minutes) - timedelta(
-        days=execution_date.weekday() + 8 - upstream_cron.weekdays
-    )
 
 
 class _TaskScheduleMapping:
@@ -245,7 +41,7 @@ class _TaskScheduleMapping:
         self,
         upstream_schedule_tag: ScheduleTag,
         downstream_schedule_tag: ScheduleTag,
-        fn: Union[Callable, list[Callable]],
+        fn: Union[callable, list[callable]],
     ):
         if not isinstance(fn, list):
             fn = [fn]
@@ -253,69 +49,110 @@ class _TaskScheduleMapping:
         return self
 
     @staticmethod
-    def _update_upstream_cron_args(fn: partial, upstream: BaseScheduleTag):
+    def _update_upstream_cron_args(fn: partial, upstream: BaseScheduleTag, downstream: BaseScheduleTag):
         if fn is None:
             return
 
-        upstream_cron = upstream.cron_expression()
-        fn.keywords.update({'upstream_cron': upstream_cron})
+        fn.keywords.update({'upstream_cron': upstream.cron_expression(), 'self_cron': downstream.cron_expression()})
 
-    def get(self, key: Tuple[BaseScheduleTag, BaseScheduleTag], default=None) -> list[Optional[Callable]]:
+    def get(self, key: tuple[BaseScheduleTag, BaseScheduleTag], default=None) -> list[Optional[callable]]:
         """
-        If result function is None (or list of None), it means that there is no need to find specific upstream task,
-        just wait for the last one.
+        If the result function is None (or list of None),
+        it means that there is no need to find a specific upstream task, wait for the last one.
         """
         if not isinstance(default, list):
             default = [default]
         stream_names = (key[0].name, key[1].name)
         fns = self._mapping.get(stream_names, default)
         for fn in fns:
-            self._update_upstream_cron_args(fn, key[0])
+            self._update_upstream_cron_args(fn, upstream=key[0], downstream=key[1])
 
         return fns
 
 
-EXECUTION_DATE_FN = (
-    _TaskScheduleMapping(WaitPolicy.last)
-    .add(ScheduleTag.hourly, ScheduleTag.daily, partial(daily_on_hourly, n_hours=23))
-    .add(ScheduleTag.daily, ScheduleTag.hourly, partial(hourly_on_daily, n_hours=24))
-    .add(ScheduleTag.hourly, ScheduleTag.weekly, partial(weekly_on_hourly, n_days=6, n_hours=23))
-    .add(ScheduleTag.daily, ScheduleTag.weekly, partial(weekly_on_daily, n_days=6))
-    .add(ScheduleTag.weekly, ScheduleTag.daily, partial(daily_on_weekly, n_days=8))
-    .add(ScheduleTag.weekly, ScheduleTag.hourly, partial(hourly_on_weekly, n_days=8))
-    .add(ScheduleTag.monthly, ScheduleTag.hourly, partial(hourly_on_monthly))
-    .add(ScheduleTag.hourly, ScheduleTag.monthly, partial(monthly_on_hourly))
-    .add(ScheduleTag.monthly, ScheduleTag.daily, partial(daily_on_monthly))
-    .add(ScheduleTag.daily, ScheduleTag.monthly, partial(monthly_on_daily))
-)
+def calculate_task_to_wait_execution_date(
+    execution_date: datetime,
+    self_cron: CronExpression,
+    upstream_cron: CronExpression,
+    num_iter: int | None = None,
+):
+    """
+    this function calculates the correct nearest execution date for the upstream task to wait for.
 
-EXECUTION_DATE_DEEP_FN = (
-    _TaskScheduleMapping(WaitPolicy.all)
-    .add(ScheduleTag.hourly, ScheduleTag.daily, [partial(daily_on_hourly, n_hours=i) for i in range(24)])
-    .add(ScheduleTag.daily, ScheduleTag.hourly, partial(hourly_on_daily, n_hours=24))
-    .add(
-        ScheduleTag.hourly,
-        ScheduleTag.weekly,
-        [partial(weekly_on_hourly, n_days=d, n_hours=h) for d in range(7) for h in range(24)],
+    :param num_iter: number of iterations to go back in time
+        by default it's None, which means that the function will return the last possible execution date.
+        this parameter is used for the 'all' wait policy to iterate over all possible execution dates
+    """
+    interval_stop_dttm: datetime = croniter(self_cron.raw_cron_expression, execution_date).get_next(datetime)
+
+    if self_cron < upstream_cron:
+        cron_iter = croniter(upstream_cron.raw_cron_expression, interval_stop_dttm)
+        cron_iter.get_prev()
+        return cron_iter.get_prev(datetime)
+
+    all_dts = list(
+        croniter_range(execution_date, interval_stop_dttm, upstream_cron.raw_cron_expression, ret_type=datetime)
     )
-    .add(ScheduleTag.daily, ScheduleTag.weekly, [partial(weekly_on_daily, n_days=d) for d in range(7)])
-    .add(ScheduleTag.weekly, ScheduleTag.daily, partial(daily_on_weekly, n_days=8))
-    .add(ScheduleTag.weekly, ScheduleTag.hourly, partial(hourly_on_weekly, n_days=8))
-    .add(
-        ScheduleTag.monthly,
-        ScheduleTag.hourly,
-        [partial(hourly_on_monthly, n_days=d, n_hours=h) for d in range(31) for h in range(24)],
-    )
-    .add(ScheduleTag.hourly, ScheduleTag.monthly, partial(monthly_on_hourly))
-    .add(ScheduleTag.monthly, ScheduleTag.daily, partial(daily_on_monthly))
-    .add(ScheduleTag.daily, ScheduleTag.monthly, [partial(monthly_on_daily, n_days=d) for d in range(31)])
-)
+
+    if all_dts and all_dts[-1] == interval_stop_dttm:
+        all_dts.pop()
+
+    if num_iter is None:
+        return all_dts[-1]
+
+    return all_dts[num_iter]
+
+
+@cache
+def get_execution_date_fn_mapping(wait_policy: WaitPolicy) -> _TaskScheduleMapping:
+    """
+    This function returns mapping of functions to calculate the correct execution dates for sensors in runtime.
+    It builds a whole matrix of possible combinations of upstream and downstream schedules and calculates functions.
+    """
+    _mapping = _TaskScheduleMapping(wait_policy)
+    for upstream_schedule_tag in ScheduleTag:
+        for downstream_schedule_tag in ScheduleTag:
+            if upstream_schedule_tag == downstream_schedule_tag or ScheduleTag.manual in (
+                upstream_schedule_tag,
+                downstream_schedule_tag,
+            ):
+                continue
+            match wait_policy:
+                case WaitPolicy.last:
+                    _mapping.add(
+                        upstream_schedule_tag,
+                        downstream_schedule_tag,
+                        partial(calculate_task_to_wait_execution_date),
+                    )
+                case WaitPolicy.all:
+                    embeddings_number = (
+                        downstream_schedule_tag()
+                        .cron_expression()
+                        .embeddings_number(upstream_schedule_tag().cron_expression())
+                    )
+                    _mapping.add(
+                        upstream_schedule_tag,
+                        downstream_schedule_tag,
+                        (
+                            [
+                                partial(calculate_task_to_wait_execution_date, num_iter=i)
+                                for i in range(embeddings_number)
+                            ]
+                            if embeddings_number
+                            else [partial(calculate_task_to_wait_execution_date)]
+                        ),
+                    )
+                case _:
+                    raise TypeError(f'Unknown wait policy {wait_policy}')
+
+    return _mapping
 
 
 class AfExecutionDateFn:
     """
-    This class is used to get execution dates for sensors. Each funtion operates with execution date (aka logical date,
-    start date) and waits for execution date of upstream task.
+    This class is used to get execution dates for sensors.
+    Each function operates with execution date (aka logical date, start date)
+    and waits for execution date of an upstream task.
 
     Example:
         daily -> hourly. Daily starts at 00:00 and waits for hourly at 23:00 of the previous day.
@@ -327,20 +164,16 @@ class AfExecutionDateFn:
         self,
         upstream_schedule_tag: BaseScheduleTag,
         downstream_schedule_tag: BaseScheduleTag,
-        wait_policy,
+        wait_policy: WaitPolicy,
     ):
         self.upstream_schedule_tag = upstream_schedule_tag
         self.downstream_schedule_tag = downstream_schedule_tag
         self.wait_policy = wait_policy
 
-    def get_execution_dates(self) -> list[Optional[Callable]]:
-        match self.wait_policy:
-            case WaitPolicy.last:
-                return EXECUTION_DATE_FN.get((self.upstream_schedule_tag, self.downstream_schedule_tag))
-            case WaitPolicy.all:
-                return EXECUTION_DATE_DEEP_FN.get((self.upstream_schedule_tag, self.downstream_schedule_tag))
-            case _:
-                raise TypeError(f'Unknown wait policy {self.wait_policy}')
+    def get_execution_dates(self) -> list[Optional[callable]]:
+        return get_execution_date_fn_mapping(self.wait_policy).get(
+            (self.upstream_schedule_tag, self.downstream_schedule_tag)
+        )
 
 
 class DbtExternalSensor(ExternalTaskSensor):
@@ -351,7 +184,7 @@ class DbtExternalSensor(ExternalTaskSensor):
         task_group: 'Optional[TaskGroup]',
         external_dag_id: str,
         external_task_id: str,
-        execution_date_fn: Callable,
+        execution_date_fn: callable,
         dep_schedule: BaseScheduleTag,
         dag: 'DAG',
         **kwargs,

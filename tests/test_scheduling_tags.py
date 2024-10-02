@@ -20,7 +20,7 @@ def test_manual_schedule_tag():
 
 
 def test_hourly_schedule_tag():
-    assert _HourlyScheduleTag().af_repr() == '@hourly'
+    assert _HourlyScheduleTag().af_repr() == '0 * * * *'
     assert _HourlyScheduleTag().name == '@hourly'
     assert _HourlyScheduleTag().safe_name == 'dbt_hourly'
     assert _HourlyScheduleTag().timeshift == _HourlyScheduleTag.default_timeshift
@@ -46,7 +46,7 @@ def test_hourly_schedule_tag():
 
 
 def test_daily_schedule_tag():
-    assert _DailyScheduleTag().af_repr() == '@daily'
+    assert _DailyScheduleTag().af_repr() == '0 0 * * *'
     assert _DailyScheduleTag().name == '@daily'
     assert _DailyScheduleTag().safe_name == 'dbt_daily'
     assert _DailyScheduleTag().timeshift == _DailyScheduleTag.default_timeshift
@@ -70,7 +70,7 @@ def test_daily_schedule_tag():
 
 
 def test_weekly_schedule_tag():
-    assert _WeeklyScheduleTag().af_repr() == '@weekly'
+    assert _WeeklyScheduleTag().af_repr() == '0 0 * * 0'
     assert _WeeklyScheduleTag().name == '@weekly'
     assert _WeeklyScheduleTag().safe_name == 'dbt_weekly'
     assert _WeeklyScheduleTag().timeshift == _WeeklyScheduleTag.default_timeshift
@@ -94,7 +94,7 @@ def test_weekly_schedule_tag():
 
 
 def test_monthly_schedule_tag():
-    assert _MonthlyScheduleTag().af_repr() == '@monthly'
+    assert _MonthlyScheduleTag().af_repr() == '0 0 1 * *'
     assert _MonthlyScheduleTag().name == '@monthly'
     assert _MonthlyScheduleTag().safe_name == 'dbt_monthly'
     assert _MonthlyScheduleTag().timeshift is _MonthlyScheduleTag.default_timeshift
