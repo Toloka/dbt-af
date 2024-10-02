@@ -112,7 +112,8 @@ models:
 Configuration to define Tableau refresh tasks. This will trigger Tableau refresh tasks after the model is successfully
 run.
 
-> [!NOTE] To use this feature, you need to install `dbt-af` with `tableau` extra.
+> [!NOTE] 
+> To use this feature, you need to install `dbt-af` with `tableau` extra.
 > ```bash
 > pip install dbt-af[tableau]
 > ```
