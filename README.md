@@ -84,6 +84,8 @@ bf_cluster: "dev"
 
 This will create Airflow DAGs for your dbt project.
 
+Check out the documentation for more details [here](docs/docs.md).
+
 ## Features
 
 1. **_dbt-af_** is essentially designed to work with large projects (1000+ models).
@@ -100,6 +102,6 @@ This will create Airflow DAGs for your dbt project.
 
 ## Project Information
 
-- [Docs](examples/README.md)
+- [Docs](docs/docs.md)
 - [PyPI](https://pypi.org/project/dbt-af/)
 - [Contributing](CONTRIBUTING.md)

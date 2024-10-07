@@ -28,6 +28,7 @@ apache-airflow = ">=2.6"
 pydantic = ">=1.10,<3.0.0"
 apache-airflow-providers-cncf-kubernetes = ">=7.0.0"
 cachetools = "~5.3"
+croniter = "^3.0"
 typer = "~0.9"
 dbt-core = "^1.7"
 

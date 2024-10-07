@@ -94,8 +94,8 @@ class DagComponent:
         ).get_execution_dates()
 
         for i, execution_date_fn in enumerate(execution_date_fns):
-            # airflow task id must be less than 250 chars. It's not necessary to have a long name for the only
-            # one external dependency wait
+            # airflow task_id for statsd must be less than 250 chars.
+            # it's not necessary to have a long name for the only one external dependency wait
             _suffix = f'__{i}' if len(execution_date_fns) > 1 else ''
             wait = DbtExternalSensor(
                 dbt_af_config=self.domain_dag.config,
