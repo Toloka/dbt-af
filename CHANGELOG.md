@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.9.0
+Features:
+- add new scheduling tag `@every15minutes`
+- new [docs page](docs/docs.md) with code references
+
 ## v0.8.1
 Fixes:
 - upgrade `airflow-mcd` to 0.3.3 version to fix bug with DAG callbacks
