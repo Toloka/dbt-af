@@ -21,13 +21,19 @@ class CronExpression:
         if not isinstance(other, CronExpression):
             return NotImplemented
 
-        now = datetime.datetime.now()
+        # find the starting point for both cron expressions as the next run time after now (with 1-second shift)
+        start_dttm = croniter(self.raw_cron_expression, datetime.datetime.now()).get_next(datetime.datetime)
+        start_dttm += datetime.timedelta(seconds=1)
 
-        iter1 = croniter(self.raw_cron_expression, now)
-        iter2 = croniter(other.raw_cron_expression, now)
+        iter1 = croniter(self.raw_cron_expression, start_dttm)
+        iter2 = croniter(other.raw_cron_expression, start_dttm)
 
         next_run1 = iter1.get_next(datetime.datetime)
         next_run2 = iter2.get_next(datetime.datetime)
+        if next_run1 == next_run2:
+            # corner case: next run times are the same, but the expressions might still be different
+            next_run1 = iter1.get_next(datetime.datetime)
+            next_run2 = iter2.get_next(datetime.datetime)
 
         return next_run1 < next_run2
 
