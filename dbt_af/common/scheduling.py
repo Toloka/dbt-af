@@ -13,29 +13,49 @@ from croniter import croniter, croniter_range
 class CronExpression:
     raw_cron_expression: str = field(validator=lambda _, __, val: croniter.is_valid(val))
 
-    def __lt__(self, other):
+    def _reorder_raw_expr(self):
         """
-        Compares two cron expressions by the next run time.
-        Returns True if the next run time of the first expression is earlier than the next run time of the second one.
+        Reorder cron parts to compare them correctly.
+        The last part of the cron expression is the day of the week, so we move it near to the day of the month.
+        It reverses the list to compare starting from monthly shift.
+        """
+        cron_parts = self._split_cron_expression()
+        cron_parts.insert(2, cron_parts.pop(4))
+        return cron_parts[::-1]
+
+    @staticmethod
+    def _transform_raw_expr(cron_parts: list) -> list:
+        """
+        Transform cron parts to a list of 1's and 0's for comparison.
+        """
+        return [1 if x != '*' else 0 for x in cron_parts]
+
+    def __lt__(self, other) -> bool:
+        """
+        Compare two cron expressions.
+
+        Comparison is based on the following order:
+        1. Reorder cron expression parts to compare them correctly
+           (put day of the week near to the day of the month and reverse the list).
+        2. Transform cron parts to a list of 1's and 0's for comparison.
+        3. Compare transformed lists.
+
+        # compare same cron expressions (interval length is the same)
+        >>> CronExpression('0 0 1 * *') < CronExpression('0 0 2 * *')  # False
+        # compare different cron expressions (interval length is different)
+        >>> CronExpression('0 0 1 * *') < CronExpression('0 0 1 1 *')  # True
+        >>> CronExpression('0 0 1 * *') < CronExpression('30 * * * *')  # False
         """
         if not isinstance(other, CronExpression):
             return NotImplemented
 
-        # find the starting point for both cron expressions as the next run time after now (with 1-second shift)
-        start_dttm = croniter(self.raw_cron_expression, datetime.datetime.now()).get_next(datetime.datetime)
-        start_dttm += datetime.timedelta(seconds=1)
+        self_reordered = self._reorder_raw_expr()
+        other_reordered = other._reorder_raw_expr()
 
-        iter1 = croniter(self.raw_cron_expression, start_dttm)
-        iter2 = croniter(other.raw_cron_expression, start_dttm)
+        self_transformed = self._transform_raw_expr(self_reordered)
+        other_transformed = other._transform_raw_expr(other_reordered)
 
-        next_run1 = iter1.get_next(datetime.datetime)
-        next_run2 = iter2.get_next(datetime.datetime)
-        if next_run1 == next_run2:
-            # corner case: next run times are the same, but the expressions might still be different
-            next_run1 = iter1.get_next(datetime.datetime)
-            next_run2 = iter2.get_next(datetime.datetime)
-
-        return next_run1 < next_run2
+        return self_transformed < other_transformed
 
     def __eq__(self, other):
         if not isinstance(other, (CronExpression, str)):
