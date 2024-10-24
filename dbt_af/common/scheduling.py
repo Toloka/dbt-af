@@ -13,50 +13,6 @@ from croniter import croniter, croniter_range
 class CronExpression:
     raw_cron_expression: str = field(validator=lambda _, __, val: croniter.is_valid(val))
 
-    def _reorder_raw_expr(self):
-        """
-        Reorder cron parts to compare them correctly.
-        The last part of the cron expression is the day of the week, so we move it near to the day of the month.
-        It reverses the list to compare starting from monthly shift.
-        """
-        cron_parts = self._split_cron_expression()
-        cron_parts.insert(2, cron_parts.pop(4))
-        return cron_parts[::-1]
-
-    @staticmethod
-    def _transform_raw_expr(cron_parts: list) -> list:
-        """
-        Transform cron parts to a list of 1's and 0's for comparison.
-        """
-        return [1 if x != '*' else 0 for x in cron_parts]
-
-    def __lt__(self, other) -> bool:
-        """
-        Compare two cron expressions.
-
-        Comparison is based on the following order:
-        1. Reorder cron expression parts to compare them correctly
-           (put day of the week near to the day of the month and reverse the list).
-        2. Transform cron parts to a list of 1's and 0's for comparison.
-        3. Compare transformed lists.
-
-        # compare same cron expressions (interval length is the same)
-        >>> CronExpression('0 0 1 * *') < CronExpression('0 0 2 * *')  # False
-        # compare different cron expressions (interval length is different)
-        >>> CronExpression('0 0 1 * *') < CronExpression('0 0 1 1 *')  # True
-        >>> CronExpression('0 0 1 * *') < CronExpression('30 * * * *')  # False
-        """
-        if not isinstance(other, CronExpression):
-            return NotImplemented
-
-        self_reordered = self._reorder_raw_expr()
-        other_reordered = other._reorder_raw_expr()
-
-        self_transformed = self._transform_raw_expr(self_reordered)
-        other_transformed = other._transform_raw_expr(other_reordered)
-
-        return self_transformed < other_transformed
-
     def __eq__(self, other):
         if not isinstance(other, (CronExpression, str)):
             return NotImplemented
@@ -64,7 +20,7 @@ class CronExpression:
             return self.raw_cron_expression == other
         return self.raw_cron_expression == other.raw_cron_expression
 
-    def embeddings_number(self, other: 'CronExpression | None') -> int:
+    def embeddings_number(self, other: 'CronExpression | None', is_upstream_bigger: bool) -> int:
         """
         Calculate how many times this cron expression can be embedded into another one over a given period.
         """
@@ -72,7 +28,7 @@ class CronExpression:
             return 0
         if not isinstance(other, CronExpression):
             raise ValueError(f'Comparison must be with another CronExpression, got {other}')
-        if self < other:
+        if is_upstream_bigger:
             return 0
 
         now = datetime.datetime.now()
@@ -149,6 +105,15 @@ class BaseScheduleTag(ABC):
 
     @property
     @abstractmethod
+    def level(self) -> int:
+        """
+        Is used for comparison of schedule tags.
+        Must be unique for each schedule tag.
+        """
+        raise NotImplementedError()
+
+    @property
+    @abstractmethod
     def default_cron_expression(self) -> CronExpression | None:
         raise NotImplementedError()
 
@@ -162,6 +127,11 @@ class BaseScheduleTag(ABC):
 
     def __hash__(self):
         return hash(self.name)
+
+    def __lt__(self, other):
+        if not isinstance(other, BaseScheduleTag):
+            return NotImplemented
+        return self.level < other.level
 
     def __eq__(self, other: Union[str, 'BaseScheduleTag']):
         if isinstance(other, str):
@@ -200,6 +170,7 @@ class BaseScheduleTag(ABC):
 class _MonthlyScheduleTag(BaseScheduleTag):
     name = '@monthly'
     default_cron_expression = CronExpression('0 0 1 * *')
+    level = 5
 
     def __init__(self, timeshift: Optional[datetime.timedelta] = None):
         self.timeshift = timeshift or self.default_timeshift
@@ -226,6 +197,7 @@ class _MonthlyScheduleTag(BaseScheduleTag):
 class _WeeklyScheduleTag(BaseScheduleTag):
     name = '@weekly'
     default_cron_expression = CronExpression('0 0 * * 0')
+    level = 4
 
     def __init__(self, timeshift: Optional[datetime.timedelta] = None):
         self.timeshift = timeshift or self.default_timeshift
@@ -244,6 +216,7 @@ class _WeeklyScheduleTag(BaseScheduleTag):
 class _DailyScheduleTag(BaseScheduleTag):
     name = '@daily'
     default_cron_expression = CronExpression('0 0 * * *')
+    level = 3
 
     def __init__(self, timeshift: Optional[datetime.timedelta] = None):
         self.timeshift = timeshift or self.default_timeshift
@@ -262,6 +235,7 @@ class _DailyScheduleTag(BaseScheduleTag):
 class _HourlyScheduleTag(BaseScheduleTag):
     name = '@hourly'
     default_cron_expression = CronExpression('0 * * * *')
+    level = 2
 
     def __init__(self, timeshift: Optional[datetime.timedelta] = None):
         self.timeshift = timeshift or self.default_timeshift
@@ -280,6 +254,7 @@ class _HourlyScheduleTag(BaseScheduleTag):
 class _Every15MinutesScheduleTag(BaseScheduleTag):
     name = '@every15minutes'
     default_cron_expression = CronExpression('*/15 * * * *')
+    level = 1
 
     def __init__(self, timeshift: Optional[datetime.timedelta] = None):
         self.timeshift = timeshift or self.default_timeshift
@@ -299,6 +274,7 @@ class _Every15MinutesScheduleTag(BaseScheduleTag):
 class _ManualScheduleTag(BaseScheduleTag):
     name = '@manual'
     default_cron_expression = None
+    level = 0
 
     def __init__(self, timeshift: Optional[datetime.timedelta] = None):
         self.timeshift = None
@@ -340,6 +316,11 @@ class ScheduleTag(Enum):
 
     def __str__(self):
         return self.value.name
+
+    def __lt__(self, other):
+        if not isinstance(other, ScheduleTag):
+            return NotImplemented
+        return self.value.level < other.value.level
 
     def __eq__(self, other):
         if isinstance(other, ScheduleTag):

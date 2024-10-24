@@ -12,7 +12,7 @@ from airflow.utils.state import State
 from croniter import croniter, croniter_range
 
 from dbt_af.common.constants import DBT_SENSOR_POOL
-from dbt_af.common.scheduling import BaseScheduleTag, CronExpression, ScheduleTag
+from dbt_af.common.scheduling import BaseScheduleTag, ScheduleTag
 from dbt_af.conf import Config
 from dbt_af.parser.dbt_node_model import WaitPolicy
 
@@ -53,7 +53,7 @@ class _TaskScheduleMapping:
         if fn is None:
             return
 
-        fn.keywords.update({'upstream_cron': upstream.cron_expression(), 'self_cron': downstream.cron_expression()})
+        fn.keywords.update({'self_schedule': downstream, 'upstream_schedule': upstream})
 
     def get(self, key: tuple[BaseScheduleTag, BaseScheduleTag], default=None) -> list[Optional[callable]]:
         """
@@ -72,8 +72,8 @@ class _TaskScheduleMapping:
 
 def calculate_task_to_wait_execution_date(
     execution_date: datetime,
-    self_cron: CronExpression,
-    upstream_cron: CronExpression,
+    self_schedule: BaseScheduleTag,
+    upstream_schedule: BaseScheduleTag,
     num_iter: int | None = None,
 ):
     """
@@ -83,9 +83,11 @@ def calculate_task_to_wait_execution_date(
         by default it's None, which means that the function will return the last possible execution date.
         this parameter is used for the 'all' wait policy to iterate over all possible execution dates
     """
+    self_cron = self_schedule.cron_expression()
+    upstream_cron = upstream_schedule.cron_expression()
     interval_stop_dttm: datetime = croniter(self_cron.raw_cron_expression, execution_date).get_next(datetime)
 
-    if self_cron < upstream_cron:
+    if self_schedule < upstream_schedule:
         cron_iter = croniter(upstream_cron.raw_cron_expression, interval_stop_dttm)
         cron_iter.get_prev()
         return cron_iter.get_prev(datetime)
@@ -128,7 +130,10 @@ def get_execution_date_fn_mapping(wait_policy: WaitPolicy) -> _TaskScheduleMappi
                     embeddings_number = (
                         downstream_schedule_tag()
                         .cron_expression()
-                        .embeddings_number(upstream_schedule_tag().cron_expression())
+                        .embeddings_number(
+                            upstream_schedule_tag().cron_expression(),
+                            is_upstream_bigger=downstream_schedule_tag < upstream_schedule_tag,
+                        )
                     )
                     _mapping.add(
                         upstream_schedule_tag,
