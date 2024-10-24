@@ -3,6 +3,7 @@ import datetime
 import pytest
 
 from dbt_af.common.scheduling import (
+    ScheduleTag,
     _DailyScheduleTag,
     _HourlyScheduleTag,
     _ManualScheduleTag,
@@ -115,3 +116,19 @@ def test_monthly_schedule_tag():
     for shift in bad_timeshifts:
         with pytest.raises(ValueError):
             _MonthlyScheduleTag(shift).af_repr()
+
+
+def test_scheduling_tag_levels_all_unique():
+    all_levels = [tag().level for tag in ScheduleTag]
+    assert len(all_levels) == len(set(all_levels))
+
+
+def test_scheduling_tag_correct_comparison():
+    assert (
+        ScheduleTag.manual()
+        < ScheduleTag.every15minutes()
+        < ScheduleTag.hourly()
+        < ScheduleTag.daily()
+        < ScheduleTag.weekly()
+        < ScheduleTag.monthly()
+    )
