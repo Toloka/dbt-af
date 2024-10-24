@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.9.1
+Fixes:
+- fixed bug with schedule overlap
+
 ## v0.9.0
 Features:
 - add new scheduling tag `@every15minutes`
