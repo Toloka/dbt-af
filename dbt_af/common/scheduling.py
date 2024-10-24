@@ -308,6 +308,10 @@ class ScheduleTag(Enum):
         return self.value.name
 
     @property
+    def level(self):
+        return self.value.level
+
+    @property
     def default_cron_expression(self):
         return self.value.default_cron_expression
 
