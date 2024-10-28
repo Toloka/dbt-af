@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.9.2
+Fixes:
+- all dbt target types are now supported
+
 ## v0.9.1
 Fixes:
 - fixed bug with schedule overlap
