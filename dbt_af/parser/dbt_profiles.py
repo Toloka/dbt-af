@@ -44,7 +44,7 @@ class KubernetesTarget(Target):
 
 class Profile(BaseModel):
     target: str
-    outputs: dict[str, Target | KubernetesTarget]
+    outputs: dict[str, KubernetesTarget | Target]
 
 
 class Profiles(BaseModel):
