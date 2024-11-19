@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.9.3
+Fixes:
+- change dbt_run_model DAG name for multi-project usage (https://github.com/Toloka/dbt-af/pull/39)
+
 ## v0.9.2
 Fixes:
 - all dbt target types are now supported
