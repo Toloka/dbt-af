@@ -1,0 +1,10 @@
+name: 'dbt_af_helper'
+version: '0.7.2'
+config-version: 2
+
+require-dbt-version: [">=1.2.0", "<2.0.0"]
+
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+macro-paths: ["macros"]
+log-path: "logs"
