@@ -25,7 +25,7 @@ The main purpose of these DAGs is to backfill the data in case of any issues wit
 To backfill any data interval, you need just to trigger the DAG with the specific date interval, and it will run all the models with tests in one domain.
 
 ### Single model DAG
-By default `dbt-af` will generate unified DAG with name `dbt_run_model`. This DAG is made for manual run of a single model. It's useful for debugging or backfilling a single model with specified date interval.
+By default `dbt-af` will generate unified DAG with name `<dbt_project_name>_dbt_run_model`. This DAG is made for manual run of a single model. It's useful for debugging or backfilling a single model with specified date interval.
 
 To turn off just set `include_single_model_manual_dag` to `False` in the `dbt-af` configuration.
 ```python

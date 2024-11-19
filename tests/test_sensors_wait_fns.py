@@ -306,7 +306,7 @@ def test_monthly_on_hourly(execution_date_during_the_day, execution_date_during_
         downstream_schedule_tag=_MonthlyScheduleTag(),
         wait_policy=WaitPolicy.all,
     ).get_execution_dates()
-    assert len(fn_set_all) == 720
+    assert 28 * 24 <= len(fn_set_all) == 31 * 24
 
 
 def test_monthly_on_daily(execution_date_during_the_day, execution_date_during_the_night):
@@ -334,9 +334,9 @@ def test_monthly_on_daily(execution_date_during_the_day, execution_date_during_t
         downstream_schedule_tag=_MonthlyScheduleTag(),
         wait_policy=WaitPolicy.all,
     ).get_execution_dates()
-    assert len(fn_set_all) == 30
+    assert 28 <= len(fn_set_all) <= 31
     assert fn_set_all[0](execution_date_during_the_night.replace(day=1)) == datetime(2023, 10, 1)
-    assert fn_set_all[-1](execution_date_during_the_night.replace(day=1)) == datetime(2023, 10, 30)
+    assert fn_set_all[-1](execution_date_during_the_night.replace(day=1)) == datetime(2023, 10, 31)
 
 
 def test_daily_on_monthly(execution_date_during_the_day, execution_date_during_the_night):

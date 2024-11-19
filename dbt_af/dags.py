@@ -55,7 +55,8 @@ def dbt_main_dags(graph: DbtAfGraph) -> dict[str, DAG]:
 
 
 def dbt_run_model_dag(config: Config) -> dict[str, DAG]:
-    dag_name = 'dbt_run_model'
+    dbt_project_name = config.dbt_project.dbt_project_name
+    dag_name = f'{dbt_project_name}_dbt_run_model'
 
     dag_callbacks, task_callbacks = collect_af_custom_callbacks(config)
     dag = DAG(
@@ -66,7 +67,7 @@ def dbt_run_model_dag(config: Config) -> dict[str, DAG]:
         catchup=False,
         default_args=DEFAULT_DAG_ARGS,
         max_active_runs=config.max_active_dag_runs,
-        tags=['dbt', 'system'],
+        tags=[dbt_project_name, 'dbt', 'system'],
         params={
             DBT_MODEL_DAG_PARAM: Param('', type='string'),
             'start_dttm': Param('2000-01-01T00:00:00', type='string'),
