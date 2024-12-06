@@ -242,6 +242,7 @@ class DagModel(DagComponent):
             model_type=self.dbt_node.model_type,
             target_environment=self.target_environment,
             dbt_af_config=self.domain_dag.config,
+            env=self.dbt_node.config.env,
             **self._af_callbacks,
         )
 
@@ -258,6 +259,7 @@ class DagModel(DagComponent):
             dag=self.domain_dag.af_dag,
             target_details=self.dbt_node.target_details,
             dbt_af_config=self.domain_dag.config,
+            env=self.dbt_node.config.env,
         )
 
     def _create_runner_task(self) -> DbtRun | DbtKubernetesPodOperator:
