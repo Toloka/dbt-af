@@ -9,9 +9,10 @@
     4. [disable_from_dttm](#disable_from_dttm-_str_)
     5. [domain_start_date](#domain_start_date-_str_)
     6. [dbt_target](#dbt_target-_str_)
-    7. [py_cluster, sql_cluster, daily_sql_cluster, bf_cluster](#py_cluster-sql_cluster-daily_sql_cluster-bf_cluster-_str_)
-    8. [maintenance](#maintenance-_dbtafmaintenanceconfig_)
-    9. [tableau_refresh_tasks](#tableau_refresh_tasks-_listtableaurefreshtaskconfig_)
+    7. [env](#env-dictstr-str)
+    8. [py_cluster, sql_cluster, daily_sql_cluster, bf_cluster](#py_cluster-sql_cluster-daily_sql_cluster-bf_cluster-_str_)
+    9. [maintenance](#maintenance-_dbtafmaintenanceconfig_)
+    10. [tableau_refresh_tasks](#tableau_refresh_tasks-_listtableaurefreshtaskconfig_)
 
 ## dbt model config options
 
@@ -110,7 +111,7 @@ models:
 > [!NOTE]
 > To use [airflow templates](https://airflow.apache.org/docs/apache-airflow/stable/templates-ref.html#) in the `env`
 > values, you need to use double curly braces `{{ '{{' }}` and `{{ '}}' }}` to escape them.
-> 
+>
 > Pattern: `{{'<airflow_template>'}}` --> `{{ '{{<airflow_template>' }}`
 
 ###### `py_cluster`, `sql_cluster`, `daily_sql_cluster`, `bf_cluster` (_str_)
