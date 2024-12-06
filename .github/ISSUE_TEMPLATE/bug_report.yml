@@ -1,0 +1,44 @@
+---
+name: Bug report
+description: Create a report to help us improve
+body:
+  - type: textarea
+    attributes:
+      label: What happened?
+      description: Describe what happened.
+      placeholder: >
+        Please provide the context in which the problem occurred and explain what happened
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: What you think should happen instead?
+      description: What do you think went wrong?
+      placeholder: >
+        Please explain why you think the behaviour is wrong. 
+        It would be very helpful if you could provide a snippet of logs that shows the exact error messages 
+        or incorrect behaviour, as well as screenshots of any issues you are facing with the user interface. 
+        You can attach these files by dragging and dropping them here.
+  - type: textarea
+    attributes:
+      label: How to reproduce
+      description: >
+        How to reproduce the issue?
+      placeholder: >
+        Please provide a detailed example that can be replicated. The example should be as concise as possible while still being accurate.
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Operating System
+      description: What Operating System are you using?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Versions of istalled packages
+      description: What python packages are installed into your environment?
+      placeholder: You can use `pip freeze` (you can leave only relevant ones)
+  - type: markdown
+    attributes:
+      value: "Thanks for completing this form!"
