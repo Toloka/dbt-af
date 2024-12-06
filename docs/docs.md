@@ -31,7 +31,7 @@ Tag to define the schedule of the model. Supported tags are:
 - **@manual** - special tag to mark the model has no schedule. Read more about it
   in [tutorial](../examples/manual_scheduling.md)
 
-###### `dependencies` (_dict[str, DependencyConfig]_)
+###### dependencies (_dict[str, DependencyConfig]_)
 
 Сonfig to define how the model depends on other models.
 You can find the tutorial [here](../examples/dependencies_management.md)
@@ -60,17 +60,17 @@ models:
           wait_policy: last
 ```
 
-###### `enable_from_dttm` (_str_)
+###### enable_from_dttm (_str_)
 
 Date and time when the model should be enabled. The model will be skipped until this
 date. The format is `YYYY-MM-DDTHH:MM:SS`. Can be used in combination with `disable_from_dttm`
 
-###### `disable_from_dttm` (_str_)
+###### disable_from_dttm (_str_)
 
 Date and time when the model should be disabled. The model will be skipped after this
 date. The format is `YYYY-MM-DDTHH:MM:SS`. Can be used in combination with `enable_from_dttm`
 
-###### `domain_start_date` (_str_)
+###### domain_start_date (_str_)
 
 Date when the domain of the model starts. Option is used to reduce number of catchup
 DagRuns in Airflow. The format is `YYYY-MM-DDTHH:MM:SS`. Each domain selects minimal `domain_start_date` from all its
@@ -85,12 +85,12 @@ models:
       domain_start_date: "2024-01-01T00:00:00"
 ```
 
-###### `dbt_target` (_str_)
+###### dbt_target (_str_)
 
 Name of the dbt target to use for this exact model. If not set, the default target will be used.
 You can find more info in [tutorial](../examples/advanced_project.md#explicit-dbt-target)
 
-###### `env` (dict[str, str])
+###### env (dict[str, str])
 
 Additional environment variables to pass to the runtime.
 All variable values are passed first to dbt jinja rendering and then to the airflow rendering.
@@ -114,7 +114,7 @@ models:
 >
 > Pattern: `{{<airflow_template>}}` --> `{{ '{{<airflow_template>' }}`
 
-###### `py_cluster`, `sql_cluster`, `daily_sql_cluster`, `bf_cluster` (_str_)
+###### py_cluster, sql_cluster, daily_sql_cluster, bf_cluster (_str_)
 
 [resolving](../examples/advanced_project.md#how-is-the-target-determined) dbt target is based on these targets
 if explicitly not set. Usually, these parameters are set in the `dbt_project.yml` file for different domains:
@@ -131,7 +131,7 @@ models:
       bf_cluster: "bf_cluster"
 ```  
 
-###### `maintenance` (_DbtAFMaintenanceConfig_)
+###### maintenance (_DbtAFMaintenanceConfig_)
 
 Config to define maintenance tasks for the model.
 
@@ -150,7 +150,7 @@ models:
         expiration_timeout: 10
 ```
 
-###### `tableau_refresh_tasks` (_list[TableauRefreshTaskConfig]_)
+###### tableau_refresh_tasks (_list[TableauRefreshTaskConfig]_)
 
 List of Tableau refresh tasks.
 
