@@ -112,7 +112,7 @@ models:
 > To use [airflow templates](https://airflow.apache.org/docs/apache-airflow/stable/templates-ref.html#) in the `env`
 > values, you need to use double curly braces `{{ '{{' }}` and `{{ '}}' }}` to escape them.
 >
-> Pattern: `{{'<airflow_template>'}}` --> `{{ '{{<airflow_template>' }}`
+> Pattern: `{{<airflow_template>}}` --> `{{ '{{<airflow_template>' }}`
 
 ###### `py_cluster`, `sql_cluster`, `daily_sql_cluster`, `bf_cluster` (_str_)
 
