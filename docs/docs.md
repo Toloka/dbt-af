@@ -105,7 +105,7 @@ models:
     config:
       env:
         MY_ENV_VAR: "my_value"
-        MY_ENV_WITH_AF_RENDERING: "{{'{{ var.value.get(\'my.var\', \'fallback\') }}'}}"
+        MY_ENV_WITH_AF_RENDERING: "{{'{{ var.value.get(\"my.var\", \"fallback\") }}'}}"
 ```
 
 > [!NOTE]
