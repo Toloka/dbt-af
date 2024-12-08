@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.10.0
+Features:
+- add `env` field to dbt model's config to specify additional environment variables
+
 ## v0.9.3
 Fixes:
 - change dbt_run_model DAG name for multi-project usage (https://github.com/Toloka/dbt-af/pull/39)

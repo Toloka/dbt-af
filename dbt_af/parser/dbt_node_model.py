@@ -124,6 +124,8 @@ class DbtNodeConfig(pydantic.BaseModel):
         default_factory=lambda: defaultdict(DependencyConfig)
     )
 
+    env: dict[str, str] = pydantic.Field(default_factory=dict)
+
     py_cluster: Optional[str]
     sql_cluster: Optional[str]
     daily_sql_cluster: Optional[str]
