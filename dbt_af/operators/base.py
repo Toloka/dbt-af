@@ -51,6 +51,7 @@ class DbtBaseOperator(BashOperator):
         debug_flg: bool = True,
         pool: Optional[str] = None,
         retry_policy: Optional[RetryPolicy] = None,
+        env: dict[str, str] | None = None,
         **kwargs,
     ) -> None:
         self.debug = '--debug' if debug_flg else ''
@@ -71,7 +72,7 @@ class DbtBaseOperator(BashOperator):
         )
         super().__init__(
             max_active_tis_per_dag=max_active_tis_per_dag,
-            env=init_environment(self.dbt_af_config),
+            env=init_environment(self.dbt_af_config) | (env or {}),
             pool=af_pool,
             append_env=True,
             bash_command=self.generate_bash(**self.__dict__),

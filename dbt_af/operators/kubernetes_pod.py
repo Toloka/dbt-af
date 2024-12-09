@@ -27,6 +27,7 @@ class DbtKubernetesPodOperator(KubernetesPodOperator):
         dbt_model_path: str,
         target_details: KubernetesTarget,
         dbt_af_config: Config,
+        env: dict[str, str] | None = None,
         *args,
         **kwargs,
     ):
@@ -44,6 +45,7 @@ class DbtKubernetesPodOperator(KubernetesPodOperator):
             log_events_on_failure=True,
             do_xcom_push=True,
             startup_timeout_seconds=1200,
+            env_vars=[k8s.V1EnvVar(name=k, value=v) for k, v in (env or {}).items()],
             namespace=conf.get('kubernetes_executor', 'NAMESPACE'),
             **dbt_af_config.retries_config.k8s_task_retry_policy.as_dict(),
             **kwargs,
