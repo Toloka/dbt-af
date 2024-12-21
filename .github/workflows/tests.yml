@@ -17,7 +17,9 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build \
+          docker buildx build \
+            --cache-to type=gha \
+            --cache-from type=gha \
             --build-arg AIRFLOW_USE_UV="true" \
             --build-arg AIRFLOW_VERSION=${{ matrix.airflow-version }} \
             --build-arg PYTHON_VERSION=${{ matrix.python-version }} \
