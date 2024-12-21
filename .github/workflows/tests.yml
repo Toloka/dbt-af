@@ -24,18 +24,18 @@ jobs:
             --build-arg AIRFLOW_VERSION=${{ matrix.airflow-version }} \
             --build-arg PYTHON_VERSION=${{ matrix.python-version }} \
             --target airflow-dbt-af-ci \
-            -t dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }} \
+            -t dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-ci \
             .
       - name: Run Docker container
         run: |
           docker run \
             -d \
-            --name dbt-af-container-${{ matrix.airflow-version }}-py${{ matrix.python-version }} \
-            dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }}
+            --name dbt-af-container-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-ci \
+            dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-ci
           
       - name: Run tests
         run: |
           docker exec \
-            dbt-af-container-${{ matrix.airflow-version }}-py${{ matrix.python-version }} \
+            dbt-af-container-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-ci \
             airflow db migrate && \
             pytest -q -s -vv --log-cli-level=INFO --cov=dbt_af --cov-report=term --run-airflow-tasks tests

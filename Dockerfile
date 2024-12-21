@@ -19,7 +19,8 @@ USER root
 RUN apt-get update --allow-releaseinfo-change \
     && apt-get install --no-install-recommends -y \
         build-essential \
-        libpq-dev
+        libpq-dev \
+        curl
 
 COPY ./dbt_af ${AIRFLOW_HOME}/dbt_af/dbt_af
 COPY ./dbt_af_functional_tests ${AIRFLOW_HOME}/dbt_af/dbt_af_functional_tests
@@ -43,10 +44,6 @@ FROM airflow-dbt-af as airflow-dbt-af-ci
 LABEL maintainer="Nikita Yurasov <nikitayurasov@toloka.ai>"
 # install poetry
 USER root
-RUN ACCEPT_EULA=Y apt-get -y -qq -o Dpkg::Use-Pty=0 update && \
-    apt-get -y -qq -o Dpkg::Use-Pty=0 upgrade && \
-    apt-get -y -qq -o Dpkg::Use-Pty=0 install \
-        curl gcc python3-dev
 ARG POETRY_UID=65533
 ARG POETRY_GID=65533
 RUN groupadd -g $POETRY_GID -o poetry
