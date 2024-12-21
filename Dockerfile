@@ -30,7 +30,7 @@ RUN chown -R airflow:0 ${AIRFLOW_HOME}/dbt_af
 
 USER airflow
 
-RUN if [ "${AIRFLOW_USE_UV}" = "true" ]; then \
+RUN if [ "${AIRFLOW_USE_UV}" = "true" && "${AIRFLOW_VERSION}" > "2.9.0" ]; then \
       uv pip install "apache-airflow[uv]==${AIRFLOW_VERSION}" \
       && uv pip install -e "${AIRFLOW_HOME}/dbt_af[all]"; \
     else \
@@ -43,7 +43,7 @@ FROM airflow-dbt-af as airflow-dbt-af-ci
 LABEL maintainer="Nikita Yurasov <nikitayurasov@toloka.ai>"
 # install poetry
 USER root
-RUN apt-get -y -qq -o Dpkg::Use-Pty=0 update && \
+RUN ACCEPT_EULA=Y apt-get -y -qq -o Dpkg::Use-Pty=0 update && \
     apt-get -y -qq -o Dpkg::Use-Pty=0 upgrade && \
     apt-get -y -qq -o Dpkg::Use-Pty=0 install \
         curl gcc python3-dev
