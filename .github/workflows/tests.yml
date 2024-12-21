@@ -34,5 +34,6 @@ jobs:
       - name: Run tests
         run: |
           docker exec \
+            dbt-af-container-${{ matrix.airflow-version }}-py${{ matrix.python-version }} \
             airflow db migrate && \
             pytest -q -s -vv --log-cli-level=INFO --cov=dbt_af --cov-report=term --run-airflow-tasks tests
