@@ -54,18 +54,23 @@ ENV POETRY_VERSION="1.8.5" \
     POETRY_HOME="/opt/poetry" \
     POETRY_CACHE_DIR="/opt/poetry/.cache" \
     POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_PREFER_ACTIVE_PYTHON=true \
+    # https://github.com/python-poetry/poetry/issues/6301 \
+    POETRY_EXPERIMENTAL_NEW_INSTALLER=false \
     POETRY_UID=$POETRY_UID \
     POETRY_GID=$POETRY_GID
-# install poetry - respects $POETRY_VERSION & $POETRY_HOME
-RUN curl -sSL https://install.python-poetry.org | python - \
-    && mkdir -p "${POETRY_CACHE_DIR}" \
-    && chown -R "poetry:poetry" "${POETRY_CACHE_DIR}"
+
+USER airflow
+RUN pip install --user pipx \
+    pipx ensurepath
+# install poetry
+RUN pipx install "poetry==${POETRY_VERSION}"
+
 ENV PATH="$POETRY_HOME/bin:$PATH"
 
 WORKDIR ${AIRFLOW_HOME}/dbt_af
 COPY --chown=airflow:0 ./tests ${AIRFLOW_HOME}/dbt_af/tests
 COPY --chown=airflow:0 ./poetry.lock ${AIRFLOW_HOME}/dbt_af/poetry.lock
 
-USER airflow
 RUN poetry export --with=dev --without-hashes --format=requirements.txt > requirements.txt \
     && pip install -r requirements.txt

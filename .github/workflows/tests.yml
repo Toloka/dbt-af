@@ -10,8 +10,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.10", "3.11" ]
         airflow-version: [ "2.6.3", "2.7.3", "2.8.4", "2.9.3", "2.10.0", "2.10.1", "2.10.2", "2.10.3", "2.10.4" ]
+        python-version: [ "3.10", "3.11" ]
     steps:
       - uses: actions/checkout@v4
 
@@ -26,16 +26,9 @@ jobs:
             --target airflow-dbt-af-ci \
             -t dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-ci \
             .
-      - name: Run Docker container
+      - name: Run tests in container
         run: |
           docker run \
-            -d \
-            --name dbt-af-container-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-ci \
-            dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-ci
-          
-      - name: Run tests
-        run: |
-          docker exec \
-            dbt-af-container-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-ci \
-            airflow db migrate && \
-            pytest -q -s -vv --log-cli-level=INFO --cov=dbt_af --cov-report=term --run-airflow-tasks tests
+            --entrypoint="" \
+            dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-ci \
+            airflow db migrate && pytest -q -s -vv --log-cli-level=INFO --cov=dbt_af --cov-report=term --run-airflow-tasks tests
