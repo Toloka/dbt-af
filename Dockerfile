@@ -61,7 +61,7 @@ ENV POETRY_VERSION="1.8.5" \
     POETRY_GID=$POETRY_GID
 
 USER airflow
-RUN pip install --user pipx \
+RUN pip install pipx \
     pipx ensurepath
 # install poetry
 RUN pipx install "poetry==${POETRY_VERSION}"

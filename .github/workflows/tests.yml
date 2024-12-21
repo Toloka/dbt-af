@@ -22,6 +22,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          outputs: type=docker
           push: false
           tags: "dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-ci"
           cache-from: type=gha
