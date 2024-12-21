@@ -15,17 +15,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: |
-          docker buildx build \
-            --cache-to type=gha \
-            --cache-from type=gha \
-            --build-arg AIRFLOW_USE_UV="true" \
-            --build-arg AIRFLOW_VERSION=${{ matrix.airflow-version }} \
-            --build-arg PYTHON_VERSION=${{ matrix.python-version }} \
-            --target airflow-dbt-af-ci \
-            -t dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-ci \
-            .
+      - name: Docker build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: "dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-ci"
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            AIRFLOW_USE_UV="true"
+            AIRFLOW_VERSION=${{ matrix.airflow-version }}
+            PYTHON_VERSION=${{ matrix.python-version }}
+
       - name: Run tests in container
         run: |
           docker run \
