@@ -53,7 +53,12 @@ x-airflow-common:
   image: dbt_af
   build:
     context: ..
-    dockerfile: examples/Dockerfile
+    dockerfile: Dockerfile
+    target: airflow-dbt-af
+    args:
+      AIRFLOW_USE_UV: ${AIRFLOW_USE_UV:-true}
+      AIRFLOW_VERSION: ${AIRFLOW_VERSION:-2.10.3}
+      PYTHON_VERSION: ${PYTHON_VERSION:-3.10}
   env_file: .env
   environment:
     &airflow-common-env
