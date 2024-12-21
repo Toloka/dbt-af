@@ -10,21 +10,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        airflow-version: [ "2.6.3", "2.7.3", "2.8.4", "2.9.3", "2.10.0", "2.10.1", "2.10.2", "2.10.3", "2.10.4" ]
         python-version: [ "3.10", "3.11" ]
     steps:
       - uses: actions/checkout@v4
-      - name: Set up python
-        uses: actions/setup-python@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker build
+        uses: docker/build-push-action@v6
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-      - name: Install project
+          context: .
+          outputs: type=docker
+          push: false
+          tags: "dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-ci"
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            AIRFLOW_USE_UV="true"
+            AIRFLOW_VERSION=${{ matrix.airflow-version }}
+            PYTHON_VERSION=${{ matrix.python-version }}
+
+      - name: Run tests in container
         run: |
-          poetry install --with=dev --all-extras
-      - name: Create airflow database
-        run: |
-          poetry run airflow db migrate
-      - name: Test with pytest
-        run: |
-          poetry run pytest -q -s -vv --log-cli-level=INFO --cov=dbt_af --cov-report=term --run-airflow-tasks tests
+          docker run \
+            --entrypoint="" \
+            dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-ci \
+            airflow db migrate && pytest -q -s -vv --log-cli-level=INFO --cov=dbt_af --cov-report=term --run-airflow-tasks tests
