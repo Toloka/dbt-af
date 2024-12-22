@@ -32,10 +32,10 @@ RUN chown -R airflow:0 ${AIRFLOW_HOME}/dbt_af
 USER airflow
 
 RUN if [ "${AIRFLOW_USE_UV}" = "true" && "${AIRFLOW_VERSION}" > "2.9.0" ]; then \
-      uv pip install "apache-airflow[uv]==${AIRFLOW_VERSION}" \
+      uv pip install "apache-airflow[uv]==${AIRFLOW_VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt \
       && uv pip install -e "${AIRFLOW_HOME}/dbt_af[all]"; \
     else \
-      pip install "apache-airflow==${AIRFLOW_VERSION}" \
+      pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt \
       && pip install -e "${AIRFLOW_HOME}/dbt_af[all]"; \
     fi
 
@@ -72,5 +72,10 @@ WORKDIR ${AIRFLOW_HOME}/dbt_af
 COPY --chown=airflow:0 ./tests ${AIRFLOW_HOME}/dbt_af/tests
 COPY --chown=airflow:0 ./poetry.lock ${AIRFLOW_HOME}/dbt_af/poetry.lock
 
-RUN poetry export --with=dev --without-hashes --format=requirements.txt > requirements.txt \
-    && pip install -r requirements.txt
+USER root
+# reinstall and resolve dependencies with exact version of airflow
+RUN poetry remove apache-airflow  \
+    && poetry add apache-airflow==${AIRFLOW_VERSION} \
+    && poetry export --with=dev --without-hashes --format=requirements.txt > requirements.txt
+USER airflow
+RUN pip install -r requirements.txt --no-deps
