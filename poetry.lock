@@ -5947,4 +5947,4 @@ tests = ["pytest", "pytest-env", "pytest-mock", "pytest-socket"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "559d2335e0af0b792c7fe7f4c6f34adac24927d4ffa3e4d08c996eb451142f44"
+content-hash = "644da63f761e262ee29883a1e0b7c73999a23d731973a92f0d8711d00ccbe6a9"
