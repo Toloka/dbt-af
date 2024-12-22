@@ -287,10 +287,12 @@ class Config:
 
     :param dbt_project: all dbt related params
     :param dbt_default_targets: default dbt targets for different operators
+    :param dbt_executable_path: path to dbt executable to run tasks
     :param model_dependencies: section to parametrize how model dependencies are handled
     :param include_single_model_manual_dag: whether to include single model manual dag; it will create airflow dag
         without schedule, only with manual trigger and preset trigger form, where model name and date interval can be
         specified
+    :param debug_mode_enabled: whether to run dbt commands with flag --debug
     :param retries_config: config with retries policies for different DAG component types
     :param max_active_dag_runs: max active dag runs for each airflow dag
     :param af_dag_description: description for airflow dags
@@ -310,8 +312,10 @@ class Config:
 
     # dbt-af specific params
     dbt_default_targets: DbtDefaultTargetsConfig = attrs.field()
+    dbt_executable_path: str = attrs.field(default='dbt')
     model_dependencies: ModelDependenciesSection = attrs.field(factory=ModelDependenciesSection)
     include_single_model_manual_dag: bool = attrs.field(default=True)
+    debug_mode_enabled: bool = attrs.field(default=True)
 
     # airflow-specific params
     retries_config: RetriesConfig = attrs.field(factory=RetriesConfig)
