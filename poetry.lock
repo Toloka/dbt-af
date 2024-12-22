@@ -251,7 +251,6 @@ files = [
 
 [package.dependencies]
 alembic = ">=1.13.1,<2.0"
-apache-airflow-providers-cncf-kubernetes = {version = "*", optional = true, markers = "extra == \"cncf-kubernetes\""}
 apache-airflow-providers-common-compat = "*"
 apache-airflow-providers-common-io = "*"
 apache-airflow-providers-common-sql = "*"
@@ -5947,4 +5946,4 @@ tests = ["pytest", "pytest-env", "pytest-mock", "pytest-socket"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "644da63f761e262ee29883a1e0b7c73999a23d731973a92f0d8711d00ccbe6a9"
+content-hash = "4280060396d19f94bf64a5c5037735c909238316ef4116ee837d002d7f2a2618"
