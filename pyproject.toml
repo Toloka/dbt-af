@@ -24,9 +24,8 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
 attrs = "^23.1"
-apache-airflow = ">=2.6"
+apache-airflow = { version = ">=2.6", extras = ["cncf-kubernetes"] }
 pydantic = ">=1.10,<3.0.0"
-apache-airflow-providers-cncf-kubernetes = ">=7.0.0"
 cachetools = "~5.3"
 croniter = "^3.0"
 typer = "~0.9"

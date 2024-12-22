@@ -1,15 +1,16 @@
 # syntax=docker/dockerfile:1.4
 
 # Labels:
-# MAIN:        main image
-# CI:          continuous integration image
+# INTERMEDIATE: intermediate image
+# MAIN:         main image
+# CI:           continuous integration image
 
 
 ARG AIRFLOW_VERSION=2.10.3
-ARG PYTHON_VERSION=3.10
+ARG PY_VERSION=3.10
 
-# MAIN: airflow image
-FROM apache/airflow:${AIRFLOW_VERSION}-python${PYTHON_VERSION} as airflow-dbt-af
+# INTERMEDIATE: airflow image
+FROM apache/airflow:${AIRFLOW_VERSION}-python${PY_VERSION} as base-airflow
 LABEL maintainer="Nikita Yurasov <nikitayurasov@toloka.ai>"
 SHELL ["/bin/bash", "-o", "pipefail", "-o", "errexit", "-o", "nounset", "-o", "xtrace", "-c"]
 # for faster builds
@@ -29,19 +30,26 @@ COPY ./pyproject.toml ${AIRFLOW_HOME}/dbt_af/pyproject.toml
 COPY ./README.md ${AIRFLOW_HOME}/dbt_af/README.md
 RUN chown -R airflow:0 ${AIRFLOW_HOME}/dbt_af
 
-USER airflow
 
+# MAIN: airflow image
+FROM base-airflow as airflow-dbt-af
+ARG AIRFLOW_VERSION
+ARG PY_VERSION
+
+USER airflow
 RUN if [ "${AIRFLOW_USE_UV}" = "true" && "${AIRFLOW_VERSION}" > "2.9.0" ]; then \
-      uv pip install "apache-airflow[uv]==${AIRFLOW_VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt \
+      uv pip install "apache-airflow[uv]==${AIRFLOW_VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PY_VERSION}.txt \
       && uv pip install -e "${AIRFLOW_HOME}/dbt_af[all]"; \
     else \
-      pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt \
+      pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PY_VERSION}.txt \
       && pip install -e "${AIRFLOW_HOME}/dbt_af[all]"; \
     fi
 
 # CI: airflow image
-FROM airflow-dbt-af as airflow-dbt-af-ci
-LABEL maintainer="Nikita Yurasov <nikitayurasov@toloka.ai>"
+FROM base-airflow as airflow-dbt-af-ci
+ARG AIRFLOW_VERSION
+ARG PY_VERSION
+
 # install poetry
 USER root
 ARG POETRY_UID=65533
@@ -65,7 +73,6 @@ RUN pip install pipx \
     pipx ensurepath
 # install poetry
 RUN pipx install "poetry==${POETRY_VERSION}"
-
 ENV PATH="$POETRY_HOME/bin:$PATH"
 
 WORKDIR ${AIRFLOW_HOME}/dbt_af
@@ -73,9 +80,11 @@ COPY --chown=airflow:0 ./tests ${AIRFLOW_HOME}/dbt_af/tests
 COPY --chown=airflow:0 ./poetry.lock ${AIRFLOW_HOME}/dbt_af/poetry.lock
 
 USER root
-# reinstall and resolve dependencies with exact version of airflow
+# reinstall apache-airflow and resolve dependencies with exact version of apache-airflow
 RUN poetry remove apache-airflow  \
-    && poetry add apache-airflow==${AIRFLOW_VERSION} \
+    && poetry add apache-airflow==${AIRFLOW_VERSION} --extras cncf-kubernetes \
     && poetry export --with=dev --without-hashes --format=requirements.txt > requirements.txt
 USER airflow
-RUN pip install -r requirements.txt --no-deps
+RUN pip install -r requirements.txt --no-deps \
+  && pip install -e "${AIRFLOW_HOME}/dbt_af[all]"
+RUN pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PY_VERSION}.txt"
