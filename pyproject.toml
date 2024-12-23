@@ -23,25 +23,29 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
-attrs = "^23.1"
+attrs = ">=23.1"
 apache-airflow = ">=2.6"
-pydantic = ">=1.10,<3.0.0"
 apache-airflow-providers-cncf-kubernetes = ">=7.0.0"
-cachetools = "~5.3"
-croniter = "^3.0"
+pydantic = ">=1.10,<3.0.0"
+cachetools = "^5.3"
+croniter = ">=3.0"
 typer = "~0.9"
 dbt-core = "^1.7"
 
+# tests extra
 pytest = { version = "*", optional = true }
 pytest-env = { version = "*", optional = true }
 pytest-socket = { version = "*", optional = true }
 pytest-mock = { version = "*", optional = true }
 
+# mcd extra
 airflow-mcd = { version = "^0.3.3", optional = true }
-pycarlo = { version = "^0.9", optional = true }
+pycarlo = { version = ">=0.9", optional = true }
 
+# tableau extra
 tableauserverclient = { version = "^0.25", optional = true }
 
+# examples extra
 dbt-postgres = { version = "^1.7", optional = true }
 
 [tool.poetry.group.dev.dependencies]

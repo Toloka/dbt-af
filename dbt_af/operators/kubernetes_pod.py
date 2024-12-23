@@ -7,7 +7,12 @@ from typing import TYPE_CHECKING
 
 import kubernetes.client.models as k8s
 from airflow.configuration import conf
-from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import KubernetesPodOperator
+
+# this is a workaround to be compatible with old versions of Airflow and cncf-kubernetes provider
+try:
+    from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import KubernetesPodOperator
+except (ModuleNotFoundError, ImportError):
+    from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
 
 from dbt_af.common.constants import AZ_MI_BINDING_LABEL_NAME
 from dbt_af.conf import Config
