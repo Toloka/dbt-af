@@ -1,8 +1,7 @@
 name: Test code style on PR
 
 on:
-  pull_request:
-    branches: [ main ]
+  workflow_call:
 
 jobs:
   pre-commit:

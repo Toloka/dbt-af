@@ -5,8 +5,15 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  codestyle_check:
+    name: Codestyle
+    uses: ./.github/workflows/test_code_style.yml
+    secrets: inherit
+    permissions: write-all
+
+  integration_tests:
     runs-on: [ ubuntu-latest ]
+    name: Integration tests
     strategy:
       fail-fast: false
       matrix:
@@ -38,3 +45,19 @@ jobs:
             --entrypoint="" \
             dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-ci \
             bash -c "pytest -q -s -vv --log-cli-level=INFO --cov=dbt_af --cov-report=term --run-airflow-tasks tests"
+    
+
+  required-collector-job:
+    needs:
+      [
+        codestyle_check,
+        integration_tests,
+      ]
+    if: github.event_name != 'push' && always()
+
+    name: Required Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for failures
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: echo "One of the dependent jobs have failed. You may need to re-run it." && exit 1
