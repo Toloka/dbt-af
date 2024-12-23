@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         airflow-version: [ "2.7.3", "2.8.4", "2.9.3", "2.10.4" ]
-        python-version: [ "3.10", "3.11", "3.12" ]
+        python-version: [ "3.10", "3.11"]
         dbt-version: [ "1.7", "1.8", "1.9" ]
     steps:
       - uses: actions/checkout@v4
@@ -34,9 +34,18 @@ jobs:
             PY_VERSION=${{ matrix.python-version }}
             DBT_VERSION=${{ matrix.dbt-version }}
 
-      - name: Run tests in container
+      - name: Run tests in container with airflow runs
+        if: ${{ startsWith(github.ref, 'refs/heads/release/') }}
         run: |
           docker run \
             --entrypoint="" \
             dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-dbt${{ matrix.dbt-version }}-ci \
             bash -c "pytest -q -s -vv --log-cli-level=INFO --cov=dbt_af --cov-report=term --run-airflow-tasks tests"
+
+      - name: Run tests in container without airflow runs
+        if: ${{ ! startsWith(github.ref, 'refs/heads/release/') }}
+        run: |
+          docker run \
+            --entrypoint="" \
+            dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-dbt${{ matrix.dbt-version }}-ci \
+            bash -c "pytest -q -s -vv --log-cli-level=INFO --cov=dbt_af --cov-report=term tests"

@@ -277,10 +277,7 @@ flask-caching = ">=2.0.0"
 flask-session = ">=0.4.0,<0.6"
 flask-wtf = ">=1.1.0"
 fsspec = ">=2023.10.0"
-google-re2 = [
-    {version = ">=1.0", markers = "python_version < \"3.12\""},
-    {version = ">=1.1", markers = "python_version >= \"3.12\""},
-]
+google-re2 = {version = ">=1.0", markers = "python_version < \"3.12\""}
 gunicorn = ">=20.1.0"
 httpx = ">=0.25.0"
 importlib_metadata = {version = ">=6.5", markers = "python_version < \"3.12\""}
@@ -299,10 +296,7 @@ opentelemetry-api = ">=1.24.0"
 opentelemetry-exporter-otlp = ">=1.24.0"
 packaging = ">=23.0"
 pathspec = ">=0.9.0"
-pendulum = [
-    {version = ">=2.1.2,<4.0", markers = "python_version < \"3.12\""},
-    {version = ">=3.0.0,<4.0", markers = "python_version >= \"3.12\""},
-]
+pendulum = {version = ">=2.1.2,<4.0", markers = "python_version < \"3.12\""}
 pluggy = ">=1.5.0"
 psutil = ">=5.8.0"
 pygments = ">=2.0.1"
@@ -3723,7 +3717,6 @@ files = [
 numpy = [
     {version = ">=1.22.4", markers = "python_version < \"3.11\""},
     {version = ">=1.23.2", markers = "python_version == \"3.11\""},
-    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
 ]
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
@@ -5977,5 +5970,5 @@ tests = ["pytest", "pytest-env", "pytest-mock", "pytest-socket"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.10,<3.13"
-content-hash = "c62e002555b6478c584f5eefca55955b903ece37124b709149350633045f413d"
+python-versions = ">=3.10,<3.12"
+content-hash = "4280060396d19f94bf64a5c5037735c909238316ef4116ee837d002d7f2a2618"
