@@ -36,10 +36,10 @@ class DbtBaseOperator(BashOperator):
     def generate_bash(self, **kwargs) -> str:
         return (
             self._patch_path_to_dbt_bash(**kwargs)
-            + ' cd $PATH_TO_DBT  && dbt {debug} {cli} '
+            + ' cd $PATH_TO_DBT  && {dbt_executable_path} {debug} {cli} '
             '--profiles-dir $DBT_PROFILES_DIR '
             '--project-dir $PATH_TO_DBT '
-            '--target {target_environment}'.format(**kwargs)
+            '--target {target_environment}'.format(dbt_executable_path=self.dbt_af_config.dbt_executable_path, **kwargs)
         )
 
     def __init__(
@@ -48,19 +48,18 @@ class DbtBaseOperator(BashOperator):
         schedule_tag: BaseScheduleTag,
         target_environment: str,
         max_active_tis_per_dag: int = 1,  # only one parallel tasks in the universe
-        debug_flg: bool = True,
         pool: Optional[str] = None,
         retry_policy: Optional[RetryPolicy] = None,
         env: dict[str, str] | None = None,
         **kwargs,
     ) -> None:
-        self.debug = '--debug' if debug_flg else ''
+        self.dbt_af_config = dbt_af_config
+
+        self.debug = '--debug' if self.dbt_af_config.debug_mode_enabled else ''
         self.cli = self.cli_command
 
         self.target_environment = target_environment or dbt_af_config.dbt_default_targets.default_target
         assert self.target_environment, 'Target environment must be specified'
-
-        self.dbt_af_config = dbt_af_config
 
         kwargs.update(get_delay_by_schedule(schedule_tag))
         af_pool = pool or f'dbt_{self.target_environment}' if dbt_af_config.use_dbt_target_specific_pools else None

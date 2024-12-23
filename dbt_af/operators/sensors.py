@@ -282,7 +282,8 @@ class DbtSourceFreshnessSensor(PythonSensor):
             [
                 'cd $DBT_PROJECT_DIR',
                 'cp -R ./target/* $DBT_TARGET_PATH',
-                f'dbt source freshness {"-h" if self.dbt_af_config.is_dev else ""} '
+                f'{self.dbt_af_config.dbt_executable_path} source freshness '
+                f'{"-h" if self.dbt_af_config.is_dev else ""} '
                 f'--profiles-dir $DBT_PROFILES_DIR --project-dir $DBT_PROJECT_DIR --target {self.target_environment} '
                 f'--select source:{self.source_name}.{self.source_identifier}',
             ]

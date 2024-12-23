@@ -11,7 +11,7 @@ KUBERNETES_TARGET_TYPE = 'kubernetes'
 class Target(BaseModel):
     target_type: str = Field(alias='type')
     target_schema: str = Field(alias='schema')
-    threads: int = Field(default=1)
+    threads: int | str = Field(default=1)
 
     # here could be any database-specific connection details
 
