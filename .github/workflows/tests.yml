@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        airflow-version: [ "2.6.3", "2.7.3", "2.8.4", "2.9.3", "2.10.0", "2.10.1", "2.10.2", "2.10.3", "2.10.4" ]
+        airflow-version: [ "2.7.3", "2.8.4", "2.9.3", "2.10.0", "2.10.1", "2.10.2", "2.10.3", "2.10.4" ]
         python-version: [ "3.10", "3.11" ]
     steps:
       - uses: actions/checkout@v4

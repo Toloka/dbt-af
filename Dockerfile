@@ -37,7 +37,7 @@ ARG AIRFLOW_VERSION
 ARG PY_VERSION
 
 USER airflow
-RUN if [ "${AIRFLOW_USE_UV}" = "true" && "${AIRFLOW_VERSION}" > "2.9.0" ]; then \
+RUN if [ "${AIRFLOW_USE_UV}" = "true" && "${AIRFLOW_VERSION}" \> "2.9.0" ]; then \
       uv pip install "apache-airflow[uv]==${AIRFLOW_VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PY_VERSION}.txt \
       && uv pip install -e "${AIRFLOW_HOME}/dbt_af[all]"; \
     else \
@@ -85,6 +85,7 @@ RUN poetry remove apache-airflow  \
     && poetry add apache-airflow==${AIRFLOW_VERSION} --extras cncf-kubernetes \
     && poetry export --with=dev --without-hashes --format=requirements.txt > requirements.txt
 USER airflow
-RUN pip install -r requirements.txt --no-deps \
-  && pip install -e "${AIRFLOW_HOME}/dbt_af[all]"
-RUN pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PY_VERSION}.txt"
+RUN pip install -e "${AIRFLOW_HOME}/dbt_af[all]" && pip install -r requirements.txt
+
+RUN airflow db migrate
+
