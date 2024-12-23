@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'push' && github.run_id || github.ref_name }}
+  cancel-in-progress: ${{ github.event_name != 'push' }}
+
 jobs:
   codestyle_check:
     name: Codestyle
