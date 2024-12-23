@@ -30,7 +30,7 @@ jobs:
           build-args: |
             AIRFLOW_USE_UV="true"
             AIRFLOW_VERSION=${{ matrix.airflow-version }}
-            PYTHON_VERSION=${{ matrix.python-version }}
+            PY_VERSION=${{ matrix.python-version }}
 
       - name: Run tests in container
         run: |
