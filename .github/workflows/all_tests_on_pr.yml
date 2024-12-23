@@ -1,0 +1,34 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  codestyle_check:
+    name: Codestyle
+    uses: ./.github/workflows/test_code_style.yml
+    secrets: inherit
+    permissions: write-all
+
+
+  integration_tests:
+    name: Integration tests
+    uses: ./.github/workflows/integration_tests.yml
+    secrets: inherit
+    permissions: write-all
+
+  required-collector-job:
+    needs:
+      [
+        codestyle_check,
+        integration_tests,
+      ]
+    if: github.event_name != 'push' && always()
+
+    name: Required Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for failures
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: echo "One of the dependent jobs have failed. You may need to re-run it." && exit 1
