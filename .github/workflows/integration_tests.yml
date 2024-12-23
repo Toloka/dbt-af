@@ -10,8 +10,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        airflow-version: [ "2.7.3", "2.8.4", "2.9.3", "2.10.0", "2.10.1", "2.10.2", "2.10.3", "2.10.4" ]
-        python-version: [ "3.10", "3.11" ]
+        airflow-version: [ "2.7.3", "2.8.4", "2.9.3", "2.10.4" ]
+        python-version: [ "3.10", "3.11", "3.12" ]
+        dbt-version: [ "1.7", "1.8", "1.9" ]
     steps:
       - uses: actions/checkout@v4
 
@@ -24,17 +25,18 @@ jobs:
           context: .
           outputs: type=docker
           push: false
-          tags: "dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-ci"
+          tags: "dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-dbt${{ matrix.dbt-version }}-ci"
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
             AIRFLOW_USE_UV="true"
             AIRFLOW_VERSION=${{ matrix.airflow-version }}
             PY_VERSION=${{ matrix.python-version }}
+            DBT_VERSION=${{ matrix.dbt-version }}
 
       - name: Run tests in container
         run: |
           docker run \
             --entrypoint="" \
-            dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-ci \
+            dbt-af-${{ matrix.airflow-version }}-py${{ matrix.python-version }}-dbt${{ matrix.dbt-version }}-ci \
             bash -c "pytest -q -s -vv --log-cli-level=INFO --cov=dbt_af --cov-report=term --run-airflow-tasks tests"

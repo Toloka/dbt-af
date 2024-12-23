@@ -8,6 +8,7 @@
 
 ARG AIRFLOW_VERSION=2.10.3
 ARG PY_VERSION=3.10
+ARG DBT_VERSION=1.8
 
 # INTERMEDIATE: airflow image
 FROM apache/airflow:${AIRFLOW_VERSION}-python${PY_VERSION} as base-airflow
@@ -35,20 +36,25 @@ RUN chown -R airflow:0 ${AIRFLOW_HOME}/dbt_af
 FROM base-airflow as airflow-dbt-af
 ARG AIRFLOW_VERSION
 ARG PY_VERSION
+ARG DBT_VERSION
+ARG AIRFLOW_USE_UV
 
 USER airflow
 RUN if [ "${AIRFLOW_USE_UV}" = "true" && "${AIRFLOW_VERSION}" \> "2.9.0" ]; then \
+      uv pip install -e "${AIRFLOW_HOME}/dbt_af[all]" && \
       uv pip install "apache-airflow[uv]==${AIRFLOW_VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PY_VERSION}.txt \
-      && uv pip install -e "${AIRFLOW_HOME}/dbt_af[all]"; \
+      && uv pip install "dbt-core==${DBT_VERSION}"; \
     else \
+      pip install -e "${AIRFLOW_HOME}/dbt_af[all]" && \
       pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PY_VERSION}.txt \
-      && pip install -e "${AIRFLOW_HOME}/dbt_af[all]"; \
+      && pip install "dbt-core==${DBT_VERSION}"; \
     fi
 
 # CI: airflow image
 FROM base-airflow as airflow-dbt-af-ci
 ARG AIRFLOW_VERSION
 ARG PY_VERSION
+ARG DBT_VERSION
 
 # install poetry
 USER root
@@ -81,8 +87,9 @@ COPY --chown=airflow:0 ./poetry.lock ${AIRFLOW_HOME}/dbt_af/poetry.lock
 
 USER root
 # reinstall apache-airflow and resolve dependencies with exact version of apache-airflow
-RUN poetry remove apache-airflow  \
+RUN poetry remove apache-airflow dbt-core \
     && poetry add apache-airflow==${AIRFLOW_VERSION} --extras cncf-kubernetes \
+    && poetry add dbt-core==${DBT_VERSION} \
     && poetry export --with=dev --without-hashes --format=requirements.txt > requirements.txt
 USER airflow
 RUN pip install -e "${AIRFLOW_HOME}/dbt_af[all]" && pip install -r requirements.txt

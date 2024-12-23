@@ -86,6 +86,19 @@ This will create Airflow DAGs for your dbt project.
 
 Check out the documentation for more details [here](docs/docs.md).
 
+### Requirements
+
+**_dbt-af_** is tested with:
+
+|         | Versions            |
+|---------|---------------------|
+| Python  | 3.10, 3.11          |
+| Airflow | 2.7, 2.8, 2.9, 2.10 |
+| dbt     | 1.7, 1.8, 1.9       |
+
+> [! Note]
+> Airflow <2.7 is also supported, but it requires additional dependencies fine-tuning.
+
 ## Features
 
 1. **_dbt-af_** is essentially designed to work with large projects (1000+ models).

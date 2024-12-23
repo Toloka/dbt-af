@@ -59,6 +59,7 @@ x-airflow-common:
       AIRFLOW_USE_UV: ${AIRFLOW_USE_UV:-true}
       AIRFLOW_VERSION: ${AIRFLOW_VERSION:-2.10.3}
       PY_VERSION: ${PY_VERSION:-3.10}
+      DBT_VERSION: ${DBT_VERSION:-1.8}
   env_file: .env
   environment:
     &airflow-common-env
