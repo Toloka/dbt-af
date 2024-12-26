@@ -40,14 +40,14 @@ ARG DBT_VERSION
 ARG AIRFLOW_USE_UV
 
 USER airflow
-RUN if [ "${AIRFLOW_USE_UV}" = "true" && "${AIRFLOW_VERSION}" \> "2.9.0" ]; then \
+RUN if [[ "${AIRFLOW_USE_UV}" == "true" && "${AIRFLOW_VERSION}" > "2.9.0" ]]; then \
       uv pip install -e "${AIRFLOW_HOME}/dbt_af[all]" && \
-      uv pip install "apache-airflow[uv]==${AIRFLOW_VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PY_VERSION}.txt \
-      && uv pip install "dbt-core==${DBT_VERSION}"; \
+      uv pip install "apache-airflow[uv]==${AIRFLOW_VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PY_VERSION}.txt" && \
+      uv pip install "dbt-core==${DBT_VERSION}"; \
     else \
       pip install -e "${AIRFLOW_HOME}/dbt_af[all]" && \
-      pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PY_VERSION}.txt \
-      && pip install "dbt-core==${DBT_VERSION}"; \
+      pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PY_VERSION}.txt" && \
+      pip install "dbt-core==${DBT_VERSION}"; \
     fi
 
 # CI: airflow image
