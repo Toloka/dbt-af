@@ -1,0 +1,6 @@
++description: |
+  two domains with task run in venv
+a:
+  +tags: 'a'
+b:
+  +tags: 'b'

@@ -14,7 +14,7 @@ from dbt_af.common.constants import DOMAIN_DAG_START_DATE_FMT
 from dbt_af.common.scheduling import BaseScheduleTag, ScheduleTag
 from dbt_af.common.utils import TestTag
 from dbt_af.conf import DbtDefaultTargetsConfig
-from dbt_af.parser.dbt_profiles import KubernetesTarget, Profile, Target
+from dbt_af.parser.dbt_profiles import KubernetesTarget, Profile, Target, VenvTarget
 
 
 class DbtModelMaintenanceType(enum.Enum):
@@ -228,7 +228,7 @@ class DbtNode(pydantic.BaseModel):
     version: Optional[str]
     latest_version: Optional[str]
 
-    target_details: Optional[Target | KubernetesTarget] = pydantic.Field(default=None)
+    target_details: Optional[Target | KubernetesTarget | VenvTarget] = pydantic.Field(default=None)
 
     def __hash__(self):
         return hash(self.unique_id)
@@ -358,7 +358,7 @@ class DbtNode(pydantic.BaseModel):
         return self.path.endswith('.py')
 
     def is_at_etl_service(self, etl_service_name) -> bool:
-        return etl_service_name in self.original_file_path
+        return any(part == etl_service_name for part in self.original_file_path.split('/'))
 
     def has_dt_partition(self) -> bool:
         # TODO: refactor this

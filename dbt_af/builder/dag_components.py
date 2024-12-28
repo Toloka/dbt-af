@@ -12,8 +12,9 @@ from dbt_af.operators.kubernetes_pod import DbtKubernetesPodOperator
 from dbt_af.operators.run import DbtRun, DbtSeed, DbtSnapshot, DbtTest
 from dbt_af.operators.sensors import AfExecutionDateFn, DbtExternalSensor, DbtSourceFreshnessSensor
 from dbt_af.operators.supplemental import TableauExtractsRefreshOperator
+from dbt_af.operators.venv import DbtPythonVenvOperator
 from dbt_af.parser.dbt_node_model import DbtNode, DbtNodeConfig
-from dbt_af.parser.dbt_profiles import KubernetesTarget
+from dbt_af.parser.dbt_profiles import KubernetesTarget, VenvTarget
 from dbt_af.parser.dbt_source_model import DbtSource
 
 
@@ -262,10 +263,22 @@ class DagModel(DagComponent):
             env=self.dbt_node.config.env,
         )
 
-    def _create_runner_task(self) -> DbtRun | DbtKubernetesPodOperator:
+    def _create_venv_runner_task(self) -> DbtPythonVenvOperator:
+        return DbtPythonVenvOperator(
+            task_id=self.safe_name,
+            task_group=self.task_group,
+            dag=self.domain_dag.af_dag,
+            dbt_model_path=self.dbt_node.path,
+            target_details=self.dbt_node.target_details,
+            dbt_af_config=self.domain_dag.config,
+            env=self.dbt_node.config.env,
+        )
+
+    def _create_runner_task(self) -> DbtRun | DbtKubernetesPodOperator | DbtPythonVenvOperator:
         if isinstance(self.dbt_node.target_details, KubernetesTarget):
             return self._create_k8s_runner_task()
-
+        if isinstance(self.dbt_node.target_details, VenvTarget):
+            return self._create_venv_runner_task()
         return self._create_dbt_runner_task()
 
     def _init_small_tests_af(self, delayed_deps: DagDelayedDependencyRegistry) -> Optional[EmptyOperator]:
@@ -302,7 +315,7 @@ class DagModel(DagComponent):
                     task_id=f'wait_freshness__{source_dep.name}__for__{self.safe_name}',
                     task_group=self.af_component,
                     dag=self.domain_dag.af_dag,
-                    env=self.model_task.env,
+                    env=self.model_task.env if hasattr(self.model_task, 'env') else {},
                     source_name=source_dep.source_name,
                     source_identifier=source_dep.identifier,
                     dbt_af_config=self.domain_dag.config,

@@ -595,6 +595,22 @@ def test_dags_domain_w_task_in_kubernetes_has_correct_dags(dags_domain_w_task_in
     assert nodes_operator_names(dags['b__daily'].tasks) == {'b1': 'DbtRun'}
 
 
+def test_dags_domain_w_task_in_venv_has_correct_dags(dags_domain_w_task_in_venv):
+    dags = dags_domain_w_task_in_venv
+    assert sorted(dags) == ['a__backfill', 'a__daily', 'b__backfill', 'b__daily']
+
+    assert sorted(dags['a__daily'].task_ids) == ['a1', 'b__daily__dependencies__group.wait__b1']
+    assert nodes_operator_names(dags['a__daily'].tasks) == {
+        'a1': 'DbtPythonVenvOperator',
+        'b__daily__dependencies__group.wait__b1': 'DbtExternalSensor',
+    }
+    assert node_ids(dags['a__daily'].task_dict['a1'].upstream_list) == ['b__daily__dependencies__group.wait__b1']
+    assert node_ids(dags['a__daily'].task_dict['a1'].downstream_list) == []
+
+    assert sorted(dags['b__daily'].task_ids) == ['b1']
+    assert nodes_operator_names(dags['b__daily'].tasks) == {'b1': 'DbtRun'}
+
+
 def test_dags_dags_domain_model_w_maintenance_has_correct_dags(dags_domain_model_w_maintenance, run_airflow_tasks):
     dags = dags_domain_model_w_maintenance
     assert sorted(dags) == ['a__backfill', 'a__daily', 'a__maintenance']
