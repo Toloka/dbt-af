@@ -57,7 +57,6 @@ pytest-socket = "*"
 pytest-mock = "*"
 dbt-postgres = "^1.7"
 psycopg2-binary = { version = "^2.9", markers = "sys_platform == 'linux'" }  # due to bug https://github.com/dbt-labs/dbt-postgres/issues/96
-dbt-databricks = "^1.7"
 pre-commit = "3.6.2"
 ipython = "^8"
 

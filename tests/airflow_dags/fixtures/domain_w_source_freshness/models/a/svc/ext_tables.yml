@@ -2,7 +2,6 @@ version: 2
 
 sources:
   - name: ext_tables
-    catalog: a
     schema: raw
 
     freshness:
