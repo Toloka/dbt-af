@@ -49,6 +49,7 @@ class Profile(BaseModel):
 
 class Profiles(BaseModel):
     profiles_config: dict[str, Any] = Field(alias='config', default_factory=dict)
+    flags: dict[str, Any] = Field(default_factory=dict)
 
     @root_validator
     def validate_profiles(cls, values: dict[str, Any]) -> dict[str, Any]:

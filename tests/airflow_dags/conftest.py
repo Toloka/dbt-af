@@ -138,7 +138,7 @@ def get_dbt_profiles_yaml_for_test():
         'threads': 1,
     }
     dbt_profiles = {
-        'config': {'send_anonymous_usage_stats': False},
+        'flags': {'send_anonymous_usage_stats': False},
         'main_profile': {
             'target': 'dev',
             'outputs': {
@@ -272,8 +272,10 @@ def mock_mcd_callbacks(mocker):
 @pytest.fixture
 def dbt_manifest(mocker):
     from dbt.adapters.postgres.impl import PostgresAdapter
+    from dbt.task.runnable import GraphRunnableTask
 
-    mocker.patch.object(PostgresAdapter, 'list_relations_without_caching', lambda *args, **kwargs: [])
+    mocker.patch.object(PostgresAdapter, 'set_relations_cache', return_value=None)
+    mocker.patch.object(GraphRunnableTask, 'execute_nodes', return_value=[])
 
     @contextlib.contextmanager
     def _dbt_manifest(fixture_name):
