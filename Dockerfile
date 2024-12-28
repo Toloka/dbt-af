@@ -15,8 +15,9 @@ FROM apache/airflow:${AIRFLOW_VERSION}-python${PY_VERSION} as base-airflow
 LABEL maintainer="Nikita Yurasov <nikitayurasov@toloka.ai>"
 SHELL ["/bin/bash", "-o", "pipefail", "-o", "errexit", "-o", "nounset", "-o", "xtrace", "-c"]
 # for faster builds
-ARG AIRFLOW_USE_UV="true"
 USER root
+
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 RUN apt-get update --allow-releaseinfo-change \
     && apt-get install --no-install-recommends -y \
@@ -40,15 +41,9 @@ ARG DBT_VERSION
 ARG AIRFLOW_USE_UV
 
 USER airflow
-RUN if [[ "${AIRFLOW_USE_UV}" == "true" && "${AIRFLOW_VERSION}" > "2.9.0" ]]; then \
-      uv pip install -e "${AIRFLOW_HOME}/dbt_af[all]" && \
-      uv pip install "apache-airflow[uv]==${AIRFLOW_VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PY_VERSION}.txt" && \
-      uv pip install "dbt-core==${DBT_VERSION}"; \
-    else \
-      pip install -e "${AIRFLOW_HOME}/dbt_af[all]" && \
-      pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PY_VERSION}.txt" && \
-      pip install "dbt-core==${DBT_VERSION}"; \
-    fi
+RUN uv pip install -e "${AIRFLOW_HOME}/dbt_af[all]" && \
+  uv pip install "apache-airflow[uv]==${AIRFLOW_VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PY_VERSION}.txt" && \
+  uv pip install "dbt-core==${DBT_VERSION}" "dbt-postgres==${DBT_VERSION}"
 
 # CI: airflow image
 FROM base-airflow as airflow-dbt-af-ci
@@ -88,12 +83,14 @@ COPY --chown=airflow:0 ./poetry.lock ${AIRFLOW_HOME}/dbt_af/poetry.lock
 USER root
 # reinstall apache-airflow and resolve dependencies with exact version of apache-airflow
 RUN poetry remove apache-airflow dbt-core dbt-postgres \
-    && poetry add apache-airflow==${AIRFLOW_VERSION} --extras cncf-kubernetes \
-    && poetry add dbt-core==${DBT_VERSION} \
-    && poetry add dbt-postgres==${DBT_VERSION} --optional \
+    && poetry add \
+      apache-airflow==${AIRFLOW_VERSION} --extras cncf-kubernetes  \
+    && poetry add \
+      dbt-core==${DBT_VERSION}  \
+      dbt-postgres==${DBT_VERSION} \
     && poetry export --with=dev --without-hashes --format=requirements.txt > requirements.txt
 USER airflow
-RUN pip install -e "${AIRFLOW_HOME}/dbt_af[all]" && pip install -r requirements.txt
+RUN uv pip install --no-deps -e "${AIRFLOW_HOME}/dbt_af[all]" && uv pip install -r requirements.txt
 
 RUN airflow db migrate
 
