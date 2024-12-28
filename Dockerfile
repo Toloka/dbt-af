@@ -87,9 +87,10 @@ COPY --chown=airflow:0 ./poetry.lock ${AIRFLOW_HOME}/dbt_af/poetry.lock
 
 USER root
 # reinstall apache-airflow and resolve dependencies with exact version of apache-airflow
-RUN poetry remove apache-airflow dbt-core \
+RUN poetry remove apache-airflow dbt-core dbt-postgres \
     && poetry add apache-airflow==${AIRFLOW_VERSION} --extras cncf-kubernetes \
     && poetry add dbt-core==${DBT_VERSION} \
+    && poetry add dbt-postgres==${DBT_VERSION} --optional \
     && poetry export --with=dev --without-hashes --format=requirements.txt > requirements.txt
 USER airflow
 RUN pip install -e "${AIRFLOW_HOME}/dbt_af[all]" && pip install -r requirements.txt
