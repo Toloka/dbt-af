@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.12.0
+
+Features:
+
+- add custom Python models to be run in a virtual environment.
+- add `--debug` flag to `dbt source freshness` command, if it's enabled in the main config
+
 ## v0.11.0
 
 Features:
