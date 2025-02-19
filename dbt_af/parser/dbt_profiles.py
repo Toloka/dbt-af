@@ -1,11 +1,10 @@
+import sys
 from typing import Any, Literal
 
 try:
     from pydantic.v1 import BaseModel, Field, root_validator
 except ModuleNotFoundError:
     from pydantic import BaseModel, Field, root_validator
-
-KUBERNETES_TARGET_TYPE = 'kubernetes'
 
 
 class Target(BaseModel):
@@ -42,9 +41,19 @@ class KubernetesTarget(Target):
     tolerations: list[KubernetesToleration]
 
 
+class VenvTarget(Target):
+    target_type: Literal['venv'] = Field(alias='type')
+    system_site_packages: bool
+    requirements: list[str] = Field(default_factory=list)
+    python_version: str = Field(default_factory=lambda: '.'.join(map(str, sys.version_info[:2])))
+    pip_install_options: list[str] = Field(default_factory=list)
+    index_urls: list[str] = Field(default_factory=list)
+    inherit_env: bool = False
+
+
 class Profile(BaseModel):
     target: str
-    outputs: dict[str, KubernetesTarget | Target]
+    outputs: dict[str, VenvTarget | KubernetesTarget | Target]
 
 
 class Profiles(BaseModel):

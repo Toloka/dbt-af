@@ -67,7 +67,10 @@ config = Config(
     is_dev=False,  # set to True if you want to turn on dry-run mode
 )
 
-dags = compile_dbt_af_dags(manifest_path='/path/to/my_dbt_project/target/manifest.json', config=config)
+dags = compile_dbt_af_dags(
+   manifest_path='/path/to/my_dbt_project/target/manifest.json', 
+   config=config,
+)
 for dag_name, dag in dags.items():
     globals()[dag_name] = dag
 ```

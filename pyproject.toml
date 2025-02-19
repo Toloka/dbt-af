@@ -31,6 +31,8 @@ cachetools = "^5.3"
 croniter = ">=3.0"
 typer = "~0.9"
 dbt-core = "^1.7"
+packaging = ">=21.0"
+virtualenv = ">=20.27.0" # https://github.com/pypa/virtualenv/pull/2782
 
 # tests extra
 pytest = { version = "*", optional = true }

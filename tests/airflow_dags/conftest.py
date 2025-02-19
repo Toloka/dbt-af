@@ -61,7 +61,7 @@ def get_config():
         return Config(
             dbt_project=DbtProjectConfig(
                 dbt_project_name='dwh',
-                dbt_models_path='.',
+                dbt_models_path=project_path / 'etl_service' / 'dbt' / 'models',
                 dbt_project_path=project_path,
                 dbt_profiles_path=project_path,
                 dbt_target_path=project_path,
@@ -154,6 +154,16 @@ def get_dbt_profiles_yaml_for_test():
                     'pod_cpu_guarantee': '1m',
                     'pod_memory_guarantee': '1Mi',
                     'tolerations': [{'key': 'fake_key', 'operator': 'fake_operator'}],
+                },
+                'fake_venv_target': {
+                    'type': 'venv',
+                    'schema': 'fake_schema',
+                    'requirements': ['pandas', 'numpy'],
+                    'system_site_packages': False,
+                    'python_version': '3.10',
+                    'pip_install_options': ['--no-cache-dir'],
+                    'index_urls': ['https://pypi.org/simple'],
+                    'inherit_env': True,
                 },
             },
         },
@@ -483,6 +493,12 @@ def dags_domain_w_source_freshness(compiled_main_dags):
 @pytest.fixture
 def dags_domain_w_task_in_kubernetes(compiled_main_dags):
     with compiled_main_dags('domain_w_task_in_kubernetes') as dags:
+        yield dags
+
+
+@pytest.fixture
+def dags_domain_w_task_in_venv(compiled_main_dags):
+    with compiled_main_dags('domain_w_task_in_venv') as dags:
         yield dags
 
 

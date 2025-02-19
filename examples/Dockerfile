@@ -19,6 +19,8 @@ COPY ./README.md ${AIRFLOW_HOME}/dbt_af/README.md
 
 RUN chown -R airflow:0 ${AIRFLOW_HOME}/dbt_af
 
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
 USER airflow
 
-RUN pip install -e "${AIRFLOW_HOME}/dbt_af[all]"
+RUN uv pip install -e "${AIRFLOW_HOME}/dbt_af[all]"

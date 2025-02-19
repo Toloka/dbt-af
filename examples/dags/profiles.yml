@@ -28,3 +28,17 @@ default:
       dbname: "{{ env_var('POSTGRES_DB') }}"
       schema: "{{ env_var('POSTGRES_SCHEMA') }}"
       threads: 1
+    ingest:
+      type: venv
+      schema: "{{ env_var('POSTGRES_SCHEMA') }}"
+      requirements:
+        - pandas
+        - numpy
+      system_site_packages: true
+      python_version: "3.10"
+      pip_install_options:
+        - "--no-cache-dir"
+      index_urls:
+        - "https://pypi.org/simple"
+      inherit_env: true
+
