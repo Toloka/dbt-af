@@ -1,6 +1,15 @@
 # Changelog
 
+## v0.12.1
+
+Fixes:
+- fix `poetry` version in release action
+- rebuild package to include all scripts
+
 ## v0.12.0
+
+> [!WARNING]
+> This release is yanked due to issues with a build process (scripts are not included in the package).
 
 Features:
 
