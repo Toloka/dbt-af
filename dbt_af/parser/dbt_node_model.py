@@ -1,3 +1,4 @@
+import datetime as dt
 import enum
 from collections import defaultdict
 from pathlib import Path
@@ -119,6 +120,8 @@ class DbtNodeConfig(pydantic.BaseModel):
     pre_hook: Optional[List[Dict[str, Any]]] = pydantic.Field(alias='pre-hook', default_factory=list)
 
     schedule: Optional[BaseScheduleTag] = pydantic.Field(default_factory=ScheduleTag.daily)
+    schedule_shift: int = pydantic.Field(default=0)
+    schedule_shift_unit: str = pydantic.Field(default='minute')
 
     dependencies: Optional[DefaultDict[str, DependencyConfig]] = pydantic.Field(
         default_factory=lambda: defaultdict(DependencyConfig)
@@ -147,7 +150,7 @@ class DbtNodeConfig(pydantic.BaseModel):
         arbitrary_types_allowed = True
 
     @pydantic.root_validator(pre=True)
-    def validate_clusters(cls, values):
+    def validate_values(cls, values):
         if values['materialized'] not in ('test', 'seed'):
             if not all(
                 [
@@ -158,6 +161,27 @@ class DbtNodeConfig(pydantic.BaseModel):
                 ]
             ):
                 raise ValueError('py_cluster, sql_cluster and daily_sql_cluster must be set')
+
+        # build schedule with shift if any
+        timeshift = None
+        if (
+            'schedule_shift' in values
+            and values['schedule_shift'] > 0
+            and 'schedule_shift_unit' in values
+            and values['schedule_shift_unit']
+            in (
+                'minute',
+                'hour',
+                'day',
+                'week',
+            )
+        ):
+            timeshift = dt.timedelta(**{f'{values["schedule_shift_unit"]}s': values['schedule_shift']})
+        if values.get('schedule') not in [item.value().name for item in ScheduleTag]:
+            values['schedule'] = ScheduleTag.daily(timeshift=timeshift)
+        else:
+            values['schedule'] = ScheduleTag[values['schedule'].lstrip('@')](timeshift=timeshift)
+
         return values
 
     @pydantic.root_validator(pre=True)
@@ -165,12 +189,6 @@ class DbtNodeConfig(pydantic.BaseModel):
         if 'airflow_parallelism' in values and isinstance(values['airflow_parallelism'], str):
             values['airflow_parallelism'] = int(values['airflow_parallelism'])
         return values
-
-    @pydantic.validator('schedule', pre=True)
-    def validate_schedule(cls, v):
-        if v not in [item.value().name for item in ScheduleTag]:
-            return ScheduleTag.daily()
-        return ScheduleTag[v.lstrip('@')]()
 
     @pydantic.validator('domain_start_date', pre=True)
     def validate_domain_start_date(cls, v):
