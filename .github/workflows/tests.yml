@@ -23,8 +23,7 @@ jobs:
         run: |
           poetry install --with=dev --all-extras
           
-          sudo apt-get update && sudo apt-get install -y python-setuptools
-          pip install --upgrade pip setuptools wheel
+          pip install --force-reinstall pip setuptools wheel
       - name: Create airflow database
         run: |
           poetry run airflow db migrate
