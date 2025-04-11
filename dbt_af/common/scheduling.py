@@ -166,6 +166,17 @@ class BaseScheduleTag(ABC):
             return None
         return CronExpression(af_schedule)
 
+    def update_name_with_shift(self) -> str:
+        full_days_shift, full_hours_shift, rest_minutes_shift = self.split_timeshift()
+        shifts = [
+            ('day', full_days_shift),
+            ('hour', full_hours_shift),
+            ('minute', rest_minutes_shift),
+        ]
+        shift_parts = [f'{value}_{unit}s' for unit, value in shifts if value > 0]
+        if shift_parts:
+            self.name += '_shift_' + '_'.join(shift_parts)
+
 
 class _MonthlyScheduleTag(BaseScheduleTag):
     name = '@monthly'
@@ -174,6 +185,8 @@ class _MonthlyScheduleTag(BaseScheduleTag):
 
     def __init__(self, timeshift: Optional[datetime.timedelta] = None):
         self.timeshift = timeshift or self.default_timeshift
+        if timeshift:
+            self.update_name_with_shift()
 
     def _af_repr_impl(self, full_days_shift: int, full_hours_shift: int, rest_minutes_shift: int):
         """
@@ -201,6 +214,8 @@ class _WeeklyScheduleTag(BaseScheduleTag):
 
     def __init__(self, timeshift: Optional[datetime.timedelta] = None):
         self.timeshift = timeshift or self.default_timeshift
+        if timeshift:
+            self.update_name_with_shift()
 
     def _af_repr_impl(self, full_days_shift: int, full_hours_shift: int, rest_minutes_shift: int):
         """
@@ -220,6 +235,8 @@ class _DailyScheduleTag(BaseScheduleTag):
 
     def __init__(self, timeshift: Optional[datetime.timedelta] = None):
         self.timeshift = timeshift or self.default_timeshift
+        if timeshift:
+            self.update_name_with_shift()
 
     def _af_repr_impl(self, full_days_shift: int, full_hours_shift: int, rest_minutes_shift: int):
         """
@@ -239,6 +256,8 @@ class _HourlyScheduleTag(BaseScheduleTag):
 
     def __init__(self, timeshift: Optional[datetime.timedelta] = None):
         self.timeshift = timeshift or self.default_timeshift
+        if timeshift:
+            self.update_name_with_shift()
 
     def _af_repr_impl(self, full_days_shift: int, full_hours_shift: int, rest_minutes_shift: int):
         """
@@ -258,6 +277,8 @@ class _Every15MinutesScheduleTag(BaseScheduleTag):
 
     def __init__(self, timeshift: Optional[datetime.timedelta] = None):
         self.timeshift = timeshift or self.default_timeshift
+        if timeshift:
+            self.update_name_with_shift()
 
     def _af_repr_impl(self, full_days_shift: int, full_hours_shift: int, rest_minutes_shift: int):
         """

@@ -31,6 +31,11 @@ def test_hourly_schedule_tag():
     assert _HourlyScheduleTag(datetime.timedelta(minutes=59)).timeshift == datetime.timedelta(minutes=59)
     assert _HourlyScheduleTag(datetime.timedelta(minutes=59)).af_repr() == '59 * * * *'
 
+    assert (
+        _HourlyScheduleTag(datetime.timedelta(minutes=22)).name
+        == '@hourly_shift_22_minutes'
+    )
+
     bad_timeshifts = [
         datetime.timedelta(minutes=60),
         datetime.timedelta(minutes=61),
@@ -56,6 +61,19 @@ def test_daily_schedule_tag():
 
     assert _DailyScheduleTag(datetime.timedelta(hours=23)).timeshift == datetime.timedelta(hours=23)
     assert _DailyScheduleTag(datetime.timedelta(hours=23)).af_repr() == '0 23 * * *'
+
+    assert (
+        _DailyScheduleTag(datetime.timedelta(minutes=22)).name
+        == '@daily_shift_22_minutes'
+    )
+    assert (
+        _DailyScheduleTag(datetime.timedelta(hours=5)).name
+        == '@daily_shift_5_hours'
+    )
+    assert (
+        _DailyScheduleTag(datetime.timedelta(minutes=22, hours=5)).name
+        == '@daily_shift_5_hours_22_minutes'
+    )
 
     bad_timeshifts = [
         datetime.timedelta(hours=24),
@@ -83,6 +101,23 @@ def test_weekly_schedule_tag():
 
     assert _WeeklyScheduleTag(datetime.timedelta(minutes=22, hours=5, days=3)).af_repr() == '22 5 * * 3'
 
+    assert (
+        _WeeklyScheduleTag(datetime.timedelta(minutes=22)).name
+        == '@weekly_shift_22_minutes'
+    )
+    assert (
+        _WeeklyScheduleTag(datetime.timedelta(hours=5)).name
+        == '@weekly_shift_5_hours'
+    )
+    assert (
+        _WeeklyScheduleTag(datetime.timedelta(days=3)).name
+        == '@weekly_shift_3_days'
+    )
+    assert (
+        _WeeklyScheduleTag(datetime.timedelta(minutes=22, hours=5, days=3)).name
+        == '@weekly_shift_3_days_5_hours_22_minutes'
+    )
+
     bad_timeshifts = [
         datetime.timedelta(days=7),
         datetime.timedelta(days=8),
@@ -106,6 +141,23 @@ def test_monthly_schedule_tag():
     assert _MonthlyScheduleTag(datetime.timedelta(days=30)).af_repr() == '0 0 30 * *'
 
     assert _MonthlyScheduleTag(datetime.timedelta(minutes=22, hours=5, days=3)).af_repr() == '22 5 3 * *'
+
+    assert (
+        _MonthlyScheduleTag(datetime.timedelta(minutes=22)).name
+        == '@monthly_shift_22_minutes'
+    )
+    assert (
+        _MonthlyScheduleTag(datetime.timedelta(hours=5)).name
+        == '@monthly_shift_5_hours'
+    )
+    assert (
+        _MonthlyScheduleTag(datetime.timedelta(days=3)).name
+        == '@monthly_shift_3_days'
+    )
+    assert (
+        _MonthlyScheduleTag(datetime.timedelta(minutes=22, hours=5, days=3)).name
+        == '@monthly_shift_3_days_5_hours_22_minutes'
+    )
 
     bad_timeshifts = [
         datetime.timedelta(days=32),
