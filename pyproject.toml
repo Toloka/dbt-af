@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "dbt-af"
 # note that this version is maintained by the release manager - do not update it manually
-version = "0.12.1"
+version = "0.12.2"
 description = "Distibuted dbt runs on Apache Airflow"
 authors = [
     "Nikita Yurasov <nikitayurasov@toloka.ai>",
@@ -29,7 +29,7 @@ apache-airflow-providers-cncf-kubernetes = ">=7.0.0"
 pydantic = ">=1.10,<3.0.0"
 cachetools = "^5.3"
 croniter = ">=3.0"
-typer = "~0.9"
+typer = ">=0.9"
 dbt-core = "^1.7"
 packaging = ">=21.0"
 virtualenv = ">=20.27.0" # https://github.com/pypa/virtualenv/pull/2782
