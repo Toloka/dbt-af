@@ -22,6 +22,7 @@ jobs:
       - name: Install project
         run: |
           poetry install --with=dev --all-extras
+          apt-get update && apt-get install -y python-setuptools
           pip install --upgrade pip setuptools wheel
       - name: Create airflow database
         run: |
