@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from datetime import datetime
 from functools import cache, cached_property, partial
 from typing import TYPE_CHECKING, Optional, Sequence, Union
@@ -29,6 +30,14 @@ _POKE_INTERVALS_SECONDS = {
 
 if TYPE_CHECKING:
     from airflow.utils.task_group import TaskGroup
+
+
+@cache
+def get_base_schedule_name(schedule: BaseScheduleTag) -> Optional[str]:
+    valid_name_tags = [tag.name for tag in ScheduleTag]
+    pattern = re.compile(rf"^({'|'.join(map(re.escape, valid_name_tags))})")
+    match = pattern.match(schedule.name)
+    return match.group(0) if match else None
 
 
 class _TaskScheduleMapping:
@@ -62,7 +71,7 @@ class _TaskScheduleMapping:
         """
         if not isinstance(default, list):
             default = [default]
-        stream_names = (key[0].name, key[1].name)
+        stream_names = (get_base_schedule_name(key[0]), get_base_schedule_name(key[1]))
         fns = self._mapping.get(stream_names, default)
         for fn in fns:
             self._update_upstream_cron_args(fn, upstream=key[0], downstream=key[1])
@@ -209,7 +218,9 @@ class DbtExternalSensor(ExternalTaskSensor):
             skipped_states=[State.NONE, State.SKIPPED],
             failed_states=[State.FAILED, State.UPSTREAM_FAILED],
             timeout=6 * 60 * 60,
-            poke_interval=_POKE_INTERVALS_SECONDS.get(dep_schedule.name, _DEFAULT_POKE_INTERVAL_SECONDS),
+            poke_interval=_POKE_INTERVALS_SECONDS.get(
+                get_base_schedule_name(dep_schedule), _DEFAULT_POKE_INTERVAL_SECONDS
+            ),
             exponential_backoff=False,
             **retry_policy,
             **kwargs,
