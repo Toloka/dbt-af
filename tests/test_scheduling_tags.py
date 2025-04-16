@@ -10,6 +10,7 @@ from dbt_af.common.scheduling import (
     _MonthlyScheduleTag,
     _WeeklyScheduleTag,
 )
+from dbt_af.operators.sensors import get_base_schedule_name
 
 
 def test_manual_schedule_tag():
@@ -154,3 +155,10 @@ def test_scheduling_tag_correct_comparison():
         < ScheduleTag.weekly()
         < ScheduleTag.monthly()
     )
+
+
+def test_base_schedule_name():
+    assert get_base_schedule_name(_HourlyScheduleTag(datetime.timedelta(minutes=22))) == '@hourly'
+    assert get_base_schedule_name(_DailyScheduleTag(datetime.timedelta(minutes=22, hours=5))) == '@daily'
+    assert get_base_schedule_name(_WeeklyScheduleTag(datetime.timedelta(minutes=22, hours=5, days=3))) == '@weekly'
+    assert get_base_schedule_name(_MonthlyScheduleTag(datetime.timedelta(minutes=22, hours=5, days=3))) == '@monthly'
