@@ -2,7 +2,7 @@ import datetime as dt
 import enum
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, DefaultDict, Dict, List, Optional, Union
+from typing import Any, DefaultDict, Dict, List, Literal, Optional, Union
 
 import pendulum
 
@@ -121,7 +121,7 @@ class DbtNodeConfig(pydantic.BaseModel):
 
     schedule: Optional[BaseScheduleTag] = pydantic.Field(default_factory=ScheduleTag.daily)
     schedule_shift: int = pydantic.Field(default=0)
-    schedule_shift_unit: str = pydantic.Field(default='minute')
+    schedule_shift_unit: Literal['minute', 'hour', 'day'] = pydantic.Field(default='minute')
 
     dependencies: Optional[DefaultDict[str, DependencyConfig]] = pydantic.Field(
         default_factory=lambda: defaultdict(DependencyConfig)
