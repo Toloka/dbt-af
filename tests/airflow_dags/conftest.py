@@ -526,3 +526,12 @@ def dags_domain_with_shift(compiled_main_dags):
     """
     with compiled_main_dags('domain_w_shift') as dags:
         yield dags
+
+
+@pytest.fixture
+def dags_two_domains_with_diff_scheduling_and_shifts(compiled_main_dags):
+    """
+    A1@hourly_shift_10_minutes -> B1@daily_shift_2_hours
+    """
+    with compiled_main_dags('two_domains_with_diff_scheduling_and_shifts') as dags:
+        yield dags
