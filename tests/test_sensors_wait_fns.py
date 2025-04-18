@@ -364,3 +364,23 @@ def test_daily_on_monthly(execution_date_during_the_day, execution_date_during_t
     assert fn_set_all[0](execution_date_during_the_night) == datetime(2023, 9, 1, 0, 0, 0)
 
     assert fn_set_last[0](execution_date_during_the_night + timedelta(days=6)) == datetime(2023, 9, 1, 0, 0, 0)
+
+
+def test_hourly_with_shift_15_m_on_hourly_with_shift_30_m(
+    execution_date_during_the_day, execution_date_during_the_night
+):
+    assert calculate_task_to_wait_execution_date(
+        datetime(2023, 10, 12, 16, 15, 0),
+        self_schedule=_HourlyScheduleTag(timedelta(minutes=15)),
+        upstream_schedule=_HourlyScheduleTag(timedelta(minutes=30)),
+    ) == datetime(2023, 10, 12, 15, 30, 0)
+
+
+def test_hourly_with_shift_30_m_on_hourly_with_shift_15_m(
+    execution_date_during_the_day, execution_date_during_the_night
+):
+    assert calculate_task_to_wait_execution_date(
+        datetime(2023, 10, 12, 16, 30, 0),
+        self_schedule=_HourlyScheduleTag(timedelta(minutes=30)),
+        upstream_schedule=_HourlyScheduleTag(timedelta(minutes=15)),
+    ) == datetime(2023, 10, 12, 16, 15, 0)
