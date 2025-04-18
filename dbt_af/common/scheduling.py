@@ -131,6 +131,8 @@ class BaseScheduleTag(ABC):
     def __lt__(self, other):
         if not isinstance(other, BaseScheduleTag):
             return NotImplemented
+        if self.level == other.level:
+            return self.timeshift < other.timeshift
         return self.level < other.level
 
     def __eq__(self, other: Union[str, 'BaseScheduleTag']):
