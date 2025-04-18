@@ -96,7 +96,7 @@ def calculate_task_to_wait_execution_date(
     upstream_cron = upstream_schedule.cron_expression()
     interval_stop_dttm: datetime = croniter(self_cron.raw_cron_expression, execution_date).get_next(datetime)
 
-    if self_schedule < upstream_schedule:
+    if self_schedule < upstream_schedule or self_schedule.level == upstream_schedule.level:
         cron_iter = croniter(upstream_cron.raw_cron_expression, interval_stop_dttm)
         cron_iter.get_prev()
         return cron_iter.get_prev(datetime)
