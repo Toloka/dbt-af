@@ -12,7 +12,7 @@ except ModuleNotFoundError:
     import pydantic
 
 from dbt_af.common.constants import DOMAIN_DAG_START_DATE_FMT
-from dbt_af.common.scheduling import BaseScheduleTag, ScheduleTag
+from dbt_af.common.scheduling import BaseScheduleTag, EScheduleTag
 from dbt_af.common.utils import TestTag
 from dbt_af.conf import DbtDefaultTargetsConfig
 from dbt_af.parser.dbt_profiles import KubernetesTarget, Profile, Target, VenvTarget
@@ -119,7 +119,7 @@ class DbtNodeConfig(pydantic.BaseModel):
     post_hook: Optional[List[Dict[str, Any]]] = pydantic.Field(alias='post-hook', default_factory=list)
     pre_hook: Optional[List[Dict[str, Any]]] = pydantic.Field(alias='pre-hook', default_factory=list)
 
-    schedule: Optional[BaseScheduleTag] = pydantic.Field(default_factory=ScheduleTag.daily)
+    schedule: Optional[BaseScheduleTag] = pydantic.Field(default_factory=EScheduleTag.daily)
     schedule_shift: int = pydantic.Field(default=0)
     schedule_shift_unit: Literal['minute', 'hour', 'day'] = pydantic.Field(default='minute')
 
@@ -177,10 +177,10 @@ class DbtNodeConfig(pydantic.BaseModel):
             )
         ):
             timeshift = dt.timedelta(**{f'{values["schedule_shift_unit"]}s': values['schedule_shift']})
-        if values.get('schedule') not in [item.value().name for item in ScheduleTag]:
-            values['schedule'] = ScheduleTag.daily(timeshift=timeshift)
+        if values.get('schedule') not in [item.value().name for item in EScheduleTag]:
+            values['schedule'] = EScheduleTag.daily(timeshift=timeshift)
         else:
-            values['schedule'] = ScheduleTag[values['schedule'].lstrip('@')](timeshift=timeshift)
+            values['schedule'] = EScheduleTag[values['schedule'].lstrip('@')](timeshift=timeshift)
 
         return values
 
@@ -330,7 +330,7 @@ class DbtNode(pydantic.BaseModel):
             return default_dbt_targets.default_for_tests_target
 
         if len(self.config.pre_hook) == 0 and self.model_type == 'sql':
-            if self.config.schedule in (ScheduleTag.daily(), ScheduleTag.weekly()):
+            if self.config.schedule in (EScheduleTag.daily(), EScheduleTag.weekly()):
                 return self.config.daily_sql_cluster
 
             return self.config.sql_cluster

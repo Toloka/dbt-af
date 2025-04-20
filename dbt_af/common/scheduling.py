@@ -3,105 +3,42 @@ import re
 from abc import ABC, abstractmethod
 from enum import Enum
 from functools import cache
-from typing import List, Optional, Union
 
-from attrs import define, field
-from croniter import croniter, croniter_range
-
-
-@define(order=False)
-class CronExpression:
-    raw_cron_expression: str = field(validator=lambda _, __, val: croniter.is_valid(val))
-
-    def __eq__(self, other):
-        if not isinstance(other, (CronExpression, str)):
-            return NotImplemented
-        if isinstance(other, str):
-            return self.raw_cron_expression == other
-        return self.raw_cron_expression == other.raw_cron_expression
-
-    def embeddings_number(self, other: 'CronExpression | None', is_upstream_bigger: bool) -> int:
-        """
-        Calculate how many times this cron expression can be embedded into another one over a given period.
-        """
-        if other is None:
-            return 0
-        if not isinstance(other, CronExpression):
-            raise ValueError(f'Comparison must be with another CronExpression, got {other}')
-        if is_upstream_bigger:
-            return 0
-
-        now = datetime.datetime.now()
-        self_cron_iter = croniter(self.raw_cron_expression, now)
-        start_interval = self_cron_iter.get_next(datetime.datetime)
-        end_interval = self_cron_iter.get_next(datetime.datetime)
-
-        dts = list(
-            croniter_range(
-                start_interval,
-                end_interval,
-                other.raw_cron_expression,
-                ret_type=datetime.datetime,
-                expand_from_start_time=True,
-            )
-        )
-        if dts and dts[-1] == end_interval:
-            # both ends are inclusive, so we need to remove the last element if it's equal to the end_interval
-            dts.pop()
-
-        return len(dts)
-
-    def _split_cron_expression(self) -> List[str]:
-        return self.raw_cron_expression.split()
-
-    @property
-    def minutes(self) -> int:
-        minutes_part = self._split_cron_expression()[0]
-        if minutes_part == '*':
-            return 0
-        return int(minutes_part)
-
-    @property
-    def hours(self) -> int:
-        hours_part = self._split_cron_expression()[1]
-        if hours_part == '*':
-            return 0
-        return int(hours_part)
-
-    @property
-    def days(self) -> int:
-        days_part = self._split_cron_expression()[2]
-        if days_part == '*':
-            return 1
-        return int(days_part)
-
-    @property
-    def months(self) -> int:
-        months_part = self._split_cron_expression()[3]
-        if months_part == '*':
-            return 1
-        return int(months_part)
-
-    @property
-    def weekdays(self) -> int:
-        weekdays_part = self._split_cron_expression()[4]
-        if weekdays_part == '*':
-            return 0
-        return int(weekdays_part)
+from dbt_af.common.cron import CronExpression
 
 
 class BaseScheduleTag(ABC):
-    timeshift: Optional[datetime.timedelta]
     default_timeshift = datetime.timedelta()
 
-    @abstractmethod
-    def __init__(self, timeshift: Optional[datetime.timedelta] = None):
-        raise NotImplementedError()
+    def __init__(self, timeshift: datetime.timedelta | None = None):
+        if timeshift is not None:
+            if self.default_cron_expression is None:
+                raise ValueError('Cannot set timeshift for manual schedule tag')
+            if timeshift >= self.default_cron_expression.distance_between_two_runs():
+                raise ValueError(f'Cannot shift schedule tag "{self.base_name}" by {timeshift}')
+        self.timeshift = timeshift or self.default_timeshift
 
     @property
     @abstractmethod
-    def name(self) -> str:
+    def base_name(self) -> str:
         raise NotImplementedError()
+
+    @property
+    def name(self) -> str:
+        if self.timeshift == self.default_timeshift or self.timeshift is None:
+            return self.base_name
+
+        full_days_shift, full_hours_shift, rest_minutes_shift = self.split_timeshift()
+        shifts = [
+            ('day', full_days_shift),
+            ('hour', full_hours_shift),
+            ('minute', rest_minutes_shift),
+        ]
+        shift_parts = [f'{value}_{unit}s' for unit, value in shifts if value > 0]
+        if shift_parts:
+            return f'{self.base_name}_shift_{"_".join(shift_parts)}'
+
+        return self.base_name
 
     @property
     @abstractmethod
@@ -135,7 +72,7 @@ class BaseScheduleTag(ABC):
             return self.timeshift < other.timeshift
         return self.level < other.level
 
-    def __eq__(self, other: Union[str, 'BaseScheduleTag']):
+    def __eq__(self, other: 'str | BaseScheduleTag'):
         if isinstance(other, str):
             return self.name == other
         if isinstance(other, BaseScheduleTag):
@@ -168,29 +105,11 @@ class BaseScheduleTag(ABC):
             return None
         return CronExpression(af_schedule)
 
-    def try_update_name_with_shift(self) -> None:
-        if self.timeshift == self.default_timeshift:
-            return
-
-        full_days_shift, full_hours_shift, rest_minutes_shift = self.split_timeshift()
-        shifts = [
-            ('day', full_days_shift),
-            ('hour', full_hours_shift),
-            ('minute', rest_minutes_shift),
-        ]
-        shift_parts = [f'{value}_{unit}s' for unit, value in shifts if value > 0]
-        if shift_parts:
-            self.name += '_shift_' + '_'.join(shift_parts)
-
 
 class _MonthlyScheduleTag(BaseScheduleTag):
-    name = '@monthly'
+    base_name = '@monthly'
     default_cron_expression = CronExpression('0 0 1 * *')
     level = 5
-
-    def __init__(self, timeshift: Optional[datetime.timedelta] = None):
-        self.timeshift = timeshift or self.default_timeshift
-        self.try_update_name_with_shift()
 
     def _af_repr_impl(self, full_days_shift: int, full_hours_shift: int, rest_minutes_shift: int):
         """
@@ -212,13 +131,9 @@ class _MonthlyScheduleTag(BaseScheduleTag):
 
 
 class _WeeklyScheduleTag(BaseScheduleTag):
-    name = '@weekly'
+    base_name = '@weekly'
     default_cron_expression = CronExpression('0 0 * * 0')
     level = 4
-
-    def __init__(self, timeshift: Optional[datetime.timedelta] = None):
-        self.timeshift = timeshift or self.default_timeshift
-        self.try_update_name_with_shift()
 
     def _af_repr_impl(self, full_days_shift: int, full_hours_shift: int, rest_minutes_shift: int):
         """
@@ -232,13 +147,9 @@ class _WeeklyScheduleTag(BaseScheduleTag):
 
 
 class _DailyScheduleTag(BaseScheduleTag):
-    name = '@daily'
+    base_name = '@daily'
     default_cron_expression = CronExpression('0 0 * * *')
     level = 3
-
-    def __init__(self, timeshift: Optional[datetime.timedelta] = None):
-        self.timeshift = timeshift or self.default_timeshift
-        self.try_update_name_with_shift()
 
     def _af_repr_impl(self, full_days_shift: int, full_hours_shift: int, rest_minutes_shift: int):
         """
@@ -252,13 +163,9 @@ class _DailyScheduleTag(BaseScheduleTag):
 
 
 class _HourlyScheduleTag(BaseScheduleTag):
-    name = '@hourly'
+    base_name = '@hourly'
     default_cron_expression = CronExpression('0 * * * *')
     level = 2
-
-    def __init__(self, timeshift: Optional[datetime.timedelta] = None):
-        self.timeshift = timeshift or self.default_timeshift
-        self.try_update_name_with_shift()
 
     def _af_repr_impl(self, full_days_shift: int, full_hours_shift: int, rest_minutes_shift: int):
         """
@@ -272,13 +179,9 @@ class _HourlyScheduleTag(BaseScheduleTag):
 
 
 class _Every15MinutesScheduleTag(BaseScheduleTag):
-    name = '@every15minutes'
+    base_name = '@every15minutes'
     default_cron_expression = CronExpression('*/15 * * * *')
     level = 1
-
-    def __init__(self, timeshift: Optional[datetime.timedelta] = None):
-        self.timeshift = timeshift or self.default_timeshift
-        self.try_update_name_with_shift()
 
     def _af_repr_impl(self, full_days_shift: int, full_hours_shift: int, rest_minutes_shift: int):
         """
@@ -293,11 +196,12 @@ class _Every15MinutesScheduleTag(BaseScheduleTag):
 
 
 class _ManualScheduleTag(BaseScheduleTag):
-    name = '@manual'
+    base_name = '@manual'
     default_cron_expression = None
     level = 0
 
-    def __init__(self, timeshift: Optional[datetime.timedelta] = None):
+    def __init__(self, timeshift: datetime.timedelta | None = None):
+        super().__init__(timeshift)
         self.timeshift = None
 
     @staticmethod
@@ -309,12 +213,12 @@ class _ManualScheduleTag(BaseScheduleTag):
         return None
 
 
-class ScheduleTag(Enum):
+class EScheduleTag(Enum):
     """
     Schedule tags for dbt models.
     Only these tags are supported.
 
-    Enum's key must be equal to the ScheduleTag name.
+    Enum's key must be equal to the EScheduleTag name.
     """
 
     monthly = _MonthlyScheduleTag
@@ -343,12 +247,12 @@ class ScheduleTag(Enum):
         return self.value.name
 
     def __lt__(self, other):
-        if not isinstance(other, ScheduleTag):
+        if not isinstance(other, EScheduleTag):
             return NotImplemented
         return self.value.level < other.value.level
 
     def __eq__(self, other):
-        if isinstance(other, ScheduleTag):
+        if isinstance(other, EScheduleTag):
             return self.value.name == other.value.name
         if isinstance(other, str):
             return self.value.name == other

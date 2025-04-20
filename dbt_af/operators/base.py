@@ -14,13 +14,13 @@ from airflow.operators.bash import BashOperator
 from airflow.utils.context import Context
 
 from dbt_af.common.constants import DBT_COMPILE_POOL
-from dbt_af.common.scheduling import BaseScheduleTag, ScheduleTag
+from dbt_af.common.scheduling import BaseScheduleTag, EScheduleTag
 from dbt_af.common.utils import find_latest_log_file, init_environment
 from dbt_af.conf import Config, RetryPolicy
 
 
 def get_delay_by_schedule(schedule_tag):
-    if schedule_tag is not None and schedule_tag == ScheduleTag.hourly():
+    if schedule_tag is not None and schedule_tag == EScheduleTag.hourly():
         return {'execution_timeout': timedelta(minutes=60)}
     return {'execution_timeout': timedelta(hours=6)}
 
