@@ -412,6 +412,12 @@ def test_hourly_with_shift_30_m_on_hourly_with_shift_15_m():
             datetime(2023, 10, 12, 16, 30, 0),
             datetime(2023, 10, 12, 16, 0, 0),
         ),
+        (
+            _HourlyScheduleTag(timedelta(minutes=30)),
+            _HourlyScheduleTag(timedelta(minutes=30)),
+            datetime(2023, 10, 12, 16, 30, 0),
+            datetime(2023, 10, 12, 16, 30, 0),
+        ),
         # daily
         (
             _DailyScheduleTag(),
@@ -431,6 +437,12 @@ def test_hourly_with_shift_30_m_on_hourly_with_shift_15_m():
             datetime(2023, 10, 12, 3, 0, 0),
             datetime(2023, 10, 12, 0, 0, 0),
         ),
+        (
+            _DailyScheduleTag(timedelta(hours=3)),
+            _DailyScheduleTag(timedelta(hours=3)),
+            datetime(2023, 10, 12, 3, 0, 0),
+            datetime(2023, 10, 12, 3, 0, 0),
+        ),
         # monthly
         (
             _MonthlyScheduleTag(),
@@ -449,6 +461,12 @@ def test_hourly_with_shift_30_m_on_hourly_with_shift_15_m():
             _MonthlyScheduleTag(timedelta(days=7)),
             datetime(2023, 10, 7, 0, 0, 0),
             datetime(2023, 10, 1, 0, 0, 0),
+        ),
+        (
+            _MonthlyScheduleTag(timedelta(days=7)),
+            _MonthlyScheduleTag(timedelta(days=7)),
+            datetime(2023, 10, 7, 0, 0, 0),
+            datetime(2023, 10, 7, 0, 0, 0),
         ),
     ],
 )
