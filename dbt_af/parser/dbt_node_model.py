@@ -177,7 +177,7 @@ class DbtNodeConfig(pydantic.BaseModel):
             )
         ):
             timeshift = dt.timedelta(**{f'{values["schedule_shift_unit"]}s': values['schedule_shift']})
-        if values.get('schedule') not in [item.value().name for item in EScheduleTag]:
+        if values.get('schedule') not in [item().name for item in EScheduleTag]:
             values['schedule'] = EScheduleTag.daily(timeshift=timeshift)
         else:
             values['schedule'] = EScheduleTag[values['schedule'].lstrip('@')](timeshift=timeshift)

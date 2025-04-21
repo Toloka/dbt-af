@@ -74,9 +74,9 @@ class BaseScheduleTag(ABC):
 
     def __eq__(self, other: 'str | BaseScheduleTag'):
         if isinstance(other, str):
-            return self.name == other
+            return self.base_name == other
         if isinstance(other, BaseScheduleTag):
-            return self.name == other.name and self.timeshift == other.timeshift
+            return self.base_name == other.base_name
         raise TypeError(f'Cannot compare {self} with {other}')
 
     @property
@@ -231,6 +231,10 @@ class EScheduleTag(Enum):
     @property
     def name(self):
         return self.value.name
+
+    @property
+    def base_name(self):
+        return self.value.base_name
 
     @property
     def level(self):

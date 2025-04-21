@@ -1,6 +1,5 @@
 import logging
 import os
-from datetime import datetime
 from functools import cached_property, partial
 from typing import TYPE_CHECKING, Optional, Sequence
 
@@ -9,9 +8,12 @@ from airflow.models.dag import DAG
 from airflow.sensors.external_task import ExternalTaskSensor
 from airflow.sensors.python import PythonSensor
 from airflow.utils.state import State
-from croniter import croniter, croniter_range
 
-from dbt_af.common.af_scheduling_utils import GLOBAL_TASK_SCHEDULE_MAPPINGS, _TaskScheduleMapping
+from dbt_af.common.af_scheduling_utils import (
+    GLOBAL_TASK_SCHEDULE_MAPPINGS,
+    _TaskScheduleMapping,
+    calculate_task_to_wait_execution_date,
+)
 from dbt_af.common.constants import DBT_SENSOR_POOL
 from dbt_af.common.scheduling import BaseScheduleTag, EScheduleTag
 from dbt_af.conf import Config
@@ -24,47 +26,12 @@ _DEFAULT_WAIT_TIMEOUT = 24 * 60 * 60
 _DEFAULT_POKE_INTERVAL_SECONDS = 30 * 60
 _RETRIES_COUNT = 30
 _POKE_INTERVALS_SECONDS = {
-    EScheduleTag.every15minutes.name: 30,
-    EScheduleTag.hourly.name: 2 * 60,
-    EScheduleTag.daily.name: 5 * 60,
-    EScheduleTag.weekly.name: 30 * 60,
-    EScheduleTag.monthly.name: 45 * 60,
+    EScheduleTag.every15minutes.base_name: 30,
+    EScheduleTag.hourly.base_name: 2 * 60,
+    EScheduleTag.daily.base_name: 5 * 60,
+    EScheduleTag.weekly.base_name: 30 * 60,
+    EScheduleTag.monthly.base_name: 45 * 60,
 }
-
-
-def calculate_task_to_wait_execution_date(
-    execution_date: datetime,
-    self_schedule: BaseScheduleTag,
-    upstream_schedule: BaseScheduleTag,
-    num_iter: int | None = None,
-):
-    """
-    this function calculates the correct nearest execution date for the upstream task to wait for.
-
-    :param num_iter: number of iterations to go back in time
-        by default it's None, which means that the function will return the last possible execution date.
-        this parameter is used for the 'all' wait policy to iterate over all possible execution dates
-    """
-    self_cron = self_schedule.cron_expression()
-    upstream_cron = upstream_schedule.cron_expression()
-    interval_stop_dttm: datetime = croniter(self_cron.raw_cron_expression, execution_date).get_next(datetime)
-
-    if self_schedule < upstream_schedule or self_schedule.level == upstream_schedule.level:
-        cron_iter = croniter(upstream_cron.raw_cron_expression, interval_stop_dttm)
-        cron_iter.get_prev()
-        return cron_iter.get_prev(datetime)
-
-    all_dts = list(
-        croniter_range(execution_date, interval_stop_dttm, upstream_cron.raw_cron_expression, ret_type=datetime)
-    )
-
-    if all_dts and all_dts[-1] == interval_stop_dttm:
-        all_dts.pop()
-
-    if num_iter is None:
-        return all_dts[-1]
-
-    return all_dts[num_iter]
 
 
 def get_execution_date_fn_mapping(
