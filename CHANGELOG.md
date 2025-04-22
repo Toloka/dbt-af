@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.12.2
+
+Chore:
+- update `typer` requirement to `>=0.9` version
+
 ## v0.12.1
 
 Fixes:
