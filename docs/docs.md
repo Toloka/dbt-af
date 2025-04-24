@@ -4,15 +4,17 @@
 
 1. [Model Config](#dbt-model-config-options)
     1. [schedule](#schedule)
-    2. [dependencies](#dependencies-_dictstr-dependencyconfig_)
-    3. [enable_from_dttm](#enable_from_dttm-_str_)
-    4. [disable_from_dttm](#disable_from_dttm-_str_)
-    5. [domain_start_date](#domain_start_date-_str_)
-    6. [dbt_target](#dbt_target-_str_)
-    7. [env](#env-dictstr-str)
-    8. [py_cluster, sql_cluster, daily_sql_cluster, bf_cluster](#py_cluster-sql_cluster-daily_sql_cluster-bf_cluster-_str_)
-    9. [maintenance](#maintenance-_dbtafmaintenanceconfig_)
-    10. [tableau_refresh_tasks](#tableau_refresh_tasks-_listtableaurefreshtaskconfig_)
+    2. [schedule_shift](#schedule_shift-_str_)
+    3. [schedule_shift_unit](#schedule_shift_unit-_str_)
+    4. [dependencies](#dependencies-_dictstr-dependencyconfig_)
+    5. [enable_from_dttm](#enable_from_dttm-_str_)
+    6. [disable_from_dttm](#disable_from_dttm-_str_)
+    7. [domain_start_date](#domain_start_date-_str_)
+    8. [dbt_target](#dbt_target-_str_)
+    9. [env](#env-dictstr-str)
+    10. [py_cluster, sql_cluster, daily_sql_cluster, bf_cluster](#py_cluster-sql_cluster-daily_sql_cluster-bf_cluster-_str_)
+    11. [maintenance](#maintenance-_dbtafmaintenanceconfig_)
+    12. [tableau_refresh_tasks](#tableau_refresh_tasks-_listtableaurefreshtaskconfig_)
 
 ## dbt model config options
 
@@ -30,6 +32,22 @@ Tag to define the schedule of the model. Supported tags are:
 - **@every15minutes** model will be run every 15 minutes (equals to `*/15 * * * *` cron schedule)
 - **@manual** - special tag to mark the model has no schedule. Read more about it
   in [tutorial](../examples/manual_scheduling.md)
+
+###### schedule_shift (_str_)
+
+Shift the schedule of the model for N units. 
+Unit is parameterized by [schedule_shift_unit](#schedule_shift_unit-_str_).
+
+Resulted airflow DAG will have name `<domain>_<schedule>_shift_<schedule_shift>_<schedule_shift_unit>s`.
+
+###### schedule_shift_unit (_str_)
+
+Schedule shift unit. Supported units are:
+
+- **minute**
+- **hour**
+- **day**
+- **week**
 
 ###### dependencies (_dict[str, DependencyConfig]_)
 
