@@ -1,7 +1,8 @@
+import datetime as dt
 import enum
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, DefaultDict, Dict, List, Optional, Union
+from typing import Any, DefaultDict, Dict, List, Literal, Optional, Union
 
 import pendulum
 
@@ -11,7 +12,7 @@ except ModuleNotFoundError:
     import pydantic
 
 from dbt_af.common.constants import DOMAIN_DAG_START_DATE_FMT
-from dbt_af.common.scheduling import BaseScheduleTag, ScheduleTag
+from dbt_af.common.scheduling import BaseScheduleTag, EScheduleTag
 from dbt_af.common.utils import TestTag
 from dbt_af.conf import DbtDefaultTargetsConfig
 from dbt_af.parser.dbt_profiles import KubernetesTarget, Profile, Target, VenvTarget
@@ -118,7 +119,9 @@ class DbtNodeConfig(pydantic.BaseModel):
     post_hook: Optional[List[Dict[str, Any]]] = pydantic.Field(alias='post-hook', default_factory=list)
     pre_hook: Optional[List[Dict[str, Any]]] = pydantic.Field(alias='pre-hook', default_factory=list)
 
-    schedule: Optional[BaseScheduleTag] = pydantic.Field(default_factory=ScheduleTag.daily)
+    schedule: Optional[BaseScheduleTag] = pydantic.Field(default_factory=EScheduleTag.daily)
+    schedule_shift: int = pydantic.Field(default=0)
+    schedule_shift_unit: Literal['minute', 'hour', 'day'] = pydantic.Field(default='minute')
 
     dependencies: Optional[DefaultDict[str, DependencyConfig]] = pydantic.Field(
         default_factory=lambda: defaultdict(DependencyConfig)
@@ -147,7 +150,7 @@ class DbtNodeConfig(pydantic.BaseModel):
         arbitrary_types_allowed = True
 
     @pydantic.root_validator(pre=True)
-    def validate_clusters(cls, values):
+    def validate_values(cls, values):
         if values['materialized'] not in ('test', 'seed'):
             if not all(
                 [
@@ -158,6 +161,27 @@ class DbtNodeConfig(pydantic.BaseModel):
                 ]
             ):
                 raise ValueError('py_cluster, sql_cluster and daily_sql_cluster must be set')
+
+        # build schedule with shift if any
+        timeshift = None
+        if (
+            'schedule_shift' in values
+            and values['schedule_shift'] > 0
+            and 'schedule_shift_unit' in values
+            and values['schedule_shift_unit']
+            in (
+                'minute',
+                'hour',
+                'day',
+                'week',
+            )
+        ):
+            timeshift = dt.timedelta(**{f'{values["schedule_shift_unit"]}s': values['schedule_shift']})
+        if values.get('schedule') not in [item().name for item in EScheduleTag]:
+            values['schedule'] = EScheduleTag.daily(timeshift=timeshift)
+        else:
+            values['schedule'] = EScheduleTag[values['schedule'].lstrip('@')](timeshift=timeshift)
+
         return values
 
     @pydantic.root_validator(pre=True)
@@ -165,12 +189,6 @@ class DbtNodeConfig(pydantic.BaseModel):
         if 'airflow_parallelism' in values and isinstance(values['airflow_parallelism'], str):
             values['airflow_parallelism'] = int(values['airflow_parallelism'])
         return values
-
-    @pydantic.validator('schedule', pre=True)
-    def validate_schedule(cls, v):
-        if v not in [item.value().name for item in ScheduleTag]:
-            return ScheduleTag.daily()
-        return ScheduleTag[v.lstrip('@')]()
 
     @pydantic.validator('domain_start_date', pre=True)
     def validate_domain_start_date(cls, v):
@@ -312,7 +330,7 @@ class DbtNode(pydantic.BaseModel):
             return default_dbt_targets.default_for_tests_target
 
         if len(self.config.pre_hook) == 0 and self.model_type == 'sql':
-            if self.config.schedule in (ScheduleTag.daily(), ScheduleTag.weekly()):
+            if self.config.schedule in (EScheduleTag.daily(), EScheduleTag.weekly()):
                 return self.config.daily_sql_cluster
 
             return self.config.sql_cluster

@@ -665,3 +665,74 @@ def test_task_with_tableau_integration_has_correct_dags(dags_task_with_tableau_i
 
     if run_airflow_tasks:
         run_all_tasks_in_dag(dags, additional_expected_ti_states=(TaskInstanceState.SKIPPED,))
+
+
+def test_domain_with_shift(
+    dags_domain_with_shift,
+    run_airflow_tasks,
+):
+    dags = dags_domain_with_shift
+
+    assert sorted(dags) == [
+        'a__backfill',
+        'a__daily_shift_5_hours',
+        'a__every15minutes_shift_3_minutes',
+        'a__hourly_shift_5_minutes',
+        'a__monthly_shift_1_days_6_hours',
+        'a__monthly_shift_2_days',
+        'a__weekly_shift_2_days',
+    ]
+    a1 = dags['a__every15minutes_shift_3_minutes']
+    a2 = dags['a__hourly_shift_5_minutes']
+    a3 = dags['a__daily_shift_5_hours']
+    a4 = dags['a__weekly_shift_2_days']
+    a5 = dags['a__monthly_shift_2_days']
+    a6 = dags['a__monthly_shift_1_days_6_hours']
+
+    assert a1.dag_id == 'a__every15minutes_shift_3_minutes'
+    assert sorted(a1.task_ids) == ['a1']
+    assert node_ids(a1.task_dict['a1'].upstream_list) == []
+
+    assert a2.dag_id == 'a__hourly_shift_5_minutes'
+
+    assert a3.dag_id == 'a__daily_shift_5_hours'
+
+    assert a4.dag_id == 'a__weekly_shift_2_days'
+
+    assert a5.dag_id == 'a__monthly_shift_2_days'
+
+    assert a6.dag_id == 'a__monthly_shift_1_days_6_hours'
+
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
+
+
+def test_two_domains_with_diff_scheduling_and_shifts(
+    dags_two_domains_with_diff_scheduling_and_shifts,
+    run_airflow_tasks,
+):
+    dags = dags_two_domains_with_diff_scheduling_and_shifts
+
+    assert sorted(dags) == [
+        'a__backfill',
+        'a__hourly_shift_10_minutes',
+        'b__backfill',
+        'b__daily_shift_2_hours',
+    ]
+
+    a_hourly = dags['a__hourly_shift_10_minutes']
+    b_daily = dags['b__daily_shift_2_hours']
+
+    assert a_hourly.dag_id == 'a__hourly_shift_10_minutes'
+    assert sorted(a_hourly.task_ids) == ['a1']
+    assert node_ids(a_hourly.task_dict['a1'].upstream_list) == []
+
+    assert b_daily.dag_id == 'b__daily_shift_2_hours'
+    assert sorted(b_daily.task_ids) == ['a__hourly_shift_10_minutes__dependencies__group.wait__a1', 'b1']
+    assert node_ids(b_daily.task_dict['a__hourly_shift_10_minutes__dependencies__group.wait__a1'].upstream_list) == []
+    assert node_ids(b_daily.task_dict['b1'].upstream_list) == [
+        'a__hourly_shift_10_minutes__dependencies__group.wait__a1'
+    ]
+
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)

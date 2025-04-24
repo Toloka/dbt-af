@@ -512,3 +512,26 @@ def dags_domain_model_w_maintenance(compiled_main_dags):
 def dags_task_with_tableau_integration(compiled_main_dags):
     with compiled_main_dags('task_with_tableau_integration', with_tableau=True) as dags:
         yield dags
+
+
+@pytest.fixture
+def dags_domain_with_shift(compiled_main_dags):
+    """
+    A1@every15minutes_shift_3_minutes
+    A2@hourly_shift_5_minutes
+    A3@daily_shift_5_hours
+    A4@weekly_shift_2_days
+    A5@monthly_shift_2_days
+    A6@monthly_shift_1_days_6_hours
+    """
+    with compiled_main_dags('domain_w_shift') as dags:
+        yield dags
+
+
+@pytest.fixture
+def dags_two_domains_with_diff_scheduling_and_shifts(compiled_main_dags):
+    """
+    A1@hourly_shift_10_minutes -> B1@daily_shift_2_hours
+    """
+    with compiled_main_dags('two_domains_with_diff_scheduling_and_shifts') as dags:
+        yield dags

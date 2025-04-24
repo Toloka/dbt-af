@@ -1,0 +1,16 @@
++description: |
+  one domain, 6 nodes with different schedules and shifts
+  
+  A1@every15minutes_shift_3_minutes
+  A2@hourly_shift_5_minutes
+  A3@daily_shift_5_hours
+  A4@weekly_shift_2_days
+  A5@monthly_shift_2_days
+  A6@monthly_shift_1_days_6_hours
+
+    
+    
+    
+    
+    
+    

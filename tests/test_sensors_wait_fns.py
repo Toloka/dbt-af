@@ -364,3 +364,120 @@ def test_daily_on_monthly(execution_date_during_the_day, execution_date_during_t
     assert fn_set_all[0](execution_date_during_the_night) == datetime(2023, 9, 1, 0, 0, 0)
 
     assert fn_set_last[0](execution_date_during_the_night + timedelta(days=6)) == datetime(2023, 9, 1, 0, 0, 0)
+
+
+def test_hourly_with_shift_15_m_on_hourly_with_shift_30_m():
+    """
+    @hourly_shift_15_minutes with an interval [16:15, 17:15]
+    waits for @hourly_shift_30_minutes with an interval [15:30, 16:30]
+    """
+    assert calculate_task_to_wait_execution_date(
+        datetime(2023, 10, 12, 16, 15, 0),
+        self_schedule=_HourlyScheduleTag(timedelta(minutes=15)),
+        upstream_schedule=_HourlyScheduleTag(timedelta(minutes=30)),
+    ) == datetime(2023, 10, 12, 15, 30, 0)
+
+
+def test_hourly_with_shift_30_m_on_hourly_with_shift_15_m():
+    """
+    @hourly_shift_30_minutes with an interval [16:30, 17:30]
+    waits for @hourly_shift_15_minutes with an interval [16:15, 17:15]
+    """
+    assert calculate_task_to_wait_execution_date(
+        datetime(2023, 10, 12, 16, 30, 0),
+        self_schedule=_HourlyScheduleTag(timedelta(minutes=30)),
+        upstream_schedule=_HourlyScheduleTag(timedelta(minutes=15)),
+    ) == datetime(2023, 10, 12, 16, 15, 0)
+
+
+@pytest.mark.parametrize(
+    'upstream_schedule, downstream_schedule, execution_date, expected_wait_execution_date',
+    [
+        # hourly
+        (
+            _HourlyScheduleTag(),
+            _HourlyScheduleTag(),
+            datetime(2023, 10, 12, 16, 0, 0),
+            datetime(2023, 10, 12, 16, 0, 0),
+        ),
+        (
+            _HourlyScheduleTag(timedelta(minutes=30)),
+            _HourlyScheduleTag(),
+            datetime(2023, 10, 12, 16, 0, 0),
+            datetime(2023, 10, 12, 15, 30, 0),
+        ),
+        (
+            _HourlyScheduleTag(),
+            _HourlyScheduleTag(timedelta(minutes=30)),
+            datetime(2023, 10, 12, 16, 30, 0),
+            datetime(2023, 10, 12, 16, 0, 0),
+        ),
+        (
+            _HourlyScheduleTag(timedelta(minutes=30)),
+            _HourlyScheduleTag(timedelta(minutes=30)),
+            datetime(2023, 10, 12, 16, 30, 0),
+            datetime(2023, 10, 12, 16, 30, 0),
+        ),
+        # daily
+        (
+            _DailyScheduleTag(),
+            _DailyScheduleTag(),
+            datetime(2023, 10, 12, 0, 0, 0),
+            datetime(2023, 10, 12, 0, 0, 0),
+        ),
+        (
+            _DailyScheduleTag(timedelta(hours=3)),
+            _DailyScheduleTag(),
+            datetime(2023, 10, 12, 0, 0, 0),
+            datetime(2023, 10, 11, 3, 0, 0),
+        ),
+        (
+            _DailyScheduleTag(),
+            _DailyScheduleTag(timedelta(hours=3)),
+            datetime(2023, 10, 12, 3, 0, 0),
+            datetime(2023, 10, 12, 0, 0, 0),
+        ),
+        (
+            _DailyScheduleTag(timedelta(hours=3)),
+            _DailyScheduleTag(timedelta(hours=3)),
+            datetime(2023, 10, 12, 3, 0, 0),
+            datetime(2023, 10, 12, 3, 0, 0),
+        ),
+        # monthly
+        (
+            _MonthlyScheduleTag(),
+            _MonthlyScheduleTag(),
+            datetime(2023, 10, 1, 0, 0, 0),
+            datetime(2023, 10, 1, 0, 0, 0),
+        ),
+        (
+            _MonthlyScheduleTag(timedelta(days=7)),
+            _MonthlyScheduleTag(),
+            datetime(2023, 10, 1, 0, 0, 0),
+            datetime(2023, 9, 7, 0, 0, 0),
+        ),
+        (
+            _MonthlyScheduleTag(),
+            _MonthlyScheduleTag(timedelta(days=7)),
+            datetime(2023, 10, 7, 0, 0, 0),
+            datetime(2023, 10, 1, 0, 0, 0),
+        ),
+        (
+            _MonthlyScheduleTag(timedelta(days=7)),
+            _MonthlyScheduleTag(timedelta(days=7)),
+            datetime(2023, 10, 7, 0, 0, 0),
+            datetime(2023, 10, 7, 0, 0, 0),
+        ),
+    ],
+)
+def test_schedule_on_same_schedule(
+    upstream_schedule, downstream_schedule, execution_date, expected_wait_execution_date
+):
+    assert (
+        calculate_task_to_wait_execution_date(
+            execution_date,
+            self_schedule=downstream_schedule,
+            upstream_schedule=upstream_schedule,
+        )
+        == expected_wait_execution_date
+    )

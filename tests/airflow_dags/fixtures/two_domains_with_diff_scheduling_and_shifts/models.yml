@@ -1,0 +1,8 @@
++description: |
+  two domains with different scheduling and shifts
+  A1@hourly_shift_10_minutes -> B1@daily_shift_2_hours
+
+a:
+  +tags: 'a'
+b:
+  +tags: 'b'

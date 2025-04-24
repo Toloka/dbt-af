@@ -6,7 +6,7 @@ from airflow.utils.task_group import TaskGroup
 
 from dbt_af.builder.domain_dag import DomainDag
 from dbt_af.builder.task_dependencies import DagDelayedDependencyRegistry
-from dbt_af.common.scheduling import ScheduleTag
+from dbt_af.common.scheduling import EScheduleTag
 from dbt_af.operators.branch import DbtBranchOperator, create_decision_path_function
 from dbt_af.operators.kubernetes_pod import DbtKubernetesPodOperator
 from dbt_af.operators.run import DbtRun, DbtSeed, DbtSnapshot, DbtTest
@@ -114,8 +114,8 @@ class DagComponent:
         return (
             dep.domain_dag != self.domain_dag
             and self.add_external_dependencies
-            and dep.domain_dag.schedule != ScheduleTag.manual()
-            and self.domain_dag.schedule != ScheduleTag.manual()
+            and dep.domain_dag.schedule != EScheduleTag.manual()
+            and self.domain_dag.schedule != EScheduleTag.manual()
         )
 
     def _init_dependencies_per_domain_af(self, delayed_deps: DagDelayedDependencyRegistry):

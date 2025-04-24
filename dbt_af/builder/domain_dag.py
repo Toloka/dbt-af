@@ -7,7 +7,7 @@ from airflow.operators.python import BranchPythonOperator
 
 from dbt_af.builder.task_dependencies import RegistryDomainDependencies
 from dbt_af.common import constants
-from dbt_af.common.scheduling import BaseScheduleTag, ScheduleTag
+from dbt_af.common.scheduling import BaseScheduleTag, EScheduleTag
 from dbt_af.conf import Config
 
 
@@ -28,7 +28,7 @@ class DomainDag:
         catchup: bool = True,
     ):
         self.domain_name = domain_name
-        self._schedule = schedule or ScheduleTag.daily()
+        self._schedule = schedule or EScheduleTag.daily()
         self.config: Config = config or Config()
 
         self.additional_tags: list[str] = additional_tags or []
@@ -60,7 +60,7 @@ class DomainDag:
     def tags(self) -> list[str]:
         pure_domain_name = self.domain_name.split('__')[0]
         merged_tags = (self._base_tags or []) + [pure_domain_name, self.schedule.safe_name] + self.additional_tags
-        if self.schedule != ScheduleTag.manual() and constants.BACKFILL_TAG not in merged_tags:
+        if self.schedule != EScheduleTag.manual() and constants.BACKFILL_TAG not in merged_tags:
             merged_tags.append(constants.FRONTIER_TAG)
 
         return merged_tags
@@ -99,7 +99,7 @@ class BackfillDomainDag(DomainDag):
 
     @property
     def schedule(self) -> BaseScheduleTag:
-        return ScheduleTag.daily()
+        return EScheduleTag.daily()
 
     def wrap_dag_with_endpoints(self):
         """
@@ -139,7 +139,7 @@ class MaintenanceDomainDag(DomainDag):
 
     @property
     def schedule(self) -> BaseScheduleTag:
-        return ScheduleTag.daily()
+        return EScheduleTag.daily()
 
 
 class LargeTestsDomainDag(DomainDag):
@@ -162,7 +162,7 @@ class LargeTestsDomainDag(DomainDag):
 
     @property
     def schedule(self) -> BaseScheduleTag:
-        return ScheduleTag.daily()
+        return EScheduleTag.daily()
 
 
 class DomainDagFactory:
