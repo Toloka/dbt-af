@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.13.0
+
+Features:
+- Add schedule shift functionality to dbt model's config:
+  ```yaml
+  config:
+    schedule: @hourly
+    schedule_shift: 30  # any positive integer
+    schedule_shift_unit: minute  # any from minute/hour/day/week
+  ```
+
 ## v0.12.2
 
 Chore:
