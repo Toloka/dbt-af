@@ -26,7 +26,7 @@ class DbtSourceConfig(pydantic.BaseModel):
 
 
 class DbtSource(pydantic.BaseModel):
-    database: str
+    database: Optional[str]
     node_schema: Optional[str] = pydantic.Field(..., alias='schema')
     name: str
     resource_type: str
