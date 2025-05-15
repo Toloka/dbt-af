@@ -34,12 +34,8 @@ class DbtBaseOperator(BashOperator):
         return 'PATH_TO_DBT=$DBT_PROJECT_DIR && '
 
     def generate_bash(self, **kwargs) -> str:
-        return (
-            self._patch_path_to_dbt_bash(**kwargs)
-            + ' cd $PATH_TO_DBT  && {dbt_executable_path} {debug} {cli} '
-            '--profiles-dir $DBT_PROFILES_DIR '
-            '--project-dir $PATH_TO_DBT '
-            '--target {target_environment}'.format(dbt_executable_path=self.dbt_af_config.dbt_executable_path, **kwargs)
+        return self._patch_path_to_dbt_bash(**kwargs) + ' cd $PATH_TO_DBT  && {dbt_executable_path} {cli} '.format(
+            dbt_executable_path=self.dbt_af_config.dbt_executable_path, **kwargs
         )
 
     def __init__(
@@ -55,11 +51,22 @@ class DbtBaseOperator(BashOperator):
     ) -> None:
         self.dbt_af_config = dbt_af_config
 
-        self.debug = '--debug' if self.dbt_af_config.debug_mode_enabled else ''
         self.cli = self.cli_command
 
         self.target_environment = target_environment or dbt_af_config.dbt_default_targets.default_target
         assert self.target_environment, 'Target environment must be specified'
+
+        # base bash options and flags
+        self.bash_options = {
+            '--profiles-dir': '$DBT_PROFILES_DIR',
+            '--project-dir': '$PATH_TO_DBT',
+        }
+        self.bash_flags = set()
+        # populate initial bash options and flags
+        if self.dbt_af_config.debug_mode_enabled:
+            self.bash_flags.add('--debug')
+        if '--target' not in self.bash_options:
+            self.bash_options['--target'] = self.target_environment
 
         kwargs.update(get_delay_by_schedule(schedule_tag))
         af_pool = pool or f'dbt_{self.target_environment}' if dbt_af_config.use_dbt_target_specific_pools else None
@@ -79,19 +86,25 @@ class DbtBaseOperator(BashOperator):
             **kwargs,
         )
 
+    def _render_full_bash_command(self) -> None:
+        raw_bash_options = ' '.join(f'{option} {value}' for option, value in self.bash_options.items() if value)
+        raw_bash_flags = ' '.join(self.bash_flags)
+        self.bash_command += f' {raw_bash_options} {raw_bash_flags}'
+
     def execute(self, context: Context):
         with TemporaryDirectory(dir=self.dbt_af_config.dbt_project.dbt_target_path) as tmp_target_path:
-            # copy manifest.json to tmp target path to isolate it
+            # copy manifest.json to tmp a target path to isolate it
             shutil.copy(
                 self.dbt_af_config.dbt_project.dbt_project_path / 'target/manifest.json',
                 f'{tmp_target_path}/manifest.json',
             )
 
-            self.bash_command += f' --target-path {tmp_target_path}'
+            self.bash_options['--target-path'] = tmp_target_path
             if self.dbt_af_config.is_dev:
-                # there is no dry-run mode in dbt, so we use -h flag just for empty dbt run
-                self.bash_command += ' -h'
+                # there is no dry-run mode in dbt, so we use `-h` flag just for empty dbt run
+                self.bash_flags.add('-h')
 
+            self._render_full_bash_command()
             super().execute(context)
 
             if self.dbt_af_config.mcd and self.dbt_af_config.mcd.artifacts_export_enabled:
@@ -199,11 +212,11 @@ class DbtIntervalActionOperator(DbtBaseOperator):
             '\n'.join(f'{k}={v}' for k, v in updated_context['params'].items()),
         )
 
-        self.bash_command += (
-            f" --vars '{json.dumps(DbtModelVars(**updated_context['params'], overlap=self.overlap).dict())}'"
-        )
-
         super().execute(updated_context)
+
+        self.bash_options['--vars'] = (
+            f"'{json.dumps(DbtModelVars(**updated_context['params'], overlap=self.overlap).dict())}'"
+        )
 
     @staticmethod
     def _time_delta_logic(context):
@@ -236,10 +249,6 @@ class DbtIntervalActionOperator(DbtBaseOperator):
 
 
 class DbtBaseActionOperator(DbtIntervalActionOperator):
-    def generate_bash(self, **kwargs):
-        base_bash = super().generate_bash(**kwargs)
-        return base_bash + ' --select {model_name}'.format(**kwargs)
-
     def __init__(
         self,
         model_name: str,
@@ -253,6 +262,7 @@ class DbtBaseActionOperator(DbtIntervalActionOperator):
         self.overlap = overlap
 
         super().__init__(schedule_tag=schedule_tag, **kwargs)
+        self.bash_options['--select'] = self.model_name
 
     def _patch_path_to_dbt_bash(self, **kwargs) -> str:
         return (
