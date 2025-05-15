@@ -211,12 +211,11 @@ class DbtIntervalActionOperator(DbtBaseOperator):
             'Context params:\n%s',
             '\n'.join(f'{k}={v}' for k, v in updated_context['params'].items()),
         )
-
-        super().execute(updated_context)
-
         self.bash_options['--vars'] = (
             f"'{json.dumps(DbtModelVars(**updated_context['params'], overlap=self.overlap).dict())}'"
         )
+
+        super().execute(updated_context)
 
     @staticmethod
     def _time_delta_logic(context):

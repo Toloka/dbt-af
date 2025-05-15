@@ -76,7 +76,6 @@ def dbt_run_model_dag(config: Config) -> dict[str, DAG]:
         default_args=DEFAULT_DAG_ARGS,
         max_active_runs=config.max_active_dag_runs,
         tags=[dbt_project_name, 'dbt', 'system'],
-        render_template_as_native_obj=True,
         params={
             DBT_MODEL_DAG_PARAM: Param(
                 '',
