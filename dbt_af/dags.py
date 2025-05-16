@@ -1,3 +1,4 @@
+import datetime as dt
 import json
 from typing import Optional
 
@@ -7,7 +8,14 @@ from airflow.models.param import Param
 
 from dbt_af.builder.dbt_af_builder import BackfillDomainDag, DbtAfGraph, get_domain_dag_start_date
 from dbt_af.common.af_callbacks import collect_af_custom_callbacks
-from dbt_af.common.constants import DBT_MODEL_DAG_PARAM, DEFAULT_DAG_ARGS
+from dbt_af.common.constants import (
+    DBT_CLI_COMMAND_EXTRA_FLAGS,
+    DBT_CLI_COMMAND_EXTRA_OPTIONS,
+    DBT_MODEL_DAG_PARAM,
+    DEFAULT_DAG_ARGS,
+    OTHER_DBT_CLI_OPTIONS,
+    OTHER_DBT_CLI_OPTIONS_DEFAULT,
+)
 from dbt_af.conf import Config
 from dbt_af.operators.run import DbtRun
 
@@ -69,9 +77,64 @@ def dbt_run_model_dag(config: Config) -> dict[str, DAG]:
         max_active_runs=config.max_active_dag_runs,
         tags=[dbt_project_name, 'dbt', 'system'],
         params={
-            DBT_MODEL_DAG_PARAM: Param('', type='string'),
-            'start_dttm': Param('2000-01-01T00:00:00', type='string'),
-            'end_dttm': Param('2000-01-01T00:00:00', type='string'),
+            DBT_MODEL_DAG_PARAM: Param(
+                '',
+                type='string',
+                title='Models selector',
+                description_md=(
+                    'Refer to the [dbt documentation](https://docs.getdbt.com/reference/node-selection/syntax) '
+                    'for detailed information on how to specify the models selector.'
+                ),
+            ),
+            'start_dttm': Param(
+                f'{dt.date.today()-dt.timedelta(days=1)}T{dt.time(hour=0, minute=0, second=0)}',
+                type='string',
+                format='date-time',
+                title='Interval start datetime',
+                description_md='Could be accessible in dbt model using `{{ var("start_dttm") }}`',
+            ),
+            'end_dttm': Param(
+                f'{dt.date.today()}T{dt.time(hour=0, minute=0, second=0)}',
+                type='string',
+                format='date-time',
+                title='Interval end datetime',
+                description_md='Could be accessible in dbt model using `{{ var("end_dttm") }}`',
+            ),
+            'target': Param(
+                '',
+                description_md=(
+                    'Optional override of target environment (used as `--target` option). '
+                    'Available target environments can be found in `profiles.yml`.'
+                ),
+                type=['null', 'string'],
+            ),
+            'full-refresh': Param(
+                False,
+                type='boolean',
+                title='Full refresh',
+                description_md=(
+                    'If specified, dbt will drop incremental models and fully-recalculate the incremental '
+                    'table from the model definition.'
+                ),
+            ),
+            OTHER_DBT_CLI_OPTIONS: Param(
+                OTHER_DBT_CLI_OPTIONS_DEFAULT,
+                type=['object', 'null'],
+                title='Extra arguments',
+                description_md=(
+                    'Extra arguments to pass to dbt run command. See `dbt run --help` for more details. '
+                    'Will be passed to the command as `--option1 value1 --option2 value2`'
+                ),
+                section='Extra arguments',
+            ),
+            DBT_CLI_COMMAND_EXTRA_OPTIONS: Param(
+                ['target'],
+                const=['target'],
+            ),
+            DBT_CLI_COMMAND_EXTRA_FLAGS: Param(
+                ['full-refresh'],
+                const=['full-refresh'],
+            ),
         },
         **dag_callbacks,
     )

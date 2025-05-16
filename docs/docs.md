@@ -35,7 +35,7 @@ Tag to define the schedule of the model. Supported tags are:
 
 ###### schedule_shift (_str_)
 
-Shift the schedule of the model for N units. 
+Shift the schedule of the model for N units.
 Unit is parameterized by [schedule_shift_unit](#schedule_shift_unit-_str_).
 
 Resulted airflow DAG will have name `<domain>_<schedule>_shift_<schedule_shift>_<schedule_shift_unit>s`.
@@ -195,3 +195,49 @@ models:
           resource_type: workbook  # or datasource
 ```
 
+## `dbt_run_model` DAG
+
+If you enable the parameter `include_single_model_manual_dag` in the `Config`, it will generate a separate DAG for your
+dbt project named `<dbt_project_name>_dbt_run_model`. This DAG is particularly useful for executing arbitrary `dbt run`
+commands in scenarios where you need to:
+
+- Backfill data into specific models
+- Manually run newly created models
+- Re-run models after code changes for a larger time range
+
+To use this functionality, navigate to the DAG and manually trigger it by pressing the "Play" button. Once triggered,
+you will be prompted to fill out an input form with all required parameters. Below is an illustration of the input form:
+
+![dbt_run_model](static/dbt_run_model.png)
+
+### Available Input Parameters
+
+1. **Model Selector**:
+    - Specify the model by its name (e.g., `jaffle_shop.ods.orders`).
+    - For models that include special selection syntax (e.g., `jaffle_shop.ods.orders+`), refer to
+      the [dbt documentation on node selection syntax](https://docs.getdbt.com/reference/node-selection/syntax) for more
+      information.
+
+2. **Interval Start Datetime**:
+    - The start datetime that will be passed to the model and can be accessed via `{{ var("start_dttm") }}`.
+
+3. **Interval End Datetime**:
+    - The end datetime that will be passed to the model and can be accessed via `{{ var("end_dttm") }}`.
+
+4. **Target** *(optional)*:
+    - The target name to override the default target.
+
+5. **Full Refresh** *(optional)*:
+    - When set to `True`, the model will be run with the `--full-refresh` flag.
+
+6. **Extra Arguments**:
+    - You can pass additional options and flags to the dbt command. To do this, provide them in the **Extra arguments**
+      section using JSON format, as shown in the example below:
+
+```json  
+{
+  "--option1": "value1",
+  "--option2": "value2",
+  "--flag": ""
+}  
+```  

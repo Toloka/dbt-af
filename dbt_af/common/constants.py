@@ -3,7 +3,12 @@ import datetime
 DBT_SENSOR_POOL = 'dbt_sensor_pool'
 DBT_COMPILE_POOL = 'dbt_compile_pool'
 
+# dbt_run_model DAG's params
 DBT_MODEL_DAG_PARAM = 'dbt_select_model'
+OTHER_DBT_CLI_OPTIONS = 'other_dbt_cli_options'
+OTHER_DBT_CLI_OPTIONS_DEFAULT = {'--option': 'value'}
+DBT_CLI_COMMAND_EXTRA_OPTIONS = '_dbt_cli_command_extra_options'
+DBT_CLI_COMMAND_EXTRA_FLAGS = '_dbt_cli_command_extra_flags'
 
 DEFAULT_DAG_ARGS = {'owner': 'airflow', 'retries': 1, 'retry_delay': datetime.timedelta(minutes=1)}
 

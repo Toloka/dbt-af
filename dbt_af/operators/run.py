@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Optional
 from airflow import Dataset
 
 from dbt_af.common.constants import DBT_MODEL_DAG_PARAM
+from dbt_af.common.utils import build_dbt_run_model_bash_extra_options
 from dbt_af.conf import Config
 from dbt_af.operators.base import DbtBaseActionOperator
 
@@ -26,9 +27,12 @@ class DbtBaseDatasetOperator(DbtBaseActionOperator):
     def execute(self, context: 'Context'):
         if 'params' in context:
             if DBT_MODEL_DAG_PARAM in context['params'] and self.model_name == DBT_MODEL_DAG_PARAM:
-                self.bash_command = self.bash_command.replace(
-                    DBT_MODEL_DAG_PARAM, context['params'][DBT_MODEL_DAG_PARAM]
-                )
+                # handle case for dbt_run_model DAG
+                self.bash_options['--select'] = context['params'][DBT_MODEL_DAG_PARAM]
+
+                bash_options, bash_flags = build_dbt_run_model_bash_extra_options(context['params'])
+                self.bash_options.update(bash_options)
+                self.bash_flags.update(bash_flags)
 
         super().execute(context)
 
