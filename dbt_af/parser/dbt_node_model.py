@@ -209,7 +209,7 @@ class DbtNodeColumn(pydantic.BaseModel):
 
 
 class DbtNode(pydantic.BaseModel):
-    database: Optional[str]  # for iceberg it is None
+    database: Optional[str]
     node_schema: str = pydantic.Field(..., alias='schema')
     name: str
     resource_type: str
