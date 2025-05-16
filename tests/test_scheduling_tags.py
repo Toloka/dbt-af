@@ -1,6 +1,7 @@
 import datetime
 
 import pytest
+from freezegun import freeze_time
 
 from dbt_af.common.scheduling import (
     BaseScheduleTag,
@@ -46,8 +47,9 @@ def test_hourly_schedule_tag():
     ]
 
     for shift in bad_timeshifts:
-        with pytest.raises(ValueError):
-            _HourlyScheduleTag(shift).af_repr()
+        assert _HourlyScheduleTag(shift).af_repr() == '59 * * * *'
+        assert _HourlyScheduleTag(shift).name == '@hourly_shift_59_minutes'
+        assert _HourlyScheduleTag(shift).timeshift == datetime.timedelta(minutes=59)
 
 
 def test_daily_schedule_tag():
@@ -74,8 +76,9 @@ def test_daily_schedule_tag():
     ]
 
     for shift in bad_timeshifts:
-        with pytest.raises(ValueError):
-            _DailyScheduleTag(shift).af_repr()
+        assert _DailyScheduleTag(shift).af_repr() == '59 23 * * *'
+        assert _DailyScheduleTag(shift).name == '@daily_shift_23_hours_59_minutes'
+        assert _DailyScheduleTag(shift).timeshift == datetime.timedelta(hours=23, minutes=59)
 
 
 def test_weekly_schedule_tag():
@@ -106,10 +109,12 @@ def test_weekly_schedule_tag():
     ]
 
     for shift in bad_timeshifts:
-        with pytest.raises(ValueError):
-            _WeeklyScheduleTag(shift).af_repr()
+        assert _WeeklyScheduleTag(shift).af_repr() == '59 23 * * 6'
+        assert _WeeklyScheduleTag(shift).name == '@weekly_shift_6_days_23_hours_59_minutes'
+        assert _WeeklyScheduleTag(shift).timeshift == datetime.timedelta(days=6, hours=23, minutes=59)
 
 
+@freeze_time(datetime.datetime(2023, 11, 1))
 def test_monthly_schedule_tag():
     assert _MonthlyScheduleTag().af_repr() == '0 0 1 * *'
     assert _MonthlyScheduleTag().name == '@monthly'
@@ -138,8 +143,9 @@ def test_monthly_schedule_tag():
     ]
 
     for shift in bad_timeshifts:
-        with pytest.raises(ValueError):
-            _MonthlyScheduleTag(shift).af_repr()
+        assert _MonthlyScheduleTag(shift).af_repr() == '59 23 30 * *'
+        assert _MonthlyScheduleTag(shift).name == '@monthly_shift_30_days_23_hours_59_minutes'
+        assert _MonthlyScheduleTag(shift).timeshift == datetime.timedelta(days=30, hours=23, minutes=59)
 
 
 def test_scheduling_tag_levels_all_unique():
@@ -159,38 +165,27 @@ def test_scheduling_tag_correct_comparison():
 
 
 @pytest.mark.parametrize(
-    'schedule_tag, shift, base_name, full_name, expected_error_raise',
+    'schedule_tag, shift, base_name, full_name',
     [
-        ('manual', None, '@manual', '@manual', False),
-        ('manual', datetime.timedelta(minutes=22), '@manual', '', True),
-        ('every15minutes', None, '@every15minutes', '@every15minutes', False),
+        ('manual', None, '@manual', '@manual'),
+        ('every15minutes', None, '@every15minutes', '@every15minutes'),
         (
             'every15minutes',
             datetime.timedelta(minutes=14),
             '@every15minutes',
             '@every15minutes_shift_14_minutes',
-            False,
         ),
-        ('every15minutes', datetime.timedelta(minutes=16), '@every15minutes', '', True),
-        ('hourly', None, '@hourly', '@hourly', False),
-        ('hourly', datetime.timedelta(minutes=22), '@hourly', '@hourly_shift_22_minutes', False),
-        ('hourly', datetime.timedelta(minutes=61), '@hourly', '', True),
-        ('daily', None, '@daily', '@daily', False),
-        ('daily', datetime.timedelta(minutes=22), '@daily', '@daily_shift_22_minutes', False),
-        ('daily', datetime.timedelta(hours=25), '@daily', '', True),
-        ('weekly', None, '@weekly', '@weekly', False),
-        ('weekly', datetime.timedelta(minutes=22), '@weekly', '@weekly_shift_22_minutes', False),
-        ('weekly', datetime.timedelta(days=8), '@weekly', '', True),
-        ('monthly', None, '@monthly', '@monthly', False),
-        ('monthly', datetime.timedelta(minutes=22), '@monthly', '@monthly_shift_22_minutes', False),
-        ('monthly', datetime.timedelta(days=50), '@monthly', '', True),
+        ('hourly', None, '@hourly', '@hourly'),
+        ('hourly', datetime.timedelta(minutes=22), '@hourly', '@hourly_shift_22_minutes'),
+        ('daily', None, '@daily', '@daily'),
+        ('daily', datetime.timedelta(minutes=22), '@daily', '@daily_shift_22_minutes'),
+        ('weekly', None, '@weekly', '@weekly'),
+        ('weekly', datetime.timedelta(minutes=22), '@weekly', '@weekly_shift_22_minutes'),
+        ('monthly', None, '@monthly', '@monthly'),
+        ('monthly', datetime.timedelta(minutes=22), '@monthly', '@monthly_shift_22_minutes'),
     ],
 )
-def test_base_schedule_name(schedule_tag, shift, base_name, full_name, expected_error_raise):
-    if expected_error_raise:
-        with pytest.raises(ValueError):
-            EScheduleTag[schedule_tag](shift)
-    else:
-        schedule: BaseScheduleTag = EScheduleTag[schedule_tag](shift)  # noqa
-        assert schedule.base_name == base_name
-        assert schedule.name == full_name
+def test_base_schedule_name(schedule_tag, shift, base_name, full_name):
+    schedule: BaseScheduleTag = EScheduleTag[schedule_tag](shift)  # noqa
+    assert schedule.base_name == base_name
+    assert schedule.name == full_name

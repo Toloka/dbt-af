@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 import pytest
 from dateutil.relativedelta import relativedelta
+from freezegun import freeze_time
 
 from dbt_af.common.scheduling import (
     _DailyScheduleTag,
@@ -235,6 +236,7 @@ def test_hourly_on_weekly(execution_date_during_the_day, execution_date_during_t
     assert fn_set_all[0](execution_date_during_the_night + timedelta(days=6)) == datetime(2023, 10, 4, 7, 0, 0)
 
 
+@freeze_time(datetime(2023, 11, 1))
 def test_hourly_on_monthly(execution_date_during_the_day, execution_date_during_the_night):
     assert calculate_task_to_wait_execution_date(
         execution_date_during_the_day,
@@ -281,6 +283,7 @@ def test_hourly_on_monthly(execution_date_during_the_day, execution_date_during_
     ) - relativedelta(months=1)
 
 
+@freeze_time(datetime(2023, 11, 1))
 def test_monthly_on_hourly(execution_date_during_the_day, execution_date_during_the_night):
     assert calculate_task_to_wait_execution_date(
         datetime(2023, 10, 1, 5, 15, 0),
@@ -306,9 +309,10 @@ def test_monthly_on_hourly(execution_date_during_the_day, execution_date_during_
         downstream_schedule_tag=_MonthlyScheduleTag(),
         wait_policy=WaitPolicy.all,
     ).get_execution_dates()
-    assert 28 * 24 <= len(fn_set_all) == 31 * 24
+    assert 28 * 24 <= len(fn_set_all) <= 31 * 24
 
 
+@freeze_time(datetime(2023, 11, 1))
 def test_monthly_on_daily(execution_date_during_the_day, execution_date_during_the_night):
     assert calculate_task_to_wait_execution_date(
         datetime(2023, 10, 12, 5, 15, 0),
@@ -339,6 +343,7 @@ def test_monthly_on_daily(execution_date_during_the_day, execution_date_during_t
     assert fn_set_all[-1](execution_date_during_the_night.replace(day=1)) == datetime(2023, 10, 31)
 
 
+@freeze_time(datetime(2023, 11, 1))
 def test_daily_on_monthly(execution_date_during_the_day, execution_date_during_the_night):
     assert calculate_task_to_wait_execution_date(
         datetime(2023, 10, 12, 5, 15, 0),

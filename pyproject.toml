@@ -62,6 +62,7 @@ psycopg2-binary = { version = "^2.9", markers = "sys_platform == 'linux'" }  # d
 dbt-databricks = "^1.7"
 pre-commit = "3.6.2"
 ipython = "^8"
+freezegun = "^1.5.1"
 
 [tool.poetry.extras]
 mcd = ["airflow-mcd", "pycarlo"]
