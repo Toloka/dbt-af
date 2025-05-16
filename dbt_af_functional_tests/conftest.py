@@ -12,27 +12,40 @@ def pytest_addoption(parser):
     parser.addoption('--manifest_path', action='store', default='.', help='Path to manifest.json')
     parser.addoption('--profiles_path', action='store', default='.', help='Path to profiles.yml')
     parser.addoption('--dbt_project_path', action='store', default='.', help='Path to dbt_project.yml')
+    parser.addoption('--models_path', action='store', default='.', help='Path to models')
     parser.addoption('--etl_name', action='store', default=None, help='List of ETLs to test')
     parser.addoption('--target', action='store', default='dev', help='Default target to use')
 
 
 @pytest.fixture(scope='session')
-def get_manifest_path(pytestconfig):
-    return pytestconfig.getoption('manifest_path')
+def manifest_path(pytestconfig) -> Path:
+    manifest_path = pytestconfig.getoption('manifest_path')
+    return Path(manifest_path) if manifest_path.endswith('manifest.json') else Path(manifest_path) / 'manifest.json'
 
 
 @pytest.fixture(scope='session')
-def get_profiles_path(pytestconfig):
-    return pytestconfig.getoption('profiles_path')
+def profiles_path(pytestconfig) -> Path:
+    profiles_path = pytestconfig.getoption('profiles_path')
+    return Path(profiles_path) if profiles_path.endswith('profiles.yml') else Path(profiles_path) / 'profiles.yml'
 
 
 @pytest.fixture(scope='session')
-def get_dbt_project_path(pytestconfig):
-    return pytestconfig.getoption('dbt_project_path')
+def dbt_project_path(pytestconfig) -> Path:
+    dbt_project_path = pytestconfig.getoption('dbt_project_path')
+    return (
+        Path(dbt_project_path)
+        if dbt_project_path.endswith('dbt_project.yml')
+        else Path(dbt_project_path) / 'dbt_project.yml'
+    )
 
 
 @pytest.fixture(scope='session')
-def get_etl_name(pytestconfig):
+def models_path(pytestconfig) -> Path:
+    return Path(pytestconfig.getoption('models_path'))
+
+
+@pytest.fixture(scope='session')
+def etl_name(pytestconfig):
     return pytestconfig.getoption('etl_name')
 
 
@@ -42,46 +55,35 @@ def target(pytestconfig):
 
 
 @pytest.fixture
-def config(target):
+def config(models_path, dbt_project_path, profiles_path, target):
     return Config(
         dbt_project=DbtProjectConfig(
             dbt_project_name='dwh',
-            dbt_models_path='.',
-            dbt_project_path='.',
-            dbt_profiles_path='.',
-            dbt_target_path='.',
-            dbt_log_path='.',
-            dbt_schema='.',
+            dbt_models_path=models_path,
+            dbt_project_path=dbt_project_path,
+            dbt_profiles_path=profiles_path,
+            dbt_target_path=dbt_project_path.parent,
+            dbt_log_path=dbt_project_path.parent,
+            dbt_schema='schema',
         ),
         dbt_default_targets=DbtDefaultTargetsConfig(default_target=target),
     )
 
 
 @pytest.fixture
-def manifest(get_manifest_path) -> dict:
-    manifest_path = (
-        get_manifest_path if get_manifest_path.endswith('manifest.json') else Path(get_manifest_path) / 'manifest.json'
-    )
+def manifest(manifest_path) -> dict:
     with open(manifest_path, 'r') as f:
         return json.load(f)
 
 
 @pytest.fixture
-def profiles(get_profiles_path) -> dict:
-    profiles_path = (
-        get_profiles_path if get_profiles_path.endswith('profiles.yml') else Path(get_profiles_path) / 'profiles.yml'
-    )
+def profiles(profiles_path) -> dict:
     with open(profiles_path, 'r') as f:
         return yaml.safe_load(f)
 
 
 @pytest.fixture
-def dbt_project(get_dbt_project_path):
-    dbt_project_path = (
-        get_dbt_project_path
-        if get_dbt_project_path.endswith('dbt_project.yml')
-        else Path(get_dbt_project_path) / 'dbt_project.yml'
-    )
+def dbt_project(dbt_project_path):
     with open(dbt_project_path, 'r') as f:
         return yaml.safe_load(f)
 
