@@ -14,8 +14,10 @@ class BaseScheduleTag(ABC):
         if timeshift is not None:
             if self.default_cron_expression is None:
                 raise ValueError('Cannot set timeshift for manual schedule tag')
-            if timeshift >= self.default_cron_expression.distance_between_two_runs():
-                raise ValueError(f'Cannot shift schedule tag "{self.base_name}" by {timeshift}')
+
+            # if timeshift is greater than max timeshift, set it to max timeshift - 1 minute
+            max_timeshift = self.default_cron_expression.distance_between_two_runs()
+            timeshift = min(timeshift, max_timeshift - datetime.timedelta(minutes=1))
         self.timeshift = timeshift or self.default_timeshift
 
     @property
