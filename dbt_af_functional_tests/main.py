@@ -11,6 +11,7 @@ def run_tests(
     manifest_path: str = typer.Option(exists=True),
     profiles_path: str = typer.Option(exists=True),
     dbt_project_path: str = typer.Option(exists=True),
+    models_path: str = typer.Option(exists=True),
     target: str = typer.Option(exists=True),
     etl_name: str = typer.Option(None),
 ):
@@ -27,6 +28,8 @@ def run_tests(
         dbt_project_path,
         '--target',
         target,
+        '--models_path',
+        models_path,
     ]
     if etl_name:
         args.extend(['--etl_name', etl_name])
