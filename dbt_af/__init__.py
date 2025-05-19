@@ -4,6 +4,6 @@ __all__ = [
 ]
 
 # note that this version is maintained by the release manager - do not update it manually
-__version__ = '0.14.0'
+__version__ = '0.13.0'
 
 from . import conf, dags  # noqa

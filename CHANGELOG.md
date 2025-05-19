@@ -1,29 +1,8 @@
 # Changelog
 
-## v0.14.0
-
-Features:
-
-- The is_dev flag is deprecated in favor of the dry_run flag in the main
-  configuration (https://github.com/Toloka/dbt-af/pull/67)
-- Improve the performance of the venv operator (https://github.com/Toloka/dbt-af/pull/65)
-- Enhance dbt_run_model with additional CLI options and parameters (https://github.com/Toloka/dbt-af/pull/64)
-- Add iceberg compatibility (thanks @authentic7) (https://github.com/Toloka/dbt-af/pull/62)
-
-Fixes:
-
-- Isolates dbt source freshness run in tmp directory (https://github.com/Toloka/dbt-af/pull/67)
-- Freeze time for monthly scheduling (https://github.com/Toloka/dbt-af/pull/66)
-- Add more flexibility to the running of functional tests (https://github.com/Toloka/dbt-af/pull/65)
-
-Chore:
-
-- add a note section about medium tests configuration (https://github.com/Toloka/dbt-af/pull/67)
-
 ## v0.13.0
 
 Features:
-
 - Add schedule shift functionality to dbt model's config:
   ```yaml
   config:
@@ -35,13 +14,11 @@ Features:
 ## v0.12.2
 
 Chore:
-
 - update `typer` requirement to `>=0.9` version
 
 ## v0.12.1
 
 Fixes:
-
 - fix `poetry` version in release action
 - rebuild package to include all scripts
 
