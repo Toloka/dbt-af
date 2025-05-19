@@ -8,7 +8,7 @@ Features:
   configuration (https://github.com/Toloka/dbt-af/pull/67)
 - Improve the performance of the venv operator (https://github.com/Toloka/dbt-af/pull/65)
 - Enhance dbt_run_model with additional CLI options and parameters (https://github.com/Toloka/dbt-af/pull/64)
-- Add iceberg compatibility (thanks https://github.com/authentic7) (https://github.com/Toloka/dbt-af/pull/62)
+- Add iceberg compatibility (thanks @authentic7) (https://github.com/Toloka/dbt-af/pull/62)
 
 Fixes:
 
