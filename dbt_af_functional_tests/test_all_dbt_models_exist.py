@@ -59,5 +59,5 @@ def check_if_all_dbt_models_are_in_dbt_af_graph(manifest, profiles, project_prof
         )
 
 
-def test_check_if_all_dbt_models_are_in_dbt_af_graph(manifest, profiles, project_profile_name, config, get_etl_name):
-    check_if_all_dbt_models_are_in_dbt_af_graph(manifest, profiles, project_profile_name, config, get_etl_name)
+def test_check_if_all_dbt_models_are_in_dbt_af_graph(manifest, profiles, project_profile_name, config, etl_name):
+    check_if_all_dbt_models_are_in_dbt_af_graph(manifest, profiles, project_profile_name, config, etl_name)
