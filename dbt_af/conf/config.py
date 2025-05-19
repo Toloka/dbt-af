@@ -306,7 +306,7 @@ class Config:
     :params tableau: config for Tableau integration
     :param k8s: settings for k8s operators
 
-    :param dry_run: (deprecated) whether it is dev environment; it's useful for local development, when you want to
+    :param is_dev: (deprecated) whether it is a dev environment; it's useful for local development, when you want to
         run dbt-af and turn off actual dbt runs and integrations with some external systems
     """
 
