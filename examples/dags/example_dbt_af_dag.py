@@ -17,7 +17,7 @@ config = Config(
     ),
     dbt_default_targets=DbtDefaultTargetsConfig(default_target='dev'),
     dag_start_date=pendulum.yesterday(),
-    is_dev=False,  # set to True if you want to turn on dry-run mode
+    dry_run=False,  # set to True if you want to turn on dry-run mode
 )
 
 dags = compile_dbt_af_dags(

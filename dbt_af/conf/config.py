@@ -297,14 +297,19 @@ class Config:
     :param max_active_dag_runs: max active dag runs for each airflow dag
     :param af_dag_description: description for airflow dags
     :param dag_start_date: default dag start date
-    :param is_dev: whether it is dev environment; it's useful for local development, when you want to run dbt-af and
-        turn off actual dbt runs and integrations with some external systems
+    :param dry_run: A flag to enable or disable the execution of dbt commands and integrations with external tools.
+        When set to `True`, dbt runs are skipped, and no changes will be applied to the database.
+        This mode is typically used for testing or validating workflows without making changes to the target
+        environment.
+        Defaults to `False`, meaning dbt commands will execute as configured.
     :param use_dbt_target_specific_pools: whether to use dbt target specific pools; if True, then airflow pools will be
         created for each dbt target with pattern `dbt_{target_name}`; if False, then only the default pool will be used
     :param af_callbacks: config with callback functions for airflow DAGs and tasks
     :param mcd: config for mcd integration; must be installed as extra dependency
     :params tableau: config for Tableau integration
     :param k8s: settings for k8s operators
+
+    :param is_dev: (deprecated) use `dry_run` instead
     """
 
     # dbt specific params
@@ -322,7 +327,7 @@ class Config:
     max_active_dag_runs: int = attrs.field(default=50)
     af_dag_description: str = attrs.field(default='')
     dag_start_date: pendulum.datetime = attrs.field(default=pendulum.datetime(2023, 10, 1, 0, 0, 0, tz='UTC'))
-    is_dev: bool = attrs.field(default=False)
+    dry_run: bool = attrs.field(default=False)
     use_dbt_target_specific_pools: bool = attrs.field(default=True)
 
     # airflow callbacks config
@@ -336,3 +341,11 @@ class Config:
 
     # k8s
     k8s: K8sConfig = attrs.field(factory=K8sConfig)
+
+    # DEPRECATED fields
+    is_dev: bool = attrs.field(default=False)
+
+    def __attrs_post_init__(self):
+        # backward compatibility is_dev --> dry_run
+        if self.is_dev and not self.dry_run:
+            object.__setattr__(self, 'dry_run', self.is_dev)

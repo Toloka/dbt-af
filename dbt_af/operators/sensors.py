@@ -1,6 +1,8 @@
 import logging
 import os
+import shutil
 from functools import cached_property, partial
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Optional, Sequence
 
 from airflow.hooks.subprocess import SubprocessHook
@@ -206,18 +208,28 @@ class DbtSourceFreshnessSensor(PythonSensor):
     def _check_freshness(self):
         env = os.environ.copy()
         env.update(self.env)
-        freshness_cmd = ' && '.join(
-            [
-                'cd $DBT_PROJECT_DIR',
-                'cp -R ./target/* $DBT_TARGET_PATH',
-                f'{self.dbt_af_config.dbt_executable_path} source freshness '
-                f'{"--debug" if self.dbt_af_config.debug_mode_enabled else ""} '
-                f'{"-h" if self.dbt_af_config.is_dev else ""} '
-                f'--profiles-dir $DBT_PROFILES_DIR --project-dir $DBT_PROJECT_DIR --target {self.target_environment} '
-                f'--select source:{self.source_name}.{self.source_identifier}',
-            ]
-        )
-        result = self.subprocess_hook.run_command(command=['bash', '-c', freshness_cmd], env=env)
+        with TemporaryDirectory(dir=self.dbt_af_config.dbt_project.dbt_target_path) as tmp_target_path:
+            shutil.copy(
+                self.dbt_af_config.dbt_project.dbt_project_path / 'target/manifest.json',
+                f'{tmp_target_path}/manifest.json',
+            )
+            freshness_cmd = ' && '.join(
+                [
+                    f'{self.dbt_af_config.dbt_executable_path} source freshness '
+                    f'{"--debug" if self.dbt_af_config.debug_mode_enabled else ""} '
+                    f'{"-h" if self.dbt_af_config.dry_run else ""} '
+                    f'--target-path {tmp_target_path} '
+                    f'--profiles-dir $DBT_PROFILES_DIR '
+                    f'--project-dir $DBT_PROJECT_DIR '
+                    f'--target {self.target_environment} '
+                    f'--select source:{self.source_name}.{self.source_identifier}',
+                ]
+            )
+            result = self.subprocess_hook.run_command(
+                command=['bash', '-c', freshness_cmd],
+                env=env,
+                cwd=str(self.dbt_af_config.dbt_project.dbt_project_path),
+            )
         if result.exit_code:
             return False
 

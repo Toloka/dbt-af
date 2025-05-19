@@ -74,7 +74,7 @@ def get_config():
                 default_maintenance_target='prod_sql_cluster',
                 default_backfill_target='prod_bf_cluster',
             ),
-            is_dev=True,
+            dry_run=True,
             mcd=mcd_config,
             tableau=tableau_config,
             k8s=k8s_config,

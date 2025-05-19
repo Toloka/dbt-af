@@ -100,7 +100,7 @@ class DbtBaseOperator(BashOperator):
             )
 
             self.bash_options['--target-path'] = tmp_target_path
-            if self.dbt_af_config.is_dev:
+            if self.dbt_af_config.dry_run:
                 # there is no dry-run mode in dbt, so we use `-h` flag just for empty dbt run
                 self.bash_flags.add('-h')
 
