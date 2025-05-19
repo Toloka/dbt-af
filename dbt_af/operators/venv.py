@@ -24,12 +24,10 @@ class DbtPythonVenvOperator(PythonVirtualenvOperator):
         env: dict[str, str] | None = None,
         **kwargs,
     ):
-        self.dbt_model_path = dbt_model_path
         self.target_details = target_details
         self.env_vars = env
-
-        with open(dbt_af_config.dbt_project.dbt_models_path / dbt_model_path, 'r') as f:
-            model_code = f.read()
+        self.dbt_model_path = dbt_model_path
+        self.dbt_af_config = dbt_af_config
 
         def _python_callable(source_code: str) -> None:
             exec(source_code)
@@ -39,7 +37,6 @@ class DbtPythonVenvOperator(PythonVirtualenvOperator):
 
         super().__init__(
             python_callable=_python_callable,
-            op_args=(model_code,),
             requirements=target_details.requirements,
             system_site_packages=target_details.system_site_packages,
             python_version=target_details.python_version,
@@ -50,6 +47,10 @@ class DbtPythonVenvOperator(PythonVirtualenvOperator):
         )
 
     def execute(self, context: Context) -> Any:
+        with open(self.dbt_af_config.dbt_project.dbt_models_path / self.dbt_model_path, 'r') as f:
+            model_code = f.read()
+        self.op_args = (model_code,)
+
         if Version(airflow_version) < Version('2.10.0') and self.env_vars:
             logging.error('Environment variables are not supported in Airflow versions below 2.10.0')
 
