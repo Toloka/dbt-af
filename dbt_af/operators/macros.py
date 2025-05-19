@@ -19,6 +19,8 @@ class DbtRunMacroOperation(DbtIntervalActionOperator):
             retry_policy=dbt_af_config.retries_config.macros_retry_policy,
             **kwargs,
         )
+        if self.macro_args:
+            self.bash_options['--args'] = f"'{json.dumps(self.macro_args)}'"
 
     @property
     def af_task_name(self) -> str:
@@ -38,12 +40,6 @@ class DbtRunMacroOperation(DbtIntervalActionOperator):
     @property
     def macro_args(self) -> Optional[dict]:
         return None
-
-    def generate_bash(self, **kwargs):
-        base_bash = super().generate_bash(**kwargs)
-        operation_args = f" --args '{json.dumps(self.macro_args)}'" if self.macro_args else ''
-
-        return base_bash.format(**kwargs) + operation_args
 
 
 class DbtStageExternalSources(DbtRunMacroOperation):

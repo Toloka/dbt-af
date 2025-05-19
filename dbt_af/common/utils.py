@@ -2,12 +2,18 @@ import logging
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Any, MutableMapping, Optional
 
 from airflow.models import Variable
 from airflow.utils.context import Context
 from cachetools import TTLCache, cached
 
+from dbt_af.common.constants import (
+    DBT_CLI_COMMAND_EXTRA_FLAGS,
+    DBT_CLI_COMMAND_EXTRA_OPTIONS,
+    OTHER_DBT_CLI_OPTIONS,
+    OTHER_DBT_CLI_OPTIONS_DEFAULT,
+)
 from dbt_af.conf import Config
 
 
@@ -51,3 +57,28 @@ def find_latest_log_file(context: 'Context', log_dir: Path) -> Optional[str]:
         logging.error(f'Something went wrong while searching log file, {ex}')
 
     return None
+
+
+def build_dbt_run_model_bash_extra_options(params: MutableMapping[str, Any]) -> tuple[dict[str, str], set[str]]:
+    """
+    Build extra options for dbt run model command.
+    Used only for dbt_run_model DAG.
+
+    Returns a string with extra options for bash command like ` --option_name option_value --flag_name`.
+    """
+    bash_options = {}
+    bash_flags = set()
+    for option_name in params.get(DBT_CLI_COMMAND_EXTRA_OPTIONS, []):
+        option_value = params.get(option_name)
+        if option_value:
+            bash_options[f'--{option_name}'] = option_value
+    for flag_name in params.get(DBT_CLI_COMMAND_EXTRA_FLAGS, []):
+        flag_value = params.get(flag_name)
+        if flag_value:
+            bash_flags.add(f'--{flag_name}')
+    if params.get(OTHER_DBT_CLI_OPTIONS, '') != OTHER_DBT_CLI_OPTIONS_DEFAULT:
+        for option_name, option_value in params.get(OTHER_DBT_CLI_OPTIONS, {}).items():
+            option_name = option_name if option_name.startswith('--') else f'--{option_name}'
+            bash_options[option_name] = option_value
+
+    return bash_options, bash_flags
