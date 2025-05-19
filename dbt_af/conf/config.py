@@ -342,3 +342,8 @@ class Config:
 
     # DEPRECATED fields
     is_dev: bool = attrs.field(default=False)
+
+    def __attrs_post_init__(self):
+        #
+        if self.is_dev and not self.dry_run:
+            object.__setattr__(self, 'dry_run', self.is_dev)
