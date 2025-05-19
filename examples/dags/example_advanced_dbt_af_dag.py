@@ -20,7 +20,7 @@ config = Config(
     dbt_default_targets=DbtDefaultTargetsConfig(default_target='dev', default_for_tests_target='tests'),
     dag_start_date=pendulum.yesterday(),
     include_single_model_manual_dag=False,
-    is_dev=False,  # set to True if you want to turn on dry-run mode
+    dry_run=False,  # set to True if you want to turn on dry-run mode
     retries_config=RetriesConfig(
         default_retry_policy=RetryPolicy(retries=3, retry_delay=timedelta(minutes=5)),
         dbt_run_retry_policy=RetryPolicy(retries=10, retry_delay=timedelta(minutes=1)),

@@ -19,7 +19,7 @@ def prepare_mcd_callbacks(config: Config) -> Tuple[Dict[str, Callable], Dict[str
         logging.error('Package airflow-mcd for MonteCarloData callbacks is not installed')
         return {}, {}
 
-    mcd_dag_callbacks = mcd_callbacks.dag_callbacks if not config.is_dev else {}
-    mcd_task_callbacks = mcd_callbacks.task_callbacks if not config.is_dev else {}
+    mcd_dag_callbacks = mcd_callbacks.dag_callbacks if not config.dry_run else {}
+    mcd_task_callbacks = mcd_callbacks.task_callbacks if not config.dry_run else {}
 
     return mcd_dag_callbacks, mcd_task_callbacks
