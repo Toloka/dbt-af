@@ -87,6 +87,9 @@ Medium tests are binding to all DAG's leaves.
 
 <img src="../docs/static/medium_tests.png" alt="drawing" width="600"/>
 
+> [!NOTE]
+> Medium tests can only be configured for models that have their own yml file.
+
 ## Large tests
 
 Large tests are designed to be most heavy and time-consuming. They are placed in special DAG for each domain (DAGs are
