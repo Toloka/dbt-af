@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.14.1
+
+Fixes:
+
+- Fix invoking macro name in dbt run command
+
 ## v0.14.0
 
 Features:
