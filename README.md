@@ -64,7 +64,7 @@ config = Config(
         dbt_schema='my_dbt_schema',
     ),
     dbt_default_targets=DbtDefaultTargetsConfig(default_target='dev'),
-    dry_run=True,  # set to True if you want to turn on dry-run mode
+    dry_run=False,  # set to True if you want to turn on dry-run mode
 )
 
 dags = compile_dbt_af_dags(
