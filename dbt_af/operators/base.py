@@ -34,9 +34,9 @@ class DbtBaseOperator(BashOperator):
         return 'PATH_TO_DBT=$DBT_PROJECT_DIR && '
 
     def generate_bash(self, **kwargs) -> str:
-        return self._patch_path_to_dbt_bash(**kwargs) + ' cd $PATH_TO_DBT  && {dbt_executable_path} {cli} '.format(
-            dbt_executable_path=self.dbt_af_config.dbt_executable_path, **kwargs
-        )
+        return self._patch_path_to_dbt_bash(
+            **kwargs
+        ) + f' cd $PATH_TO_DBT  && {self.dbt_af_config.dbt_executable_path} {self.cli} '.format(**kwargs)
 
     def __init__(
         self,

@@ -6,6 +6,9 @@ models:
     config:
       schedule: "@hourly"
       dbt_target: large_dev
+      maintenance:
+        ttl:
+          force_predicate: abc = 1
 
     columns:
       - name: customer_id
