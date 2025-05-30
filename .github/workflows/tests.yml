@@ -21,6 +21,10 @@ jobs:
         uses: snok/install-poetry@v1
         with:
           version: 1.8.5
+      - name: Pre-install setuptools for Python 3.12 (optional)
+        if: ${{ matrix.python-version == '3.12' }}
+        run: |
+          poetry add --dev setuptools
       - name: Install project
         run: |
           poetry install --with=dev --all-extras

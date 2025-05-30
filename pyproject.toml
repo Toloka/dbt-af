@@ -43,6 +43,7 @@ pytest-mock = { version = "*", optional = true }
 # mcd extra
 airflow-mcd = { version = "^0.3.3", optional = true }
 pycarlo = { version = ">=0.9", optional = true }
+setuptools = { version = "*", python = ">=3.12", optional = true }
 
 # tableau extra
 tableauserverclient = { version = "^0.25", optional = true }
@@ -65,13 +66,13 @@ ipython = "^8"
 freezegun = "^1.5.1"
 
 [tool.poetry.extras]
-mcd = ["airflow-mcd", "pycarlo"]
+mcd = ["airflow-mcd", "pycarlo", "setuptools"]
 tests = ["pytest", "pytest-env", "pytest-socket", "pytest-mock"]
 minidbt = []
 examples = ["dbt-postgres", "psycopg2-binary"]
 tableau = ["tableauserverclient"]
 all = [
-    "airflow-mcd", "pycarlo", # mcd
+    "airflow-mcd", "pycarlo", "setuptools", # mcd
     "pytest", "pytest-env", "pytest-socket", "pytest-mock", # tests
     "dbt-postgres", "psycopg2-binary", # examples
     "tableauserverclient", # tableau
