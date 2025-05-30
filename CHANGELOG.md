@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.14.2
+
+Features:
+- Add support for Python 3.12 (updated requirement to `>=3.10,<3.13`)
+
 ## v0.14.1
 
 Fixes:
