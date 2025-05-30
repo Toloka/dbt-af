@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "dbt-af"
 # note that this version is maintained by the release manager - do not update it manually
-version = "0.14.1"
+version = "0.14.2"
 description = "Distibuted dbt runs on Apache Airflow"
 authors = [
     "Nikita Yurasov <nikitayurasov@toloka.ai>",
@@ -22,7 +22,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.12"
+python = ">=3.10,<3.13"
 attrs = ">=23.1"
 apache-airflow = "^2.6"
 apache-airflow-providers-cncf-kubernetes = ">=7.0.0"
@@ -43,6 +43,7 @@ pytest-mock = { version = "*", optional = true }
 # mcd extra
 airflow-mcd = { version = "^0.3.3", optional = true }
 pycarlo = { version = ">=0.9", optional = true }
+setuptools = { version = "*", python = ">=3.12", optional = true }
 
 # tableau extra
 tableauserverclient = { version = "^0.25", optional = true }
@@ -65,13 +66,13 @@ ipython = "^8"
 freezegun = "^1.5.1"
 
 [tool.poetry.extras]
-mcd = ["airflow-mcd", "pycarlo"]
+mcd = ["airflow-mcd", "pycarlo", "setuptools"]
 tests = ["pytest", "pytest-env", "pytest-socket", "pytest-mock"]
 minidbt = []
 examples = ["dbt-postgres", "psycopg2-binary"]
 tableau = ["tableauserverclient"]
 all = [
-    "airflow-mcd", "pycarlo", # mcd
+    "airflow-mcd", "pycarlo", "setuptools", # mcd
     "pytest", "pytest-env", "pytest-socket", "pytest-mock", # tests
     "dbt-postgres", "psycopg2-binary", # examples
     "tableauserverclient", # tableau
