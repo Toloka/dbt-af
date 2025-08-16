@@ -71,7 +71,7 @@ def dbt_run_model_dag(config: Config) -> dict[str, DAG]:
         dag_name,
         start_date=config.dag_start_date,
         description=config.af_dag_description,
-        schedule_interval=None,
+        schedule=None,
         catchup=False,
         default_args=DEFAULT_DAG_ARGS,
         max_active_runs=config.max_active_dag_runs,
