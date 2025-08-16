@@ -1,4 +1,4 @@
-FROM apache/airflow:2.9.1-python3.10
+FROM apache/airflow:2.11.0-python3.12
 
 LABEL maintainer="Nikita Yurasov <nikitayurasov@toloka.ai>"
 SHELL ["/bin/bash", "-o", "pipefail", "-o", "errexit", "-o", "nounset", "-o", "xtrace", "-c"]

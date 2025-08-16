@@ -7,6 +7,10 @@ Fixes:
 - Include snapshots to pre-selected dbt nodes
 - Rename deprecated airflow DAG argument `schedule_interval` to `schedule`
 
+Chore:
+
+- Update base image in examples to `apache/airflow:2.11.0-python3.12`
+
 ## v0.14.2
 
 Features:
