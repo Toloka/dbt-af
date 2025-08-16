@@ -154,9 +154,7 @@ class DbtAfGraph:
                 continue
 
         self._models = {
-            node.unique_id: self._dag_components_registry[node.unique_id]
-            for node in nodes
-            if node.is_model() or node.is_seed()
+            node.unique_id: self._dag_components_registry[node.unique_id] for node in nodes if not node.is_test()
         }
         if not backfill:
             self._large_tests = {
