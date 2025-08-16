@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.14.3
+
+Fixes:
+
+- Include snapshots to pre-selected dbt nodes
+- Rename deprecated airflow DAG argument `schedule_interval` to `schedule`
+
 ## v0.14.2
 
 Features:
