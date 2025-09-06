@@ -24,8 +24,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
 attrs = ">=23.1"
-apache-airflow = "^2.6"
-apache-airflow-providers-cncf-kubernetes = ">=7.0.0"
+apache-airflow = { version = "3.0.6", extras = ["fab", "cncf-kubernetes"] }
 pydantic = ">=1.10,<3.0.0"
 cachetools = "^5.3"
 croniter = ">=3.0"
@@ -37,7 +36,6 @@ virtualenv = ">=20.27.0" # https://github.com/pypa/virtualenv/pull/2782
 # tests extra
 pytest = { version = "*", optional = true }
 pytest-env = { version = "*", optional = true }
-pytest-socket = { version = "*", optional = true }
 pytest-mock = { version = "*", optional = true }
 
 # mcd extra
@@ -56,7 +54,6 @@ ruff = "^0.3"
 pytest = "^8"
 pytest-env = "*"
 pytest-cov = "~4.1"
-pytest-socket = "*"
 pytest-mock = "*"
 dbt-postgres = "^1.7"
 psycopg2-binary = { version = "^2.9", markers = "sys_platform == 'linux'" }  # due to bug https://github.com/dbt-labs/dbt-postgres/issues/96

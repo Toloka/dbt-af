@@ -1,7 +1,11 @@
 from typing import TYPE_CHECKING
 
 from airflow.exceptions import AirflowSkipException
-from airflow.operators.python import PythonOperator
+
+try:
+    from airflow.operators.python import PythonOperator
+except (ModuleNotFoundError, ImportError):
+    from airflow.providers.standard.operators.python import PythonOperator
 
 from dbt_af.conf import Config
 from dbt_af.integrations.tableau import is_tableau_installed, tableau_extracts_refresh

@@ -1,8 +1,13 @@
 from collections import defaultdict
 from typing import Generator, Optional
 
-from airflow.operators.empty import EmptyOperator
 from airflow.utils.task_group import TaskGroup
+
+try:
+    from airflow.operators.empty import EmptyOperator
+except (ModuleNotFoundError, ImportError):
+    from airflow.providers.standard.operators.empty import EmptyOperator
+
 
 from dbt_af.builder.domain_dag import DomainDag
 from dbt_af.builder.task_dependencies import DagDelayedDependencyRegistry
@@ -221,7 +226,7 @@ class DagModel(DagComponent):
     runner_class = DbtRun
     add_external_dependencies = True
     overlap = True
-    is_dataset_enable = True
+    is_dataset_enable = False
 
     def __init__(self, dbt_node: DbtNode, domain_dag: DomainDag):
         super().__init__(dbt_node.resource_name, domain_dag, node_config=dbt_node.config)

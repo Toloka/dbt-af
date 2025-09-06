@@ -9,6 +9,13 @@ from airflow.models.taskinstance import TaskInstance
 from airflow.utils.state import DagRunState, TaskInstanceState
 from airflow.utils.types import DagRunType
 
+try:
+    from airflow.utils.types import DagRunTriggeredByType
+
+    IS_AIRFLOW_3 = True
+except (ModuleNotFoundError, ImportError):
+    IS_AIRFLOW_3 = False
+
 
 def node_ids(tasks):
     return sorted(t.node_id for t in tasks)
@@ -19,16 +26,19 @@ def nodes_operator_names(tasks) -> dict[str, str]:
 
 
 def try_run_task_in_dag(dag: DAG, task_id: str, additional_expected_ti_states: Sequence[TaskInstanceState] = []):
-    start_date = pendulum.now().replace(minute=0, second=0, microsecond=0) - datetime.timedelta(hours=1)
+    now = pendulum.now()
+    start_date = now.replace(minute=0, second=0, microsecond=0) - datetime.timedelta(hours=1)
     end_date = start_date + datetime.timedelta(hours=1)
     run_id = f'test_run_{uuid.uuid4()}'
     dagrun = dag.create_dagrun(
         run_id=run_id,
         state=DagRunState.RUNNING,
-        execution_date=pendulum.now(),
+        logical_date=now,
+        run_after=start_date,
         data_interval=(start_date, end_date),
         start_date=end_date,
         run_type=DagRunType.MANUAL,
+        **({'triggered_by': DagRunTriggeredByType.TIMETABLE} if IS_AIRFLOW_3 else {}),
     )
     ti: TaskInstance = dagrun.get_task_instance(task_id=task_id)
     ti.task = dag.get_task(task_id=task_id)
@@ -41,12 +51,17 @@ def try_run_task_in_dag(dag: DAG, task_id: str, additional_expected_ti_states: S
 
 
 def run_all_tasks_in_dag(dags: dict[str, DAG], additional_expected_ti_states: Sequence[TaskInstanceState] = []):
-    airflow_loggers = [logger for logger in logging.Logger.manager.loggerDict if logger.startswith('airflow')]
+    airflow_loggers = [
+        logger for logger in logging.Logger.manager.loggerDict if 'airflow' in logger or 'httpx' in logger
+    ]
     for logger in airflow_loggers:
         logging.getLogger(logger).setLevel(logging.ERROR)
 
     for dag in dags:
         for task_id in dags[dag].task_ids:
+            if '__dependencies__group.wait__' in task_id:
+                # Skip the sensors that wait for dependencies
+                continue
             try_run_task_in_dag(dags[dag], task_id, additional_expected_ti_states)
 
 
