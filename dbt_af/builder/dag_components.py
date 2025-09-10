@@ -249,7 +249,7 @@ class DagModel(DagComponent):
 
     def _create_k8s_runner_task(self) -> DbtKubernetesPodOperator:
         """
-        Create a k8s operator to run the dbt model not in Databricks but in a k8s pod
+        Create a k8s operator to run the dbt model not in DWH but in a k8s pod
         It's used only in rare cases when model requires a lot of resources and/or data processing on the same node
         """
         return DbtKubernetesPodOperator(

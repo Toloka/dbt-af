@@ -127,24 +127,26 @@ def get_dbt_project_yaml_for_test(test_location):
 
 
 def get_dbt_profiles_yaml_for_test():
-    databricks_target = {
-        'type': 'databricks',
+    target = {
+        'type': 'postgres',
+        'host': 'localhost',
+        'port': 5432,
+        'database': 'postgres',
         'schema': 'fake_schema',
-        'host': 'fake_host',
-        'http_path': 'fake_http_path',
-        'token': 'fake_token',
+        'user': 'postgres',
+        'password': 'postgres',
     }
     dbt_profiles = {
         'config': {'send_anonymous_usage_stats': False},
         'main_profile': {
             'target': 'dev',
             'outputs': {
-                'dev': databricks_target,
-                'fake_sql_cluster': databricks_target,
-                'fake_daily_sql_cluster': databricks_target,
-                'fake_py_cluster': databricks_target,
-                'fake_bf_cluster': databricks_target,
-                'prod_data_test_cluster': databricks_target,
+                'dev': target,
+                'fake_sql_cluster': target,
+                'fake_daily_sql_cluster': target,
+                'fake_py_cluster': target,
+                'fake_bf_cluster': target,
+                'prod_data_test_cluster': target,
                 'fake_k8s_cluster': {
                     'type': 'kubernetes',
                     'schema': 'fake_schema',
@@ -217,7 +219,7 @@ class TmpManifest(TestManifest):
             dbt_cli,
             [
                 '--debug',
-                'compile',
+                'parse',
                 '--project-dir',
                 project_location,
                 '--profiles-dir',
@@ -278,10 +280,6 @@ def mock_mcd_callbacks(mocker):
 
 @pytest.fixture
 def dbt_manifest(mocker):
-    from dbt.adapters.databricks.impl import DatabricksAdapter
-
-    mocker.patch.object(DatabricksAdapter, 'list_relations_without_caching', lambda *args, **kwargs: [])
-
     @contextlib.contextmanager
     def _dbt_manifest(fixture_name):
         with TmpManifest(fixture_name) as manifest_path:

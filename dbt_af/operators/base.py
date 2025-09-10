@@ -183,9 +183,9 @@ class DbtModelVars(pydantic.BaseModel):
             if field_name not in required_fields:
                 extra[field_name] = values.pop(field_name)
                 if isinstance(extra[field_name], (list, tuple)):
-                    # brackets [] are not supported for array values in Databricks
+                    # brackets [] are not supported for array values in DWH
                     # HACK: if it's empty collection, we pass empty string. It will work ONLY with string fields, but
-                    # it's impossible to fetch correct type of the field from Databricks, and it's impossible to
+                    # it's impossible to fetch correct type of the field from DWH, and it's impossible to
                     # pass just empty brackets
                     extra[field_name] = (
                         f"({','.join(map(json.dumps, extra[field_name]))})" if len(extra[field_name]) > 0 else '("")'
