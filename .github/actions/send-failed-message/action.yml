@@ -1,0 +1,15 @@
+name: 'Send failed message'
+description: 'Send a message to the PR when the action fails'
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: '❗ Command failed ❗\n\nGitHub action run: [link](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+          })
