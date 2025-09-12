@@ -8,7 +8,7 @@ on:
     types:
       - created
 jobs:
-  test:
+  integration_test:
     if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'for_integration_tests' || (github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/run_integration_tests'))
     runs-on: [ ubuntu-latest ]
     steps:
