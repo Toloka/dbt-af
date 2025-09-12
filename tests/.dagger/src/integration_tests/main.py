@@ -26,7 +26,7 @@ POETRY_VERSION = '1.8.5'
 
 
 @object_type
-class IntegrationalTests:
+class IntegrationTests:
     @staticmethod
     async def _get_all_available_package_versions(package_name: str) -> list[Version]:
         pip_index_stdout = await (

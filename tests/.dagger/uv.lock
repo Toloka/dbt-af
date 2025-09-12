@@ -251,7 +251,7 @@ wheels = [
 ]
 
 [[package]]
-name = "integrational-tests"
+name = "integration-tests"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

@@ -1,5 +1,5 @@
 {
-  "name": "integrational-tests",
+  "name": "integration-tests",
   "engineVersion": "v0.18.17",
   "sdk": {
     "source": "python"

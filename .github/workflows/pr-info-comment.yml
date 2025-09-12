@@ -21,7 +21,7 @@ jobs:
               '',
               'Here are some commands you can use in this PR by posting a comment:',
               '',
-              '- **`/run_integrational_tests`** - Run integrational tests for this branch'
+              '- **`/run_integration_tests`** - Run integration tests for this branch'
             ].join('\n');
 
             await github.rest.issues.createComment({

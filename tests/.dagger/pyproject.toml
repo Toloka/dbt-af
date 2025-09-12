@@ -1,5 +1,5 @@
 [project]
-name = "integrational-tests"
+name = "integration-tests"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = ["dagger-io"]

@@ -1,4 +1,4 @@
-name: Integrational Tests
+name: Integration Tests
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ on:
       - created
 jobs:
   test:
-    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'for_integrational_tests' || (github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/run_integrational_tests'))
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'for_integration_tests' || (github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/run_integration_tests'))
     runs-on: [ ubuntu-latest ]
     steps:
       - uses: actions/checkout@v4
@@ -21,12 +21,12 @@ jobs:
           args: all --with-running-airflow-tasks
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
 
-      - name: Remove 'for_integrational_tests' label if exists
+      - name: Remove 'for_integration_tests' label if exists
         if: success() && github.event_name == 'pull_request'
         uses: actions-ecosystem/action-remove-labels@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          labels: for_integrational_tests
+          labels: for_integration_tests
 
       - name: Add 'integration_passed' label
         if: success()
