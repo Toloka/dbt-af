@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.14.4
+
+Fixes:
+
+- New dbt Snapshots (https://docs.getdbt.com/docs/build/snapshots#configuring-snapshots) can be executed by dbtsnapshot task (https://github.com/Toloka/dbt-af/pull/77)
+
 ## v0.14.3
 
 Fixes:
