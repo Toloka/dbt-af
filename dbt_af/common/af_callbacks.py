@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Optional
+from typing import Any, Callable, Optional
 
 from dbt_af.conf import Config
 from dbt_af.integrations.af_callbacks import prepare_custom_af_callbacks
@@ -21,7 +21,7 @@ def merge_dicts_by_key(*dicts: dict) -> dict:
 
 def collect_af_custom_callbacks(
     config: Config,
-) -> tuple[dict[str, list[Optional[callable]]], dict[str, list[Optional[callable]]]]:
+) -> tuple[dict[str, list[Optional[Callable[..., Any]]]], dict[str, list[Optional[Callable[..., Any]]]]]:
     mcd_dag_callbacks, mcd_task_callbacks = prepare_mcd_callbacks(config)
     airflow_dag_callbacks, airflow_task_callbacks = prepare_custom_af_callbacks(config)
 

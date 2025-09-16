@@ -308,7 +308,6 @@ def compiled_main_dags(
     mock_init_airflow_environment,
     mock_mcd_callbacks,
     get_config,
-    socket_disabled,
 ):
     @contextlib.contextmanager
     def _dags(fixture_name, with_mcd=False, with_tableau=False, with_k8s=False):

@@ -1,7 +1,11 @@
 from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
-from airflow.operators.python import BranchPythonOperator
 from airflow.utils.context import Context
+
+try:
+    from airflow.operators.python import BranchPythonOperator
+except (ModuleNotFoundError, ImportError):
+    from airflow.providers.standard.operators.python import BranchPythonOperator
 
 from dbt_af.parser.dbt_node_model import DbtNodeConfig
 

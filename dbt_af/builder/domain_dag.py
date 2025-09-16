@@ -2,8 +2,12 @@ from collections import defaultdict
 from enum import Enum
 from typing import Optional
 
-from airflow.operators.empty import EmptyOperator
-from airflow.operators.python import BranchPythonOperator
+try:
+    from airflow.operators.empty import EmptyOperator
+    from airflow.operators.python import BranchPythonOperator
+except (ModuleNotFoundError, ImportError):
+    from airflow.providers.standard.operators.empty import EmptyOperator
+    from airflow.providers.standard.operators.python import BranchPythonOperator
 
 from dbt_af.builder.task_dependencies import RegistryDomainDependencies
 from dbt_af.common import constants
@@ -22,14 +26,14 @@ class DomainDag:
     def __init__(
         self,
         domain_name: str,
+        config: Config,
         schedule: BaseScheduleTag = None,
-        config: Optional[Config] = None,
         additional_tags: Optional[list[str]] = None,
         catchup: bool = True,
     ):
         self.domain_name = domain_name
         self._schedule = schedule or EScheduleTag.daily()
-        self.config: Config = config or Config()
+        self.config = config
 
         self.additional_tags: list[str] = additional_tags or []
         self.catchup = catchup
@@ -85,7 +89,7 @@ class BackfillDomainDag(DomainDag):
         additional_tags: list[str] = None,
         catchup: bool = True,
     ):
-        super().__init__(domain_name, self.schedule, config, additional_tags, catchup)
+        super().__init__(domain_name, config, self.schedule, additional_tags, catchup)
 
         self.start_endpoint: Optional[EmptyOperator] = None
 
@@ -127,7 +131,7 @@ class MaintenanceDomainDag(DomainDag):
         additional_tags: list[str] = None,
         catchup: bool = False,
     ):
-        super().__init__(domain_name, self.schedule, config, additional_tags, catchup)
+        super().__init__(domain_name, config, self.schedule, additional_tags, catchup)
 
     @property
     def _base_tags(self) -> Optional[list[str]]:
@@ -150,7 +154,7 @@ class LargeTestsDomainDag(DomainDag):
         additional_tags: list[str] = None,
         catchup: bool = False,
     ):
-        super().__init__(domain_name, self.schedule, config, additional_tags, catchup)
+        super().__init__(domain_name, config, self.schedule, additional_tags, catchup)
 
     @property
     def _base_tags(self) -> Optional[list[str]]:
@@ -169,7 +173,7 @@ class DomainDagFactory:
     @staticmethod
     def create(dag_type: DomainDagType, domain_name: str, schedule: BaseScheduleTag, config: Config) -> DomainDag:
         if dag_type == DomainDagType.SCHEDULED:
-            return DomainDag(domain_name, schedule, config)
+            return DomainDag(domain_name, config, schedule)
         if dag_type == DomainDagType.BACKFILL:
             return BackfillDomainDag(domain_name, config)
         if dag_type == DomainDagType.MAINTENANCE:
