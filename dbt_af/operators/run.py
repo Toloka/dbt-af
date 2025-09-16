@@ -76,6 +76,7 @@ class DbtSnapshot(DbtBaseDatasetOperator):
     def __init__(self, dbt_af_config: 'Config', **kwargs) -> None:
         super().__init__(
             dbt_af_config=dbt_af_config,
+            model_type='',
             retry_policy=dbt_af_config.retries_config.dbt_snapshot_retry_policy,
             **kwargs,
         )
