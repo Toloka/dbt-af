@@ -1832,21 +1832,20 @@ asymmetric-crypto = ["cryptography (>=3.3.1)"]
 
 [[package]]
 name = "flask-limiter"
-version = "3.13"
+version = "3.12"
 description = "Rate limiting for flask applications"
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "flask_limiter-3.13-py3-none-any.whl", hash = "sha256:2664933f71e3759a518c59cd07e05c2f7bb7614eb88d420ac348b05e32c6cb94"},
-    {file = "flask_limiter-3.13.tar.gz", hash = "sha256:f665ddc6531612c435cc8fabd58d48cf3b86b7985571e1e3644bcd389b802329"},
+    {file = "flask_limiter-3.12-py3-none-any.whl", hash = "sha256:b94c9e9584df98209542686947cf647f1ede35ed7e4ab564934a2bb9ed46b143"},
+    {file = "flask_limiter-3.12.tar.gz", hash = "sha256:f9e3e3d0c4acd0d1ffbfa729e17198dd1042f4d23c130ae160044fc930e21300"},
 ]
 
 [package.dependencies]
 Flask = ">=2"
 limits = ">=3.13"
 ordered-set = ">4,<5"
-rich = ">=12,<15"
-typing_extensions = ">=4.3"
+rich = ">=12,<14"
 
 [package.extras]
 memcached = ["limits[memcached]"]
@@ -3972,13 +3971,13 @@ pyasn1 = ">=0.6.1,<0.7.0"
 
 [[package]]
 name = "pycarlo"
-version = "0.10.141"
+version = "0.10.142"
 description = "Monte Carlo's Python SDK"
 optional = true
 python-versions = ">=3.8"
 files = [
-    {file = "pycarlo-0.10.141-py3-none-any.whl", hash = "sha256:920c58055437d754df2fdeeacb1dd2f448b1bd3a5bc843385b7d5eaa391c119c"},
-    {file = "pycarlo-0.10.141.tar.gz", hash = "sha256:1c719262da1059bd1a7573bc972b13098cb0e1f6dffd161725113ff09167766f"},
+    {file = "pycarlo-0.10.142-py3-none-any.whl", hash = "sha256:cd1b2fd55b1f1421e680a3191af5bfbaa2bb252ffd0adf9170218ca74b5dcad5"},
+    {file = "pycarlo-0.10.142.tar.gz", hash = "sha256:8ab212781da9c9a3aa414481176b3915e716413f27aeb38d08dbf60d3b2e7252"},
 ]
 
 [package.dependencies]
@@ -4541,18 +4540,19 @@ six = "*"
 
 [[package]]
 name = "rich"
-version = "14.1.0"
+version = "13.9.4"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
 optional = false
 python-versions = ">=3.8.0"
 files = [
-    {file = "rich-14.1.0-py3-none-any.whl", hash = "sha256:536f5f1785986d6dbdea3c75205c473f970777b4a0d6c6dd1b696aa05a3fa04f"},
-    {file = "rich-14.1.0.tar.gz", hash = "sha256:e497a48b844b0320d45007cdebfeaeed8db2a4f4bcf49f15e455cfc4af11eaa8"},
+    {file = "rich-13.9.4-py3-none-any.whl", hash = "sha256:6049d5e6ec054bf2779ab3358186963bac2ea89175919d699e378b99738c2a90"},
+    {file = "rich-13.9.4.tar.gz", hash = "sha256:439594978a49a09530cff7ebc4b5c7103ef57baf48d5ea3184f21d9a2befa098"},
 ]
 
 [package.dependencies]
 markdown-it-py = ">=2.2.0"
 pygments = ">=2.13.0,<3.0.0"
+typing-extensions = {version = ">=4.0.0,<5.0", markers = "python_version < \"3.11\""}
 
 [package.extras]
 jupyter = ["ipywidgets (>=7.5.1,<9)"]
@@ -5754,4 +5754,4 @@ tests = ["pytest", "pytest-env", "pytest-mock", "pytest-socket"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "e3aa191d08ff8b0a66dc1a90ed0fba34d918d08461085323fd528cbe8ac37749"
+content-hash = "ee52ceeac884b52f71e28ba2f49f1ba1f722d1738300469cacb4b3bf27e28388"
