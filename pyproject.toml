@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "dbt-af"
 # note that this version is maintained by the release manager - do not update it manually
-version = "0.14.3"
+version = "0.14.4"
 description = "Distibuted dbt runs on Apache Airflow"
 authors = [
     "Nikita Yurasov <nikitayurasov@toloka.ai>",
@@ -63,6 +63,8 @@ psycopg2-binary = { version = "^2.9", markers = "sys_platform == 'linux'" }  # d
 pre-commit = "3.6.2"
 ipython = "^8"
 freezegun = "^1.5.1"
+shandy-sqlfmt = { version = "0.27.0", extras = ["jinjafmt"] }
+flask_limiter = ">3,<4,!=3.13" # temporarily due to https://github.com/alisaifee/flask-limiter/issues/479
 
 [tool.poetry.extras]
 mcd = ["airflow-mcd", "pycarlo", "setuptools"]
