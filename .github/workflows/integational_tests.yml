@@ -11,10 +11,21 @@ jobs:
     runs-on: [ ubuntu-latest ]
     steps:
       - uses: actions/checkout@v4
+
       - name: Call Dagger Function
         uses: dagger/dagger-for-github@8.0.0
+        env:
+          USE_POETRY_CACHE: true
         with:
           version: "latest"
           module: ./tests
           args: all --with-running-airflow-tasks
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+
+      - name: Send message if failed
+        if: failure()
+        uses: ./.github/actions/send-failed-message
+
+      - name: Send message if cancelled
+        if: cancelled()
+        uses: ./.github/actions/send-cancelled-message

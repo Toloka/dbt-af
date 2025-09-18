@@ -1,4 +1,5 @@
 import json
+import os
 import typing as tp
 
 import anyio
@@ -104,6 +105,7 @@ class IntegrationTests:
         """
         Prepare python requirements for dbt-af with pinned airflow, python and dbt version
         """
+        poetry_venv_cache = dag.cache_volume('poetry_venv_cache')
 
         python_version = Version(python_version)
 
@@ -145,6 +147,9 @@ class IntegrationTests:
             .with_exec(['poetry', 'lock', '--no-update'])
             .with_exec(['poetry', 'install', '--with', 'dev', '--all-extras'])
         )
+
+        if os.environ.get('USE_POETRY_CACHE', 'false').lower() == 'true':
+            base = base.with_mounted_cache('/root/.cache/pypoetry/virtualenvs', poetry_venv_cache)
 
         if python_version < Version('3.12'):
             base = base.with_exec(
@@ -204,38 +209,7 @@ class IntegrationTests:
         return await (
             env.with_workdir('/dbt_af')
             .with_service_binding('db', postgres)
-            # download apache-airflow official constraints
-            .with_exec(
-                [
-                    'curl',
-                    '-s',
-                    '-o',
-                    'airflow-constraints.txt',
-                    f'https://raw.githubusercontent.com/apache/airflow/constraints-{airflow_version}/constraints-{python_version}.txt',
-                ],
-            )
-            # remove croniter from airflow constraints
-            .with_exec(
-                [
-                    'sed',
-                    '-i',
-                    r'/^croniter==*/d',
-                    'airflow-constraints.txt',
-                ]
-            )
-            # install apache-airflow with provided constraints
-            .with_exec(
-                [
-                    'poetry',
-                    # 'add',
-                    'run',
-                    'pip',
-                    'install',
-                    f'apache-airflow[fab,cncf-kubernetes]=={airflow_version}',
-                    '-c',
-                    'airflow-constraints.txt',
-                ]
-            )
+            # init airflow database
             .with_exec(
                 [
                     'poetry',
