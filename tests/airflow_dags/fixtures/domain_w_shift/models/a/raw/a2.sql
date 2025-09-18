@@ -1,14 +1,14 @@
-{{ config(
-    materialized='table',
-    file_format='delta',
-    unique_key='id',
-    schedule='@hourly',
-    schedule_shift=5,
-    schedule_shift_unit='minute'
-) }}
+{{
+    config(
+        materialized="table",
+        schedule="@hourly",
+        schedule_shift=5,
+        schedule_shift_unit="minute",
+    )
+}}
 
 
-select  1 as id, 'a' as val
+select 1 as id, 'a' as val
 union all
 select 2 as id, 'b' as val
 union all

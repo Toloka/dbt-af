@@ -1,9 +1,9 @@
-{{ config(
-    materialized='table',
-    file_format='delta',
-    unique_key='id',
-) }}
+{{
+    config(
+        materialized="table",
+    )
+}}
 
 
 select *
-from {{ ref('b1') }}
+from {{ ref("b1") }}
