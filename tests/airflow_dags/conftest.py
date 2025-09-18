@@ -129,8 +129,8 @@ def get_dbt_project_yaml_for_test(test_location):
 def get_dbt_profiles_yaml_for_test():
     target = {
         'type': 'postgres',
-        'host': 'localhost',
-        'port': 5555,
+        'host': 'db',
+        'port': 5432,
         'database': 'postgres',
         'schema': 'fake_schema',
         'user': 'postgres',

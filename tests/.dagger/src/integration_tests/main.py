@@ -1,6 +1,7 @@
 import json
 import typing as tp
 
+import anyio
 import dagger
 from dagger import DefaultPath, Doc, dag, function, object_type
 from packaging.version import Version
@@ -53,7 +54,7 @@ class IntegrationTests:
     ) -> dagger.Container:
         pendulum_version = '2' if airflow_version < Version('2.8.0') else '3'
 
-        return (
+        env = (
             env
             # change apache-airflow package version in pyproject.toml to resolve other dependencies
             .with_exec(
@@ -65,6 +66,18 @@ class IntegrationTests:
                 ]
             )
         )
+
+        # update pluggy version
+        if airflow_version < Version('2.8.0'):
+            env = env.with_exec(
+                [
+                    'poetry',
+                    'add',
+                    'pluggy@>=1.3.0',
+                ]
+            )
+
+        return env
 
     async def _add_to_env_dbt(self, env: dagger.Container, dbt_version: Version) -> dagger.Container:
         _all_dbt_postgres_versions = await self._get_all_available_package_versions('dbt-postgres')
@@ -173,8 +186,43 @@ class IntegrationTests:
                 dbt_version,
             )
 
+        # postgres database from dbt tests
+        postgres = (
+            dag.container()
+            .from_('postgres:16')
+            .with_env_variable('POSTGRES_USER', 'postgres')
+            .with_env_variable('POSTGRES_PASSWORD', 'postgres')
+            .with_env_variable('POSTGRES_DB', 'postgres')
+            .with_file(
+                '/docker-entrypoint-initdb.d/init.sql',
+                source.file('./tests/.dagger/src/integration_tests/init_test_db.sql'),
+            )
+            .with_exposed_port(5432)
+            .as_service(use_entrypoint=True)
+        )
+
         return await (
             env.with_workdir('/dbt_af')
+            .with_service_binding('db', postgres)
+            # download apache-airflow official constraints
+            .with_exec(
+                [
+                    'curl',
+                    '-s',
+                    '-o',
+                    'airflow-constraints.txt',
+                    f'https://raw.githubusercontent.com/apache/airflow/constraints-{airflow_version}/constraints-{python_version}.txt',
+                ],
+            )
+            # remove croniter from airflow constraints
+            .with_exec(
+                [
+                    'sed',
+                    '-i',
+                    r'/^croniter==*/d',
+                    'airflow-constraints.txt',
+                ]
+            )
             # install apache-airflow with provided constraints
             .with_exec(
                 [
@@ -185,7 +233,7 @@ class IntegrationTests:
                     'install',
                     f'apache-airflow[fab,cncf-kubernetes]=={airflow_version}',
                     '-c',
-                    f'https://raw.githubusercontent.com/apache/airflow/constraints-{airflow_version}/constraints-{python_version}.txt',
+                    'airflow-constraints.txt',
                 ]
             )
             .with_exec(
@@ -246,14 +294,16 @@ class IntegrationTests:
                 if airflow_version < Version('2.9.0') and python_version > Version('3.11'):
                     continue
                 airflow_env = self._add_to_env_airflow(python_env, airflow_version)
-                for dbt_version in dbt_versions:
-                    dbt_env = await self._add_to_env_dbt(airflow_env, dbt_version)
+                async with anyio.create_task_group() as tg:
+                    for dbt_version in dbt_versions:
+                        dbt_env = await self._add_to_env_dbt(airflow_env, dbt_version)
 
-                    await self.test_one_versions_combination(
-                        source=source,
-                        python_version=python_version.base_version,
-                        airflow_version=airflow_version.base_version,
-                        dbt_version=dbt_version.base_version,
-                        prebuild_env=dbt_env,
-                        with_running_airflow_tasks=with_running_airflow_tasks,
-                    )
+                        tg.start_soon(
+                            self.test_one_versions_combination,
+                            source,
+                            python_version.base_version,
+                            airflow_version.base_version,
+                            dbt_version.base_version,
+                            dbt_env,
+                            with_running_airflow_tasks,
+                        )
