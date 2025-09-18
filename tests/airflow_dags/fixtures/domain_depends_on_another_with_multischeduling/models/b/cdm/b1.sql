@@ -1,10 +1,10 @@
-{{ config(
-    materialized='table',
-    file_format='delta',
-    unique_key='id',
-    schedule='@hourly',
-) }}
+{{
+    config(
+        materialized="table",
+        schedule="@hourly",
+    )
+}}
 
 
 select *
-from {{ ref('a2') }}
+from {{ ref("a2") }}

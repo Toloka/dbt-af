@@ -60,10 +60,11 @@ pytest-socket = "*"
 pytest-mock = "*"
 dbt-postgres = "^1.7"
 psycopg2-binary = { version = "^2.9", markers = "sys_platform == 'linux'" }  # due to bug https://github.com/dbt-labs/dbt-postgres/issues/96
-dbt-databricks = "^1.7"
 pre-commit = "3.6.2"
 ipython = "^8"
 freezegun = "^1.5.1"
+shandy-sqlfmt = { version = "0.27.0", extras = ["jinjafmt"] }
+flask_limiter = ">3,<4,!=3.13" # temporarily due to https://github.com/alisaifee/flask-limiter/issues/479
 
 [tool.poetry.extras]
 mcd = ["airflow-mcd", "pycarlo", "setuptools"]

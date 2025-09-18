@@ -1,7 +1,8 @@
-{{ config(
-    materialized='table',
-    file_format='delta',
-) }}
+{{
+    config(
+        materialized="table",
+    )
+}}
 
 
 select *

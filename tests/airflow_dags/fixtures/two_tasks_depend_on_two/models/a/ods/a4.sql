@@ -1,14 +1,14 @@
-{{ config(
-    materialized='table',
-    file_format='delta',
-    unique_key='id',
-) }}
+{{
+    config(
+        materialized="table",
+    )
+}}
 
 
 select *
-from {{ ref('a1') }}
+from {{ ref("a1") }}
 where val = 'b'
 union all
 select *
-from {{ ref('a2') }}
+from {{ ref("a2") }}
 where val = 'b'
