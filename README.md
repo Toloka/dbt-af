@@ -68,8 +68,8 @@ config = Config(
 )
 
 dags = compile_dbt_af_dags(
-   manifest_path='/path/to/my_dbt_project/target/manifest.json', 
-   config=config,
+    manifest_path='/path/to/my_dbt_project/target/manifest.json',
+    config=config,
 )
 for dag_name, dag in dags.items():
     globals()[dag_name] = dag
@@ -102,6 +102,19 @@ Check out the documentation for more details [here](docs/docs.md).
    This means that analytics professionals, data scientists,
    and data engineers can focus on their dbt models and important business logic
    rather than spending time on Airflow DAGs.
+
+## Requirements
+
+`dbt-af` is tested with:
+
+| Airflow version | Python versions | `dbt-core` versions |
+|-----------------|-----------------|---------------------|
+| 2.6.3           | >=3.10,<3.12    | >=1.7,<=1.10        |
+| 2.7.3           | >=3.10,<3.12    | >=1.7,<=1.10        |
+| 2.8.4           | >=3.10,<3.12    | >=1.7,<=1.10        |
+| 2.9.3           | >=3.10,<3.13    | >=1.7,<=1.10        |
+| 2.10.5          | >=3.10,<3.13    | >=1.7,<=1.10        |
+| 2.11.0          | >=3.10,<3.13    | >=1.7,<=1.10        |
 
 ## Project Information
 

@@ -47,15 +47,23 @@ class IntegrationTests:
         )
 
     @staticmethod
-    def _add_to_env_airflow(env: dagger.Container, airflow_version: Version) -> dagger.Container:
+    def _add_to_env_airflow(
+        env: dagger.Container,
+        airflow_version: Version,
+    ) -> dagger.Container:
         pendulum_version = '2' if airflow_version < Version('2.8.0') else '3'
-        return env.with_exec(
-            [
-                'poetry',
-                'add',
-                f'apache-airflow[fab,cncf-kubernetes]@{airflow_version}',
-                f'pendulum@^{pendulum_version}',
-            ]
+
+        return (
+            env
+            # change apache-airflow package version in pyproject.toml to resolve other dependencies
+            .with_exec(
+                [
+                    'poetry',
+                    'add',
+                    f'apache-airflow[fab,cncf-kubernetes]@{airflow_version}',
+                    f'pendulum@^{pendulum_version}',
+                ]
+            )
         )
 
     async def _add_to_env_dbt(self, env: dagger.Container, dbt_version: Version) -> dagger.Container:
@@ -122,6 +130,7 @@ class IntegrationTests:
             )
             # resolve current dependencies
             .with_exec(['poetry', 'lock', '--no-update'])
+            .with_exec(['poetry', 'install', '--with', 'dev', '--all-extras'])
         )
 
         if python_version < Version('3.12'):
@@ -166,7 +175,19 @@ class IntegrationTests:
 
         return await (
             env.with_workdir('/dbt_af')
-            .with_exec(['poetry', 'install', '--with', 'dev', '--all-extras'])
+            # install apache-airflow with provided constraints
+            .with_exec(
+                [
+                    'poetry',
+                    # 'add',
+                    'run',
+                    'pip',
+                    'install',
+                    f'apache-airflow[fab,cncf-kubernetes]=={airflow_version}',
+                    '-c',
+                    f'https://raw.githubusercontent.com/apache/airflow/constraints-{airflow_version}/constraints-{python_version}.txt',
+                ]
+            )
             .with_exec(
                 [
                     'poetry',
