@@ -266,21 +266,17 @@ class IntegrationTests:
         dbt_versions = DBT_VERSIONS if dbt_versions is None else [Version(dbt_version) for dbt_version in dbt_versions]
 
         for python_version in python_versions:
-            # python_env = await self.build_env(source, python_version.base_version)
             for airflow_version in airflow_versions:
                 if airflow_version < Version('2.9.0') and python_version > Version('3.11'):
                     continue
-                # airflow_env = self._add_to_env_airflow(python_env, airflow_version)
                 async with anyio.create_task_group() as tg:
                     for dbt_version in dbt_versions:
-                        # dbt_env = await self._add_to_env_dbt(airflow_env, dbt_version)
-
                         tg.start_soon(
                             self.test_one_versions_combination,
                             source,
                             python_version.base_version,
                             airflow_version.base_version,
                             dbt_version.base_version,
-                            None,  # dbt_env,
+                            None,
                             with_running_airflow_tasks,
                         )
