@@ -1,6 +1,7 @@
 import json
 import os
 import typing as tp
+import uuid
 
 import anyio
 import dagger
@@ -114,7 +115,7 @@ class IntegrationTests:
             .from_(f'python:{python_version}-slim')
             # install curl
             .with_exec(['apt-get', 'update'])
-            .with_exec(['apt-get', 'install', '--no-install-recommends', '-y', 'curl'])
+            .with_exec(['apt-get', 'install', '--no-install-recommends', '-y', 'curl', 'vim'])
             .with_exec(['pip', 'install', '--upgrade', 'pip'])
             # install poetry
             .with_exec(
@@ -198,12 +199,14 @@ class IntegrationTests:
             .with_env_variable('POSTGRES_USER', 'postgres')
             .with_env_variable('POSTGRES_PASSWORD', 'postgres')
             .with_env_variable('POSTGRES_DB', 'postgres')
+            # unique instance id for each integration test
+            .with_env_variable('INSTANCE_ID', uuid.uuid4().hex)
             .with_file(
                 '/docker-entrypoint-initdb.d/init.sql',
                 source.file('./tests/.dagger/src/integration_tests/init_test_db.sql'),
             )
             .with_exposed_port(5432)
-            .as_service(use_entrypoint=True)
+            .as_service(args=['postgres', '-c', 'log_statement=all'], use_entrypoint=True)
         )
 
         return await (
