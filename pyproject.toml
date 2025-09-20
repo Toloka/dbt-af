@@ -63,7 +63,7 @@ pins = [
 mcd = [
     "airflow-mcd>=0.3.3,<0.4.0",
     "pycarlo>=0.9",
-    "setuptools; python_version >= '3.12'",
+    "setuptools",
 ]
 tableau = [
     "tableauserverclient>=0.25.0,<0.26.0"

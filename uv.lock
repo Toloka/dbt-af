@@ -908,13 +908,13 @@ dependencies = [
 all = [
     { name = "airflow-mcd" },
     { name = "pycarlo" },
-    { name = "setuptools", marker = "python_full_version >= '3.12'" },
+    { name = "setuptools" },
     { name = "tableauserverclient" },
 ]
 mcd = [
     { name = "airflow-mcd" },
     { name = "pycarlo" },
-    { name = "setuptools", marker = "python_full_version >= '3.12'" },
+    { name = "setuptools" },
 ]
 tableau = [
     { name = "tableauserverclient" },
@@ -963,8 +963,8 @@ requires-dist = [
     { name = "pydantic", specifier = ">=1.10,<3.0.0" },
     { name = "pytest", specifier = ">=7.4.0" },
     { name = "pytest-env", specifier = ">=1.0.0" },
-    { name = "setuptools", marker = "python_full_version >= '3.12' and extra == 'all'" },
-    { name = "setuptools", marker = "python_full_version >= '3.12' and extra == 'mcd'" },
+    { name = "setuptools", marker = "extra == 'all'" },
+    { name = "setuptools", marker = "extra == 'mcd'" },
     { name = "tableauserverclient", marker = "extra == 'all'", specifier = ">=0.25.0,<0.26.0" },
     { name = "tableauserverclient", marker = "extra == 'tableau'", specifier = ">=0.25.0,<0.26.0" },
     { name = "typer", specifier = ">=0.9" },
