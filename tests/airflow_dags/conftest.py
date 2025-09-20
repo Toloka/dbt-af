@@ -343,9 +343,12 @@ def compiled_main_dags(
         with_k8s: bool = False,
         with_dbt_run_check: bool = False,
     ):
-        with dbt_manifest(fixture_name, with_dbt_run_check=with_dbt_run_check) as manifest_path, dbt_profiles() as (
-            profiles,
-            profile_name,
+        with (
+            dbt_manifest(fixture_name, with_dbt_run_check=with_dbt_run_check) as manifest_path,
+            dbt_profiles() as (
+                profiles,
+                profile_name,
+            ),
         ):
             from dbt_af.dags import dbt_main_dags
 

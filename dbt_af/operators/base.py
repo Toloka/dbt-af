@@ -188,7 +188,7 @@ class DbtModelVars(pydantic.BaseModel):
                     # it's impossible to fetch correct type of the field from DWH, and it's impossible to
                     # pass just empty brackets
                     extra[field_name] = (
-                        f"({','.join(map(json.dumps, extra[field_name]))})" if len(extra[field_name]) > 0 else '("")'
+                        f'({",".join(map(json.dumps, extra[field_name]))})' if len(extra[field_name]) > 0 else '("")'
                     )
 
         values['extra'] = extra
