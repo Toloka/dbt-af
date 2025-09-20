@@ -1,5 +1,4 @@
 import json
-import os
 import typing as tp
 import uuid
 
@@ -56,7 +55,7 @@ class IntegrationTests:
     ) -> dagger.Container:
         pendulum_version = '2' if airflow_version < Version('2.8.0') else '3'
 
-        env = (
+        return (
             env
             # change apache-airflow package version in pyproject.toml to resolve other dependencies
             .with_exec(
@@ -64,22 +63,13 @@ class IntegrationTests:
                     'poetry',
                     'add',
                     f'apache-airflow[fab,cncf-kubernetes]@{airflow_version}',
+                    # pendulum3 has breaking changes for airflow<2.8.0
                     f'pendulum@^{pendulum_version}',
-                ]
-            )
-        )
-
-        # update pluggy version
-        if airflow_version < Version('2.8.0'):
-            env = env.with_exec(
-                [
-                    'poetry',
-                    'add',
+                    # old pluggy version is incompatible with tests
                     'pluggy@>=1.3.0',
                 ]
             )
-
-        return env
+        )
 
     async def _add_to_env_dbt(self, env: dagger.Container, dbt_version: Version) -> dagger.Container:
         _all_dbt_postgres_versions = await self._get_all_available_package_versions('dbt-postgres')
@@ -106,8 +96,6 @@ class IntegrationTests:
         """
         Prepare python requirements for dbt-af with pinned airflow, python and dbt version
         """
-        poetry_venv_cache = dag.cache_volume('poetry_venv_cache')
-
         python_version = Version(python_version)
 
         base = (
@@ -144,13 +132,7 @@ class IntegrationTests:
                     'pyproject.toml',
                 ]
             )
-            # resolve current dependencies
-            .with_exec(['poetry', 'lock', '--no-update'])
-            .with_exec(['poetry', 'install', '--with', 'dev', '--all-extras'])
         )
-
-        if os.environ.get('USE_POETRY_CACHE', 'false').lower() == 'true':
-            base = base.with_mounted_cache('/root/.cache/pypoetry/virtualenvs', poetry_venv_cache)
 
         if python_version < Version('3.12'):
             base = base.with_exec(
