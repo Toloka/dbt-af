@@ -194,6 +194,8 @@ class IntegrationTests:
         return await (
             env.with_workdir('/dbt_af')
             .with_service_binding('db', postgres)
+            # install all dependencies and extra packages
+            .with_exec(['poetry', 'install', '--with', 'dev', '--all-extras'])
             # init airflow database
             .with_exec(
                 [
