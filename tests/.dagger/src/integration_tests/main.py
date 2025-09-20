@@ -24,7 +24,7 @@ AIRFLOW_2_VERSIONS = [
 ]
 AIRFLOW_3_VERSIONS = []
 
-POETRY_VERSION = '1.8.5'
+UV_VERSION = '0.8.19'
 
 
 @object_type
@@ -42,10 +42,7 @@ class IntegrationTests:
             return [Version(v) for v in versions]
 
         raise Exception(
-            (
-                f"Couldn't find any available versions for package {package_name}; "
-                f'pip index output: {pip_index_stdout}'
-            )
+            f"Couldn't find any available versions for package {package_name}; pip index output: {pip_index_stdout}"
         )
 
     @staticmethod
@@ -53,26 +50,32 @@ class IntegrationTests:
         env: dagger.Container,
         airflow_version: Version,
     ) -> dagger.Container:
-        pendulum_version = '2' if airflow_version < Version('2.8.0') else '3'
+        pendulum_version = 2 if airflow_version < Version('2.8.0') else 3
 
         return (
             env
             # change apache-airflow package version in pyproject.toml to resolve other dependencies
             .with_exec(
                 [
-                    'poetry',
+                    'uv',
                     'add',
-                    f'apache-airflow[fab,cncf-kubernetes]@{airflow_version}',
+                    f'apache-airflow[fab,cncf-kubernetes]=={airflow_version}',
                     # pendulum3 has breaking changes for airflow<2.8.0
-                    f'pendulum@^{pendulum_version}',
+                    f'pendulum>={pendulum_version},<{pendulum_version + 1}',
                     # old pluggy version is incompatible with tests
-                    'pluggy@>=1.3.0',
+                    'pluggy>=1.3.0',
                 ]
             )
         )
 
     async def _add_to_env_dbt(self, env: dagger.Container, dbt_version: Version) -> dagger.Container:
+        _all_dbt_core_versions = await self._get_all_available_package_versions('dbt-core')
         _all_dbt_postgres_versions = await self._get_all_available_package_versions('dbt-postgres')
+
+        dbt_core_versions = [
+            v for v in _all_dbt_core_versions if v.major == dbt_version.major and v.minor == dbt_version.minor
+        ]
+        dbt_core_version = max(dbt_core_versions) if dbt_core_versions else max(_all_dbt_core_versions)
         dbt_postgres_versions = [
             v for v in _all_dbt_postgres_versions if v.major == dbt_version.major and v.minor == dbt_version.minor
         ]
@@ -80,10 +83,10 @@ class IntegrationTests:
 
         return env.with_exec(
             [
-                'poetry',
+                'uv',
                 'add',
-                f'dbt-core@~{dbt_version}',
-                f'dbt-postgres@{dbt_postgres_version}',
+                f'dbt-core=={dbt_core_version}',
+                f'dbt-postgres=={dbt_postgres_version}',
             ]
         )
 
@@ -105,16 +108,19 @@ class IntegrationTests:
             .with_exec(['apt-get', 'update'])
             .with_exec(['apt-get', 'install', '--no-install-recommends', '-y', 'curl', 'vim'])
             .with_exec(['pip', 'install', '--upgrade', 'pip'])
-            # install poetry
+            # install uv
             .with_exec(
                 [
-                    'bash',
-                    '-lc',
-                    f'curl -sSL https://install.python-poetry.org | POETRY_VERSION={POETRY_VERSION} python -',
-                ]
+                    'curl',
+                    '-LsSf',
+                    '-o',
+                    '/install_uv.sh',
+                    f'https://astral.sh/uv/{UV_VERSION}/install.sh',
+                ],
             )
-            .with_env_variable('PATH', '/root/.local/bin:$PATH', expand=True)
-            .with_exec(['poetry', '--version'])
+            .with_exec(['sh', '/install_uv.sh'])
+            .with_env_variable('PATH', '$PATH:/root/.local/bin', expand=True)
+            .with_exec(['uv', '--version'])
             # copy source code
             .with_directory('/dbt_af/dbt_af', source.directory('dbt_af'))
             .with_directory('/dbt_af/dbt_af_functional_tests', source.directory('dbt_af_functional_tests'))
@@ -122,27 +128,10 @@ class IntegrationTests:
             .with_directory('/dbt_af/tests', source.directory('tests'))
             .with_file('/dbt_af/pyproject.toml', source.file('pyproject.toml'))
             .with_file('/dbt_af/README.md', source.file('README.md'))
-            .with_workdir('/dbt_af')
             # pin python version
-            .with_exec(
-                [
-                    'sed',
-                    '-i',
-                    f's/^python = "[^"]*"/python = "~{python_version.base_version}"/',
-                    'pyproject.toml',
-                ]
-            )
+            .with_new_file('/dbt_af/.python-version', contents=python_version.base_version)
+            .with_workdir('/dbt_af')
         )
-
-        if python_version < Version('3.12'):
-            base = base.with_exec(
-                [
-                    'sed',
-                    '-i',
-                    r'/^setuptools = {.*python *= *">=3\.12".*}/d',
-                    'pyproject.toml',
-                ]
-            )
 
         return base
 
@@ -195,11 +184,11 @@ class IntegrationTests:
             env.with_workdir('/dbt_af')
             .with_service_binding('db', postgres)
             # install all dependencies and extra packages
-            .with_exec(['poetry', 'install', '--with', 'dev', '--all-extras'])
+            .with_exec(['uv', 'sync', '--all-packages', '--all-groups', '--all-extras'])
             # init airflow database
             .with_exec(
                 [
-                    'poetry',
+                    'uv',
                     'run',
                     'airflow',
                     'db',
@@ -208,7 +197,7 @@ class IntegrationTests:
             )
             .with_exec(
                 [
-                    'poetry',
+                    'uv',
                     'run',
                     'pytest',
                     '-qsxvv',

@@ -6,6 +6,7 @@ from collections import defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from textwrap import indent
+from unittest.mock import patch
 
 import pytest
 import yaml
@@ -280,42 +281,33 @@ class TmpManifest(TestManifest):
         self._tmp_dir.__exit__(exc_type, exc_val, exc_tb)
 
 
-class FileManifest(TestManifest):
-    """DBT manifest as a Golden file"""
-
-    # TODO
-
-
-class DockerManifest(TestManifest):
-    """DBT manifest that will be created inside a docker container"""
-
-    # TODO
+@pytest.fixture
+def mock_node_is_etl_service():
+    with patch.object(DbtNode, 'is_at_etl_service', lambda *args, **kwargs: True):
+        yield
 
 
 @pytest.fixture
-def mock_node_is_etl_service(mocker):
-    mocker.patch.object(DbtNode, 'is_at_etl_service', lambda *args, **kwargs: True)
-
-
-@pytest.fixture
-def mock_init_airflow_environment(mocker):
+def mock_init_airflow_environment():
     import dbt_af.operators.base as module_in_use
 
-    mocker.patch(f'{module_in_use.__name__}.{module_in_use.init_environment.__name__}', return_value=dict())
+    with patch(f'{module_in_use.__name__}.{module_in_use.init_environment.__name__}', return_value=dict()):
+        yield
 
 
 @pytest.fixture
-def mock_mcd_callbacks(mocker):
+def mock_mcd_callbacks():
     import dbt_af.dags as module_in_use
 
-    mocker.patch(
+    with patch(
         f'{module_in_use.__name__}.{module_in_use.collect_af_custom_callbacks.__name__}',
         return_value=(dict(), dict()),
-    )
+    ):
+        yield
 
 
 @pytest.fixture
-def dbt_manifest(mocker):
+def dbt_manifest():
     @contextlib.contextmanager
     def _dbt_manifest(fixture_name, with_dbt_run_check: bool = False):
         with TmpManifest(fixture_name, with_dbt_run_check=with_dbt_run_check) as manifest_path:
@@ -342,7 +334,6 @@ def compiled_main_dags(
     mock_init_airflow_environment,
     mock_mcd_callbacks,
     get_config,
-    socket_disabled,
 ):
     @contextlib.contextmanager
     def _dags(

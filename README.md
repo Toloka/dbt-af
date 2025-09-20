@@ -5,7 +5,7 @@
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dbt-af.svg)](https://pypi.org/project/dbt-af/)
 [![PyPI - Downloads](https://img.shields.io/pepy/dt/dbt-af)](https://pypi.org/project/dbt-af/)
 
-[![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 # dbt-af: distributed run of dbt models using Airflow
@@ -38,8 +38,8 @@ allowing you to run the models independently while preserving their dependencies
 
 To install `dbt-af` run `pip install dbt-af`.
 
-To contribute we recommend to use `poetry` to install package dependencies. Run `poetry install --with=dev` to install
-all dependencies.
+To contribute we recommend to use `uv` to install package dependencies.
+Run `uv sync --all-packages --all-groups --all-extras` to install all dependencies.
 
 ## _dbt-af_ by Example
 
