@@ -2,6 +2,7 @@ name: Integration Tests
 run-name: Integration tests run (triggered by @${{ github.actor }})
 
 on:
+  pull_request:
   workflow_dispatch:
   push:
     branches:
