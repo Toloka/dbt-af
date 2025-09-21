@@ -1,10 +1,11 @@
 name: Integration Tests
+run-name: Integration tests run (triggered by @${{ github.actor }})
 
 on:
   workflow_dispatch:
-  issue_comment:
-    types:
-      - created
+  push:
+    branches:
+      - main
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -12,10 +13,9 @@ concurrency:
 
 jobs:
   integration_test:
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/run_integration_tests'))
     runs-on: [ ubuntu-latest ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Call Dagger Function
         uses: dagger/dagger-for-github@8.0.0
@@ -26,9 +26,9 @@ jobs:
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
 
       - name: Send message if failed
-        if: failure()
+        if: failure() && github.event_name == 'workflow_dispatch'
         uses: ./.github/actions/send-failed-message
 
       - name: Send message if cancelled
-        if: cancelled()
+        if: cancelled() && github.event_name == 'workflow_dispatch'
         uses: ./.github/actions/send-cancelled-message

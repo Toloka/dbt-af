@@ -1,11 +1,60 @@
 name: Release
+run-name: PyPI release (triggered by @${{ github.actor }})
 
 on:
   release:
     types: [ published ]
 
 jobs:
+  verify-tests-workflow:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: read
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Get commit SHA from tag
+        id: sha
+        run: |
+          git fetch --tags --force
+          TAG="${{ github.event.release.tag_name }}"
+          SHA="$(git rev-parse "${TAG}^{commit}")"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Verify other workflow success
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = "${{ steps.sha.outputs.sha }}";
+            const testsWorkflowFile = "integrational_tests.yml";
+            
+            // Get last workflow run matching SHA
+            const { data } = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: testsWorkflowFile,
+              branch: "main",
+              head_sha: sha,
+            });
+            
+            if (data.workflow_runs.length === 0) {
+              core.setFailed(`Could not find workflow run for SHA ${sha}`);
+              return;
+            }
+            const run = data.workflow_runs[0];
+            
+            if (run.conclusion !== "success") {
+              core.setFailed(`Workflow ${testsWorkflowFile} for SHA ${sha} finished with status: ${run.conclusion}`);
+            } else {
+              core.info(`Workflow ${testsWorkflowFile} for SHA ${sha} finished with status: ${run.conclusion} ✅`);
+            }
+
   build:
+    needs: verify-tests-workflow
     name: Build wheels and source distribution
     runs-on: ubuntu-latest
 
