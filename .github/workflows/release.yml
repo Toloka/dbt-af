@@ -9,7 +9,7 @@ jobs:
   verify-tests-workflow:
     runs-on: ubuntu-latest
     permissions:
-      id-token: read
+      id-token: write
       actions: read
       contents: read
     steps:
