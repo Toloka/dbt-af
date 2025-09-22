@@ -283,8 +283,9 @@ class IntegrationTests:
         airflow_versions: list[str] | None = None,
         dbt_versions: list[str] | None = None,
         with_running_airflow_tasks: bool = False,
+        number_of_concurrent_tests: int = 2,
     ):
-        limiter = anyio.CapacityLimiter(2)
+        limiter = anyio.CapacityLimiter(number_of_concurrent_tests)
 
         python_versions = (
             PYTHON_VERSIONS
