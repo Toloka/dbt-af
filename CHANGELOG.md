@@ -7,6 +7,8 @@ Fixes:
 - New dbt Snapshots (https://docs.getdbt.com/docs/build/snapshots#configuring-snapshots) can be executed by dbtsnapshot task (https://github.com/Toloka/dbt-af/pull/77)
 
 ## v0.14.4
+> [!CAUTION]
+> This version is yanked due to a bug with building tasks for snapshots.
 
 I don't always test my code, but when I do, I do it in production
 
