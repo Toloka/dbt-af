@@ -45,29 +45,6 @@ class IntegrationTests:
             f"Couldn't find any available versions for package {package_name}; pip index output: {pip_index_stdout}"
         )
 
-    @staticmethod
-    def _add_to_env_airflow(
-        env: dagger.Container,
-        airflow_version: Version,
-    ) -> dagger.Container:
-        pendulum_version = 2 if airflow_version < Version('2.8.0') else 3
-
-        return (
-            env
-            # change apache-airflow package version in pyproject.toml to resolve other dependencies
-            .with_exec(
-                [
-                    'uv',
-                    'add',
-                    f'apache-airflow[fab,cncf-kubernetes]=={airflow_version}',
-                    # pendulum3 has breaking changes for airflow<2.8.0
-                    f'pendulum>={pendulum_version},<{pendulum_version + 1}',
-                    # old pluggy version is incompatible with tests
-                    'pluggy>=1.3.0',
-                ]
-            )
-        )
-
     async def _add_to_env_dbt(self, env: dagger.Container, dbt_version: Version) -> dagger.Container:
         _all_dbt_core_versions = await self._get_all_available_package_versions('dbt-core')
         _all_dbt_postgres_versions = await self._get_all_available_package_versions('dbt-postgres')
@@ -88,6 +65,64 @@ class IntegrationTests:
                 f'dbt-core=={dbt_core_version}',
                 f'dbt-postgres=={dbt_postgres_version}',
             ]
+        )
+
+    @staticmethod
+    def _install_all_requirements(
+        env: dagger.Container,
+        python_version: Version,
+        airflow_version: Version,
+    ) -> dagger.Container:
+        pendulum_version = 2 if airflow_version < Version('2.8.0') else 3
+
+        return (
+            env.with_workdir('/dbt_af')
+            # remove airflow from main project dependencies to install it from constraints
+            .with_exec(['uv', 'remove', 'apache-airflow'])
+            # add pendulum and pluggy to main project dependencies
+            .with_exec(
+                [
+                    'uv',
+                    'add',
+                    # pendulum3 has breaking changes for airflow<2.8.0
+                    f'pendulum>={pendulum_version},<{pendulum_version + 1}',
+                    # old pluggy version is incompatible with tests
+                    'pluggy>=1.3.0',
+                ]
+            )
+            .with_exec(['uv', 'lock'])
+            .with_exec(
+                [
+                    'uv',
+                    'export',
+                    '--all-extras',
+                    '--dev',
+                    '--no-editable',
+                    '--output-file=requirements.txt',
+                ]
+            )
+            # install airflow from official constraints
+            .with_exec(
+                [
+                    'uv',
+                    'pip',
+                    'install',
+                    '--system',
+                    '-c',
+                    f'https://raw.githubusercontent.com/apache/airflow/constraints-{airflow_version}/constraints-{python_version}.txt',
+                    f'apache-airflow[fab,cncf-kubernetes]=={airflow_version}',
+                ]
+            )
+            .with_exec(
+                [
+                    'uv',
+                    'pip',
+                    'install',
+                    '--system',
+                    '-r',
+                    'requirements.txt',
+                ]
+            )
         )
 
     @function
@@ -152,15 +187,16 @@ class IntegrationTests:
         if prebuild_env:
             env = prebuild_env
         else:
-            env = await self._add_to_env_dbt(
-                self._add_to_env_airflow(
+            env = self._install_all_requirements(
+                await self._add_to_env_dbt(
                     await self.build_env(
                         source,
                         python_version.base_version,
                     ),
-                    airflow_version,
+                    dbt_version,
                 ),
-                dbt_version,
+                python_version,
+                airflow_version,
             )
 
         # postgres database from dbt tests
@@ -183,13 +219,9 @@ class IntegrationTests:
         return await (
             env.with_workdir('/dbt_af')
             .with_service_binding('db', postgres)
-            # install all dependencies and extra packages
-            .with_exec(['uv', 'sync', '--all-packages', '--all-groups', '--all-extras'])
             # init airflow database
             .with_exec(
                 [
-                    'uv',
-                    'run',
                     'airflow',
                     'db',
                     'migrate' if airflow_version >= Version('2.7.0') else 'init',
@@ -197,8 +229,6 @@ class IntegrationTests:
             )
             .with_exec(
                 [
-                    'uv',
-                    'run',
                     'pytest',
                     '-qsxvv',
                     '--log-cli-level=INFO',

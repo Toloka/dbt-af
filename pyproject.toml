@@ -44,16 +44,12 @@ dev = [
     "ipython==8.37.0",
     "freezegun==1.5.5",
     { include-group = "lint" },
-    { include-group = "pins" },
-    { include-group = "packaging" }
+    { include-group = "pins" }
 ]
 lint = [
     "ruff==0.13.1",
     "pre-commit==3.8.0",
     "shandy-sqlfmt[jinjafmt]==0.27.0",
-]
-packaging = [
-    "hatch==1.14.1"
 ]
 pins = [
     "flask_limiter>3,<4,!=3.13", # temporarily due to https://github.com/alisaifee/flask-limiter/issues/479
