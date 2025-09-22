@@ -5,7 +5,7 @@
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dbt-af.svg)](https://pypi.org/project/dbt-af/)
 [![PyPI - Downloads](https://img.shields.io/pepy/dt/dbt-af)](https://pypi.org/project/dbt-af/)
 
-[![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 # dbt-af: distributed run of dbt models using Airflow
@@ -38,8 +38,8 @@ allowing you to run the models independently while preserving their dependencies
 
 To install `dbt-af` run `pip install dbt-af`.
 
-To contribute we recommend to use `poetry` to install package dependencies. Run `poetry install --with=dev` to install
-all dependencies.
+To contribute we recommend to use `uv` to install package dependencies.
+Run `uv sync --all-packages --all-groups --all-extras` to install all dependencies.
 
 ## _dbt-af_ by Example
 
@@ -68,8 +68,8 @@ config = Config(
 )
 
 dags = compile_dbt_af_dags(
-   manifest_path='/path/to/my_dbt_project/target/manifest.json', 
-   config=config,
+    manifest_path='/path/to/my_dbt_project/target/manifest.json',
+    config=config,
 )
 for dag_name, dag in dags.items():
     globals()[dag_name] = dag
@@ -102,6 +102,19 @@ Check out the documentation for more details [here](docs/docs.md).
    This means that analytics professionals, data scientists,
    and data engineers can focus on their dbt models and important business logic
    rather than spending time on Airflow DAGs.
+
+## Requirements
+
+`dbt-af` is tested with:
+
+| Airflow version | Python versions | `dbt-core` versions |
+|-----------------|-----------------|---------------------|
+| 2.6.3           | >=3.10,<3.12    | >=1.7,<=1.10        |
+| 2.7.3           | >=3.10,<3.12    | >=1.7,<=1.10        |
+| 2.8.4           | >=3.10,<3.12    | >=1.7,<=1.10        |
+| 2.9.3           | >=3.10,<3.13    | >=1.7,<=1.10        |
+| 2.10.5          | >=3.10,<3.13    | >=1.7,<=1.10        |
+| 2.11.0          | >=3.10,<3.13    | >=1.7,<=1.10        |
 
 ## Project Information
 

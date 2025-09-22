@@ -87,7 +87,7 @@ def dbt_run_model_dag(config: Config) -> dict[str, DAG]:
                 ),
             ),
             'start_dttm': Param(
-                f'{dt.date.today()-dt.timedelta(days=1)}T{dt.time(hour=0, minute=0, second=0)}',
+                f'{dt.date.today() - dt.timedelta(days=1)}T{dt.time(hour=0, minute=0, second=0)}',
                 type='string',
                 format='date-time',
                 title='Interval start datetime',
