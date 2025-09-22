@@ -176,6 +176,86 @@ class IntegrationTests:
 
         return base
 
+    async def _test_one_versions_combination_impl(
+        self,
+        source: tp.Annotated[dagger.Directory, DefaultPath('/'), Doc('dbt-af source directory')],
+        python_version: str,
+        airflow_version: str,
+        dbt_version: str,
+        prebuild_env: dagger.Container | None = None,
+        with_running_airflow_tasks: bool = False,
+        limiter: anyio.CapacityLimiter | None = None,
+    ) -> str:
+        limiter = limiter or anyio.CapacityLimiter(1)
+
+        async with limiter:
+            python_version = Version(python_version)
+            airflow_version = Version(airflow_version)
+            dbt_version = Version(dbt_version)
+
+            if prebuild_env:
+                env = prebuild_env
+            else:
+                env = self._install_all_requirements(
+                    await self._add_to_env_dbt(
+                        await self.build_env(
+                            source,
+                            python_version.base_version,
+                        ),
+                        dbt_version,
+                    ),
+                    python_version,
+                    airflow_version,
+                )
+
+            # postgres database from dbt tests
+            postgres = (
+                dag.container()
+                .from_('postgres:16')
+                .with_env_variable('POSTGRES_USER', 'postgres')
+                .with_env_variable('POSTGRES_PASSWORD', 'postgres')
+                .with_env_variable('POSTGRES_DB', 'postgres')
+                # unique instance id for each integration test
+                .with_env_variable('INSTANCE_ID', uuid.uuid4().hex)
+                .with_file(
+                    '/docker-entrypoint-initdb.d/init.sql',
+                    source.file('./tests/.dagger/src/integration_tests/init_test_db.sql'),
+                )
+                .with_exposed_port(5432)
+                .as_service(args=['postgres', '-c', 'log_statement=all'], use_entrypoint=True)
+            )
+
+            return await (
+                env.with_workdir('/dbt_af')
+                .with_service_binding('db', postgres)
+                # init airflow database
+                .with_exec(
+                    [
+                        'airflow',
+                        'db',
+                        'migrate' if airflow_version >= Version('2.7.0') else 'init',
+                    ]
+                )
+                .with_exec(
+                    [
+                        'pytest',
+                        '-qsxvv',
+                        '--log-cli-level=INFO',
+                    ]
+                    + (
+                        [
+                            '--run-airflow-tasks',
+                        ]
+                        if with_running_airflow_tasks
+                        else []
+                    )
+                    + [
+                        'tests',
+                    ]
+                )
+                .stdout()
+            )
+
     @function
     async def test_one_versions_combination(
         self,
@@ -186,71 +266,13 @@ class IntegrationTests:
         prebuild_env: dagger.Container | None = None,
         with_running_airflow_tasks: bool = False,
     ) -> str:
-        python_version = Version(python_version)
-        airflow_version = Version(airflow_version)
-        dbt_version = Version(dbt_version)
-
-        if prebuild_env:
-            env = prebuild_env
-        else:
-            env = self._install_all_requirements(
-                await self._add_to_env_dbt(
-                    await self.build_env(
-                        source,
-                        python_version.base_version,
-                    ),
-                    dbt_version,
-                ),
-                python_version,
-                airflow_version,
-            )
-
-        # postgres database from dbt tests
-        postgres = (
-            dag.container()
-            .from_('postgres:16')
-            .with_env_variable('POSTGRES_USER', 'postgres')
-            .with_env_variable('POSTGRES_PASSWORD', 'postgres')
-            .with_env_variable('POSTGRES_DB', 'postgres')
-            # unique instance id for each integration test
-            .with_env_variable('INSTANCE_ID', uuid.uuid4().hex)
-            .with_file(
-                '/docker-entrypoint-initdb.d/init.sql',
-                source.file('./tests/.dagger/src/integration_tests/init_test_db.sql'),
-            )
-            .with_exposed_port(5432)
-            .as_service(args=['postgres', '-c', 'log_statement=all'], use_entrypoint=True)
-        )
-
-        return await (
-            env.with_workdir('/dbt_af')
-            .with_service_binding('db', postgres)
-            # init airflow database
-            .with_exec(
-                [
-                    'airflow',
-                    'db',
-                    'migrate' if airflow_version >= Version('2.7.0') else 'init',
-                ]
-            )
-            .with_exec(
-                [
-                    'pytest',
-                    '-qsxvv',
-                    '--log-cli-level=INFO',
-                ]
-                + (
-                    [
-                        '--run-airflow-tasks',
-                    ]
-                    if with_running_airflow_tasks
-                    else []
-                )
-                + [
-                    'tests',
-                ]
-            )
-            .stdout()
+        return await self._test_one_versions_combination_impl(
+            source,
+            python_version,
+            airflow_version,
+            dbt_version,
+            prebuild_env,
+            with_running_airflow_tasks,
         )
 
     @function
@@ -262,6 +284,8 @@ class IntegrationTests:
         dbt_versions: list[str] | None = None,
         with_running_airflow_tasks: bool = False,
     ):
+        limiter = anyio.CapacityLimiter(2)
+
         python_versions = (
             PYTHON_VERSIONS
             if python_versions is None
@@ -281,11 +305,12 @@ class IntegrationTests:
                 async with anyio.create_task_group() as tg:
                     for dbt_version in dbt_versions:
                         tg.start_soon(
-                            self.test_one_versions_combination,
+                            self._test_one_versions_combination_impl,
                             source,
                             python_version.base_version,
                             airflow_version.base_version,
                             dbt_version.base_version,
                             None,
                             with_running_airflow_tasks,
+                            limiter,
                         )
