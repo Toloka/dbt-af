@@ -123,6 +123,16 @@ def get_dbt_project_yaml_for_test(test_location):
     project['models'][project['name']]['k8s_cluster'] = 'fake_k8s_cluster'
     project['models'] = dict(project['models'])
 
+    project['snapshots'] = defaultdict(dict)
+    project['snapshots'][project['name']] = test_model_config
+    project['snapshots'][project['name']]['sql_cluster'] = 'fake_sql_cluster'
+    project['snapshots'][project['name']]['daily_sql_cluster'] = 'fake_daily_sql_cluster'
+    project['snapshots'][project['name']]['py_cluster'] = 'fake_py_cluster'
+    project['snapshots'][project['name']]['bf_cluster'] = 'fake_bf_cluster'
+    project['snapshots'][project['name']]['prod_data_test_cluster'] = 'fake_prod_data_test_cluster'
+    project['snapshots'][project['name']]['k8s_cluster'] = 'fake_k8s_cluster'
+    project['snapshots'] = dict(project['models'])
+
     return project
 
 
@@ -488,6 +498,18 @@ def dags_two_tasks_depend_on_two(compiled_main_dags):
     A2 -> +
     """
     with compiled_main_dags('two_tasks_depend_on_two', with_dbt_run_check=True) as dags:
+        yield dags
+
+
+@pytest.fixture
+def dags_two_tasks_depend_on_two_w_snapshot(compiled_main_dags):
+    """
+    A1 -> +
+          + -> A3 + -> S1
+          + -> A4
+    A2 -> +
+    """
+    with compiled_main_dags('two_tasks_depend_on_two_w_snapshot', with_dbt_run_check=True) as dags:
         yield dags
 
 
