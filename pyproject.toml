@@ -39,10 +39,10 @@ dev = [
     "pytest==8.4.2",
     "pytest-env==1.1.5",
     "pytest-cov==4.1.0",
-    "dbt-postgres==1.9.1",
-    "psycopg2-binary==2.9.10; sys_platform == 'linux'",
+    "dbt-postgres>=1.7.0,<2",
+    "psycopg2-binary>=2.9.0,<2.10; sys_platform == 'linux'",
     "ipython==8.37.0",
-    "freezegun==1.5.5",
+    "freezegun>=1.5.1,<1.6.0",
     { include-group = "lint" },
     { include-group = "pins" }
 ]

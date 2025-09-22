@@ -63,6 +63,12 @@ class IntegrationTests:
                 'uv',
                 'add',
                 f'dbt-core=={dbt_core_version}',
+            ]
+        ).with_exec(
+            [
+                'uv',
+                'add',
+                '--group=dev',
                 f'dbt-postgres=={dbt_postgres_version}',
             ]
         )

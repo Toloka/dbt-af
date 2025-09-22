@@ -961,12 +961,12 @@ provides-extras = ["all", "mcd", "tableau"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "dbt-postgres", specifier = "==1.9.1" },
+    { name = "dbt-postgres", specifier = ">=1.7.0,<2" },
     { name = "flask-limiter", specifier = ">3,!=3.13,<4" },
-    { name = "freezegun", specifier = "==1.5.5" },
+    { name = "freezegun", specifier = ">=1.5.1,<1.6.0" },
     { name = "ipython", specifier = "==8.37.0" },
     { name = "pre-commit", specifier = "==3.8.0" },
-    { name = "psycopg2-binary", marker = "sys_platform == 'linux'", specifier = "==2.9.10" },
+    { name = "psycopg2-binary", marker = "sys_platform == 'linux'", specifier = ">=2.9.0,<2.10" },
     { name = "pytest", specifier = "==8.4.2" },
     { name = "pytest-cov", specifier = "==4.1.0" },
     { name = "pytest-env", specifier = "==1.1.5" },
