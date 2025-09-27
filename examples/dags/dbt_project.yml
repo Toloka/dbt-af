@@ -46,6 +46,13 @@ models:
     py_cluster: "dev"
     bf_cluster: "dev"
 
+snapshots:
+  sql_cluster: "dev"
+  daily_sql_cluster: "dev"
+  py_cluster: "dev"
+  bf_cluster: "dev"
+
+
 seeds:
   sql_cluster: "dev"
   daily_sql_cluster: "dev"

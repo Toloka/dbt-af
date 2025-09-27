@@ -736,3 +736,24 @@ def test_two_domains_with_diff_scheduling_and_shifts(
 
     if run_airflow_tasks:
         run_all_tasks_in_dag(dags)
+
+
+def test_two_tasks_depend_on_two_w_snapshot_have_correct_dags(
+    dags_two_tasks_depend_on_two_w_snapshot, run_airflow_tasks
+):
+    dags = dags_two_tasks_depend_on_two_w_snapshot
+
+    assert sorted(dags) == ['a__backfill', 'a__daily']
+
+    a = dags['a__daily']
+
+    assert a.dag_id == 'a__daily'
+    assert sorted(a.task_ids) == ['a1', 'a2', 'a3', 'a4', 's1']
+    assert node_ids(a.task_dict['a1'].upstream_list) == []
+    assert node_ids(a.task_dict['a2'].upstream_list) == []
+    assert node_ids(a.task_dict['a3'].upstream_list) == ['a1', 'a2']
+    assert node_ids(a.task_dict['a4'].upstream_list) == ['a1', 'a2']
+    assert node_ids(a.task_dict['s1'].upstream_list) == ['a3']
+
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)

@@ -1,0 +1,7 @@
++description: |
+  2 sources + 2 destinations in cross dependency withing a single domain
+  
+    A1 -> +
+          + -> A3 + -> S1
+          + -> A4
+    A2 -> +

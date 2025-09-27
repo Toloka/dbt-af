@@ -1,0 +1,9 @@
+version: 2
+snapshots:
+  - name: dmn_jaffle_analytics.odscustomers_scd
+    relation: ref("dmn_jaffle_analytics.ods.customers")
+    config:
+      unique_key: customer_id
+      strategy: check
+      check_cols: ['*']
+

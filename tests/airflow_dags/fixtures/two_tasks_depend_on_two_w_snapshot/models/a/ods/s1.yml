@@ -1,0 +1,7 @@
+version: 2
+snapshots:
+  - name: s1
+    relation: ref("a3")
+    config:
+      unique_key: id
+      strategy: snapshot
