@@ -113,6 +113,7 @@ class IntegrationTests:
                     'uv',
                     'pip',
                     'install',
+                    '--no-cache',
                     '--system',
                     '-c',
                     f'https://raw.githubusercontent.com/apache/airflow/constraints-{airflow_version}/constraints-{python_version}.txt',
