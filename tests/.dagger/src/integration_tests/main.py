@@ -31,6 +31,9 @@ UV_VERSION = '0.8.19'
 class IntegrationTests:
     @staticmethod
     async def _get_all_available_package_versions(package_name: str) -> list[Version]:
+        """
+        Helper to get all available package versions from PyPI
+        """
         pip_index_stdout = await (
             dag.container()
             .from_('python:3.12-slim')
@@ -46,6 +49,9 @@ class IntegrationTests:
         )
 
     async def _add_to_env_dbt(self, env: dagger.Container, dbt_version: Version) -> dagger.Container:
+        """
+        Adds to tests env dbt-core and dbt-postgres packages for specified dbt-version (takes latest patch version).
+        """
         _all_dbt_core_versions = await self._get_all_available_package_versions('dbt-core')
         _all_dbt_postgres_versions = await self._get_all_available_package_versions('dbt-postgres')
 
@@ -79,6 +85,11 @@ class IntegrationTests:
         python_version: Version,
         airflow_version: Version,
     ) -> dagger.Container:
+        """
+        Installs all necessary requirements for one test run.
+
+        NOTE! apache-airflow is installed with official constraints file and not as one of the project dependencies.
+        """
         pendulum_version = 2 if airflow_version < Version('2.8.0') else 3
 
         return (
@@ -198,6 +209,12 @@ class IntegrationTests:
         with_running_airflow_tasks: bool = False,
         limiter: anyio.CapacityLimiter | None = None,
     ) -> str:
+        """
+        Implementation of one version combination test.
+        Takes into account limiters to avoid too many parallel tests.
+
+        Could be run with prebuilt environment.
+        """
         limiter = limiter or anyio.CapacityLimiter(1)
 
         async with limiter:
@@ -278,6 +295,9 @@ class IntegrationTests:
         prebuild_env: dagger.Container | None = None,
         with_running_airflow_tasks: bool = False,
     ) -> str:
+        """
+        Tests one version combination.
+        """
         if Version(airflow_version) < Version('2.9.0') and Version(python_version) > Version('3.11'):
             return 'skipped'
 
@@ -300,6 +320,9 @@ class IntegrationTests:
         with_running_airflow_tasks: bool = False,
         number_of_concurrent_tests: int = 2,
     ):
+        """
+        Tests all version combinations.
+        """
         limiter = anyio.CapacityLimiter(number_of_concurrent_tests)
 
         python_versions = (
@@ -333,6 +356,9 @@ class IntegrationTests:
 
     @function
     def get_versions_matrix(self) -> dagger.File:
+        """
+        Helper function for CI to get all available version combinations.
+        """
         filename = 'integration_tests_matrix.json'
         content = json.dumps(
             {

@@ -75,7 +75,7 @@ jobs:
 
       - name: Build package
         run: |
-          uv run hatch build
+          uv build
 
       - uses: actions/upload-artifact@v4
         with:
