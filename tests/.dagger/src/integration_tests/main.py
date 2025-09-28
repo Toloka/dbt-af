@@ -148,7 +148,18 @@ class IntegrationTests:
             .from_(f'python:{python_version}-slim')
             # install curl
             .with_exec(['apt-get', 'update'])
-            .with_exec(['apt-get', 'install', '--no-install-recommends', '-y', 'curl', 'vim'])
+            .with_exec(
+                [
+                    'apt-get',
+                    'install',
+                    '--no-install-recommends',
+                    '-y',
+                    'curl',
+                    'vim',
+                    'gcc',
+                    'python3-dev',
+                ]
+            )
             .with_exec(['pip', 'install', '--upgrade', 'pip'])
             # install uv
             .with_exec(

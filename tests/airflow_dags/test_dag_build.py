@@ -1,13 +1,18 @@
 import datetime
+import importlib.metadata
 import logging
 import uuid
 from typing import Sequence
 
 import pendulum
+import pytest
 from airflow import DAG
 from airflow.models.taskinstance import TaskInstance
 from airflow.utils.state import DagRunState, TaskInstanceState
 from airflow.utils.types import DagRunType
+from packaging import version
+
+dbt_core_version = version.parse(importlib.metadata.version('dbt-core'))
 
 
 def node_ids(tasks):
@@ -738,6 +743,10 @@ def test_two_domains_with_diff_scheduling_and_shifts(
         run_all_tasks_in_dag(dags)
 
 
+@pytest.mark.skipif(
+    dbt_core_version < version.parse('1.9.0'),
+    reason='dbt snapshots as yaml are available since dbt-core 1.9.0',
+)
 def test_two_tasks_depend_on_two_w_snapshot_have_correct_dags(
     dags_two_tasks_depend_on_two_w_snapshot, run_airflow_tasks
 ):
