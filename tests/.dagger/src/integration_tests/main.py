@@ -332,11 +332,13 @@ class IntegrationTests:
                         )
 
     @function
-    def get_versions_matrix(self) -> str:
-        return json.dumps(
+    def get_versions_matrix(self) -> dagger.File:
+        filename = 'integration_tests_matrix.json'
+        content = json.dumps(
             {
                 'python': [v.base_version for v in PYTHON_VERSIONS],
                 'airflow': [v.base_version for v in AIRFLOW_2_VERSIONS + AIRFLOW_3_VERSIONS],
                 'dbt': [v.base_version for v in DBT_VERSIONS],
             },
         )
+        return dag.container().from_('alpine').with_new_file(filename, content).file(filename)

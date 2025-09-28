@@ -16,7 +16,7 @@ jobs:
   get-matrix:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.get_matrix.outputs.stdout }}
+      matrix: ${{ steps.put_matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v5
 
@@ -26,8 +26,13 @@ jobs:
         with:
           version: "latest"
           module: ./tests
-          args: get-versions-matrix
+          args: get-versions-matrix export --path=./matrix.json
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+
+      - name: Put matrix to output
+        id: put_matrix
+        run: |
+          echo "matrix=$(cat ./matrix.json)" >> $GITHUB_OUTPUT
 
   integration_test:
     needs: get-matrix
