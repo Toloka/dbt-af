@@ -13,8 +13,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  get-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.get_matrix.outputs.stdout }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Get matrix
+        id: get_matrix
+        uses: dagger/dagger-for-github@8.0.0
+        with:
+          version: "latest"
+          module: ./tests
+          args: get-versions-matrix
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+
   integration_test:
+    needs: get-matrix
     runs-on: [ ubuntu-latest ]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.get-matrix.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v5
 
@@ -23,7 +43,7 @@ jobs:
         with:
           version: "latest"
           module: ./tests
-          args: all --with-running-airflow-tasks
+          args: test-one-versions-combination --python-version=${{ matrix.python }} --airflow-version=${{ matrix.airflow }} --dbt-version=${{ matrix.dbt }} --with-running-airflow-tasks
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
 
       - name: Send message if failed

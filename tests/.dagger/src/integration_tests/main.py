@@ -278,6 +278,9 @@ class IntegrationTests:
         prebuild_env: dagger.Container | None = None,
         with_running_airflow_tasks: bool = False,
     ) -> str:
+        if Version(airflow_version) < Version('2.9.0') and Version(python_version) > Version('3.11'):
+            return 'skipped'
+
         return await self._test_one_versions_combination_impl(
             source,
             python_version,
@@ -327,3 +330,13 @@ class IntegrationTests:
                             with_running_airflow_tasks,
                             limiter,
                         )
+
+    @function
+    def get_versions_matrix(self) -> str:
+        return json.dumps(
+            {
+                'python': [v.base_version for v in PYTHON_VERSIONS],
+                'airflow': [v.base_version for v in AIRFLOW_2_VERSIONS + AIRFLOW_3_VERSIONS],
+                'dbt': [v.base_version for v in DBT_VERSIONS],
+            },
+        )
