@@ -1,12 +1,12 @@
-{{ config(
-    materialized='table',
-    file_format='delta',
-    unique_key='id',
-    schedule='@daily',
-    schedule_shift=2,
-    schedule_shift_unit='hour'
-) }}
+{{
+    config(
+        materialized="table",
+        schedule="@daily",
+        schedule_shift=2,
+        schedule_shift_unit="hour",
+    )
+}}
 
 
 select *
-from {{ ref('a1') }}
+from {{ ref("a1") }}

@@ -1,0 +1,59 @@
+name: Integration Tests
+run-name: Integration tests run (triggered by @${{ github.actor }})
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  get-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.put_matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Get matrix
+        id: get_matrix
+        uses: dagger/dagger-for-github@8.0.0
+        with:
+          version: "latest"
+          module: ./tests
+          args: get-versions-matrix export --path=./matrix.json
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+
+      - name: Put matrix to output
+        id: put_matrix
+        run: |
+          echo "matrix=$(cat ./matrix.json)" >> $GITHUB_OUTPUT
+
+  integration_test:
+    needs: get-matrix
+    runs-on: [ ubuntu-latest ]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.get-matrix.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Call Dagger Function
+        uses: dagger/dagger-for-github@8.0.0
+        with:
+          version: "latest"
+          module: ./tests
+          args: test-one-versions-combination --python-version=${{ matrix.python }} --airflow-version=${{ matrix.airflow }} --dbt-version=${{ matrix.dbt }} --with-running-airflow-tasks
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+
+      - name: Send message if failed
+        if: failure() && github.event_name == 'workflow_dispatch'
+        uses: ./.github/actions/send-failed-message
+
+      - name: Send message if cancelled
+        if: cancelled() && github.event_name == 'workflow_dispatch'
+        uses: ./.github/actions/send-cancelled-message

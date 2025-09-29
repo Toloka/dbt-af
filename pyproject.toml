@@ -1,13 +1,12 @@
-[tool.poetry]
+[project]
 name = "dbt-af"
-# note that this version is maintained by the release manager - do not update it manually
-version = "0.14.3"
+dynamic = ["version"]
 description = "Distibuted dbt runs on Apache Airflow"
 authors = [
-    "Nikita Yurasov <nikitayurasov@toloka.ai>",
-    "Igor Safonov <igsaf@toloka.ai>",
-    "Evgeny Ermakov <jkermakov@toloka.ai>",
-    "Leonid Kozhinov <lkozhinov@toloka.ai>",
+    { name = "Nikita Yurasov", email = "nikitayurasov@toloka.ai" },
+    { name = "Igor Safonov", email = "igsaf@toloka.ai" },
+    { name = "Evgeny Ermakov", email = "jkermakov@toloka.ai" },
+    { name = "Leonid Kozhinov", email = "lkozhinov@toloka.ai" }
 ]
 readme = "README.md"
 license = "Apache-2.0"
@@ -15,73 +14,75 @@ homepage = "https://github.com/Toloka/dbt-af"
 repository = "https://github.com/Toloka/dbt-af"
 documentation = "https://github.com/Toloka/dbt-af/blob/main/examples/README.md"
 keywords = ["python", "airflow", "dbt"]
-packages = [
-    { include = "dbt_af" },
-    { include = "dbt_af_functional_tests" },
-    { include = "scripts" },
+requires-python = ">=3.10,<3.13"
+
+dependencies = [
+    "attrs >=23.1",
+    "apache-airflow >=2.6,<3",
+    "apache-airflow-providers-cncf-kubernetes >=7.0.0",
+    "pydantic >=1.10,<3.0.0",
+    "cachetools >=5.3,<7",
+    "croniter >=3.0",
+    "typer >=0.9",
+    "dbt-core >=1.7,<2",
+    "packaging >=21.0",
+    "virtualenv >=20.27.0", # https://github.com/pypa/virtualenv/pull/2782
+    "pytest >=7.4.0",
+    "pytest-env >=1.0.0",
 ]
 
-[tool.poetry.dependencies]
-python = ">=3.10,<3.13"
-attrs = ">=23.1"
-apache-airflow = { version = "3.0.6", extras = ["fab", "cncf-kubernetes"] }
-pydantic = ">=1.10,<3.0.0"
-cachetools = "^5.3"
-croniter = ">=3.0"
-typer = ">=0.9"
-dbt-core = "^1.7"
-packaging = ">=21.0"
-virtualenv = ">=20.27.0" # https://github.com/pypa/virtualenv/pull/2782
+[tool.hatch.version]
+path = "dbt_af/__init__.py"
 
-# tests extra
-pytest = { version = "*", optional = true }
-pytest-env = { version = "*", optional = true }
-pytest-mock = { version = "*", optional = true }
+[dependency-groups]
+dev = [
+    "pytest==8.4.2",
+    "pytest-env==1.1.5",
+    "pytest-cov==4.1.0",
+    "dbt-postgres>=1.7.0,<2",
+    "psycopg2-binary>=2.9.0,<2.10; sys_platform == 'linux'",
+    "ipython==8.37.0",
+    "freezegun>=1.5.1,<1.6.0",
+    { include-group = "lint" },
+    { include-group = "pins" }
+]
+lint = [
+    "ruff==0.13.1",
+    "pre-commit==3.8.0",
+    "shandy-sqlfmt[jinjafmt]==0.27.0",
+]
+pins = [
+    "flask_limiter>3,<4,!=3.13", # temporarily due to https://github.com/alisaifee/flask-limiter/issues/479
+]
 
-# mcd extra
-airflow-mcd = { version = "^0.3.3", optional = true }
-pycarlo = { version = ">=0.9", optional = true }
-setuptools = { version = "*", python = ">=3.12", optional = true }
-
-# tableau extra
-tableauserverclient = { version = "^0.25", optional = true }
-
-# examples extra
-dbt-postgres = { version = "^1.7", optional = true }
-
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.3"
-pytest = "^8"
-pytest-env = "*"
-pytest-cov = "~4.1"
-pytest-mock = "*"
-dbt-postgres = "^1.7"
-psycopg2-binary = { version = "^2.9", markers = "sys_platform == 'linux'" }  # due to bug https://github.com/dbt-labs/dbt-postgres/issues/96
-dbt-databricks = "^1.7"
-pre-commit = "3.6.2"
-ipython = "^8"
-freezegun = "^1.5.1"
-
-[tool.poetry.extras]
-mcd = ["airflow-mcd", "pycarlo", "setuptools"]
-tests = ["pytest", "pytest-env", "pytest-socket", "pytest-mock"]
-minidbt = []
-examples = ["dbt-postgres", "psycopg2-binary"]
-tableau = ["tableauserverclient"]
+[project.optional-dependencies]
+mcd = [
+    "airflow-mcd>=0.3.3,<0.4.0",
+    "pycarlo>=0.9",
+    "setuptools",
+]
+tableau = [
+    "tableauserverclient>=0.25.0,<0.26.0"
+]
 all = [
-    "airflow-mcd", "pycarlo", "setuptools", # mcd
-    "pytest", "pytest-env", "pytest-socket", "pytest-mock", # tests
-    "dbt-postgres", "psycopg2-binary", # examples
-    "tableauserverclient", # tableau
+    "dbt-af[mcd]",
+    "dbt-af[tableau]"
 ]
 
-[tool.poetry.scripts]
-dbt-af-manifest-tests = { callable = "dbt_af_functional_tests:cli", extras = ["tests", "all"] }
-mini_dbt_project_generator = { callable = "scripts.mini_dbt_project_generator:cli", extras = ["minidbt", "all"] }
+[project.scripts]
+dbt-af-manifest-tests = "dbt_af_functional_tests:cli"
+mini_dbt_project_generator = "scripts.mini_dbt_project_generator:cli"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+packages = [
+    "/dbt_af",
+    "/dbt_af_functional_tests",
+    "/scripts",
+]
 
 [tool.ruff]
 # https://beta.ruff.rs/docs

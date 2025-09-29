@@ -74,8 +74,10 @@ class DbtSnapshot(DbtBaseDatasetOperator):
         return 'snapshot'
 
     def __init__(self, dbt_af_config: 'Config', **kwargs) -> None:
+        kwargs.pop('model_type', None)  # Remove if present
         super().__init__(
             dbt_af_config=dbt_af_config,
+            model_type='',
             retry_policy=dbt_af_config.retries_config.dbt_snapshot_retry_policy,
             **kwargs,
         )

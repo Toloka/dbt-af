@@ -38,6 +38,8 @@ class DbtPythonVenvOperator(PythonVirtualenvOperator):
 
         if Version(airflow_version) >= Version('2.10.0'):
             kwargs |= {'inherit_env': target_details.inherit_env, 'env_vars': env}
+        if Version(airflow_version) >= Version('2.8.0'):
+            kwargs |= {'index_urls': target_details.index_urls}
 
         super().__init__(
             python_callable=_python_callable,
@@ -45,7 +47,6 @@ class DbtPythonVenvOperator(PythonVirtualenvOperator):
             system_site_packages=target_details.system_site_packages,
             python_version=target_details.python_version,
             pip_install_options=target_details.pip_install_options,
-            index_urls=target_details.index_urls,
             **dbt_af_config.retries_config.k8s_task_retry_policy.as_dict(),
             **kwargs,
         )

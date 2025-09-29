@@ -6,6 +6,7 @@ from collections import defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from textwrap import indent
+from unittest.mock import patch
 
 import pytest
 import yaml
@@ -123,28 +124,40 @@ def get_dbt_project_yaml_for_test(test_location):
     project['models'][project['name']]['k8s_cluster'] = 'fake_k8s_cluster'
     project['models'] = dict(project['models'])
 
+    project['snapshots'] = defaultdict(dict)
+    project['snapshots'][project['name']] = test_model_config
+    project['snapshots'][project['name']]['sql_cluster'] = 'fake_sql_cluster'
+    project['snapshots'][project['name']]['daily_sql_cluster'] = 'fake_daily_sql_cluster'
+    project['snapshots'][project['name']]['py_cluster'] = 'fake_py_cluster'
+    project['snapshots'][project['name']]['bf_cluster'] = 'fake_bf_cluster'
+    project['snapshots'][project['name']]['prod_data_test_cluster'] = 'fake_prod_data_test_cluster'
+    project['snapshots'][project['name']]['k8s_cluster'] = 'fake_k8s_cluster'
+    project['snapshots'] = dict(project['models'])
+
     return project
 
 
 def get_dbt_profiles_yaml_for_test():
-    databricks_target = {
-        'type': 'databricks',
+    target = {
+        'type': 'postgres',
+        'host': 'db',
+        'port': 5432,
+        'database': 'postgres',
         'schema': 'fake_schema',
-        'host': 'fake_host',
-        'http_path': 'fake_http_path',
-        'token': 'fake_token',
+        'user': 'postgres',
+        'password': 'postgres',
     }
     dbt_profiles = {
         'config': {'send_anonymous_usage_stats': False},
         'main_profile': {
             'target': 'dev',
             'outputs': {
-                'dev': databricks_target,
-                'fake_sql_cluster': databricks_target,
-                'fake_daily_sql_cluster': databricks_target,
-                'fake_py_cluster': databricks_target,
-                'fake_bf_cluster': databricks_target,
-                'prod_data_test_cluster': databricks_target,
+                'dev': target,
+                'fake_sql_cluster': target,
+                'fake_daily_sql_cluster': target,
+                'fake_py_cluster': target,
+                'fake_bf_cluster': target,
+                'prod_data_test_cluster': target,
                 'fake_k8s_cluster': {
                     'type': 'kubernetes',
                     'schema': 'fake_schema',
@@ -183,9 +196,11 @@ class TestManifest:
 
 
 class TmpManifest(TestManifest):
-    def __init__(self, test_name):
+    def __init__(self, test_name: str, with_dbt_run_check: bool = False):
         super().__init__(test_name)
         self._tmp_dir = TemporaryDirectory(prefix='tdp-test-')
+
+        self.with_dbt_run_check = with_dbt_run_check
 
     def __enter__(self):
         tmpdir = self._tmp_dir.__enter__()
@@ -217,7 +232,7 @@ class TmpManifest(TestManifest):
             dbt_cli,
             [
                 '--debug',
-                'compile',
+                'parse',
                 '--project-dir',
                 project_location,
                 '--profiles-dir',
@@ -236,55 +251,76 @@ class TmpManifest(TestManifest):
             exception = indent(dbt_command_result.stdout, ' ' * 4)
             raise RuntimeError('Could not compile dbt. Error:\n' + exception)
 
+        if self.with_dbt_run_check:
+            dbt_run_command_result = CliRunner().invoke(
+                dbt_cli,
+                [
+                    '--debug',
+                    'run',
+                    '--project-dir',
+                    project_location,
+                    '--profiles-dir',
+                    profile_location,
+                    '--target',
+                    target_env,
+                    '--target-path',
+                    target_dir,
+                    '--vars',
+                    json.dumps(vars_),
+                ],
+                env={**os.environ, **prepare_env_for_test()},
+            )
+
+            if dbt_run_command_result.exit_code != 0:
+                exception = indent(dbt_run_command_result.stdout, ' ' * 4)
+                raise RuntimeError('Could not compile dbt-run. Error:\n' + exception)
+
+            with open(target_dir / 'run_results.json', 'r') as fin:
+                run_results = json.load(fin)
+
+                if not len(run_results['results']):
+                    raise RuntimeError(f'Got empty results in run_results.json, raw data: {run_results}')
+
+                for result in run_results['results']:
+                    if result['status'] != 'success':
+                        raise RuntimeError(f'Got non-successful result for node {result["unique_id"]}, data: {result}')
+
         return target_dir
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._tmp_dir.__exit__(exc_type, exc_val, exc_tb)
 
 
-class FileManifest(TestManifest):
-    """DBT manifest as a Golden file"""
-
-    # TODO
-
-
-class DockerManifest(TestManifest):
-    """DBT manifest that will be created inside a docker container"""
-
-    # TODO
+@pytest.fixture
+def mock_node_is_etl_service():
+    with patch.object(DbtNode, 'is_at_etl_service', lambda *args, **kwargs: True):
+        yield
 
 
 @pytest.fixture
-def mock_node_is_etl_service(mocker):
-    mocker.patch.object(DbtNode, 'is_at_etl_service', lambda *args, **kwargs: True)
-
-
-@pytest.fixture
-def mock_init_airflow_environment(mocker):
+def mock_init_airflow_environment():
     import dbt_af.operators.base as module_in_use
 
-    mocker.patch(f'{module_in_use.__name__}.{module_in_use.init_environment.__name__}', return_value=dict())
+    with patch(f'{module_in_use.__name__}.{module_in_use.init_environment.__name__}', return_value=dict()):
+        yield
 
 
 @pytest.fixture
-def mock_mcd_callbacks(mocker):
+def mock_mcd_callbacks():
     import dbt_af.dags as module_in_use
 
-    mocker.patch(
+    with patch(
         f'{module_in_use.__name__}.{module_in_use.collect_af_custom_callbacks.__name__}',
         return_value=(dict(), dict()),
-    )
+    ):
+        yield
 
 
 @pytest.fixture
-def dbt_manifest(mocker):
-    from dbt.adapters.databricks.impl import DatabricksAdapter
-
-    mocker.patch.object(DatabricksAdapter, 'list_relations_without_caching', lambda *args, **kwargs: [])
-
+def dbt_manifest():
     @contextlib.contextmanager
-    def _dbt_manifest(fixture_name):
-        with TmpManifest(fixture_name) as manifest_path:
+    def _dbt_manifest(fixture_name, with_dbt_run_check: bool = False):
+        with TmpManifest(fixture_name, with_dbt_run_check=with_dbt_run_check) as manifest_path:
             yield manifest_path
 
     return _dbt_manifest
@@ -310,10 +346,19 @@ def compiled_main_dags(
     get_config,
 ):
     @contextlib.contextmanager
-    def _dags(fixture_name, with_mcd=False, with_tableau=False, with_k8s=False):
-        with dbt_manifest(fixture_name) as manifest_path, dbt_profiles() as (
-            profiles,
-            profile_name,
+    def _dags(
+        fixture_name: str,
+        with_mcd: bool = False,
+        with_tableau: bool = False,
+        with_k8s: bool = False,
+        with_dbt_run_check: bool = False,
+    ):
+        with (
+            dbt_manifest(fixture_name, with_dbt_run_check=with_dbt_run_check) as manifest_path,
+            dbt_profiles() as (
+                profiles,
+                profile_name,
+            ),
         ):
             from dbt_af.dags import dbt_main_dags
 
@@ -340,7 +385,7 @@ def dags_domain_depends_on_another_partially(compiled_main_dags):
     B1 + -------> +
 
     """
-    with compiled_main_dags('domain_depends_on_another_partially') as dags:
+    with compiled_main_dags('domain_depends_on_another_partially', with_dbt_run_check=True) as dags:
         yield dags
 
 
@@ -352,13 +397,13 @@ def dags_domain_depends_on_two_domains(compiled_main_dags):
     B1 -> +
 
     """
-    with compiled_main_dags('domain_depends_on_two_domains') as dags:
+    with compiled_main_dags('domain_depends_on_two_domains', with_dbt_run_check=True) as dags:
         yield dags
 
 
 @pytest.fixture
 def dags_hourly_task_with_tests(compiled_main_dags):
-    with compiled_main_dags('hourly_task_with_tests') as dags:
+    with compiled_main_dags('hourly_task_with_tests', with_dbt_run_check=True) as dags:
         yield dags
 
 
@@ -368,7 +413,7 @@ def dags_independent_domains(compiled_main_dags):
     A1 -> A2
     B1 -> B2
     """
-    with compiled_main_dags('independent_domains') as dags:
+    with compiled_main_dags('independent_domains', with_dbt_run_check=True) as dags:
         yield dags
 
 
@@ -378,7 +423,7 @@ def dags_sequential_domains(compiled_main_dags):
     (a1 -> a2) -> (b1 -> b2) -> c1
 
     """
-    with compiled_main_dags('sequential_domains') as dags:
+    with compiled_main_dags('sequential_domains', with_dbt_run_check=True) as dags:
         yield dags
 
 
@@ -387,7 +432,7 @@ def dags_sequential_tasks_in_one_domain(compiled_main_dags):
     """
     A1 -> A2 -> A3
     """
-    with compiled_main_dags('sequential_tasks_in_one_domain') as dags:
+    with compiled_main_dags('sequential_tasks_in_one_domain', with_dbt_run_check=True) as dags:
         yield dags
 
 
@@ -399,7 +444,7 @@ def dags_two_domains_depend_on_another(compiled_main_dags):
           + -> C1
 
     """
-    with compiled_main_dags('two_domains_depend_on_another') as dags:
+    with compiled_main_dags('two_domains_depend_on_another', with_dbt_run_check=True) as dags:
         yield dags
 
 
@@ -412,7 +457,7 @@ def dags_two_domains_depend_on_two(compiled_main_dags):
     B1 -> +
 
     """
-    with compiled_main_dags('two_domains_depend_on_two') as dags:
+    with compiled_main_dags('two_domains_depend_on_two', with_dbt_run_check=True) as dags:
         yield dags
 
 
@@ -423,7 +468,7 @@ def dags_task_depends_on_two_within_same_domain(compiled_main_dags):
         +--> A3
     A2 -+
     """
-    with compiled_main_dags('task_depends_on_two_within_same_domain') as dags:
+    with compiled_main_dags('task_depends_on_two_within_same_domain', with_dbt_run_check=True) as dags:
         yield dags
 
 
@@ -434,7 +479,7 @@ def dags_two_tasks_depend_on_one(compiled_main_dags):
     A1 -+
         +--> A3
     """
-    with compiled_main_dags('two_tasks_depend_on_one') as dags:
+    with compiled_main_dags('two_tasks_depend_on_one', with_dbt_run_check=True) as dags:
         yield dags
 
 
@@ -446,7 +491,19 @@ def dags_two_tasks_depend_on_two(compiled_main_dags):
           + -> A4
     A2 -> +
     """
-    with compiled_main_dags('two_tasks_depend_on_two') as dags:
+    with compiled_main_dags('two_tasks_depend_on_two', with_dbt_run_check=True) as dags:
+        yield dags
+
+
+@pytest.fixture
+def dags_two_tasks_depend_on_two_w_snapshot(compiled_main_dags):
+    """
+    A1 -> +
+          + -> A3 + -> S1
+          + -> A4
+    A2 -> +
+    """
+    with compiled_main_dags('two_tasks_depend_on_two_w_snapshot', with_dbt_run_check=True) as dags:
         yield dags
 
 
@@ -455,7 +512,7 @@ def dags_domain_with_different_schedule(compiled_main_dags):
     """
     A1@hourly -> A2@daily -> A3@hourly
     """
-    with compiled_main_dags('domain_with_different_schedule') as dags:
+    with compiled_main_dags('domain_with_different_schedule', with_dbt_run_check=True) as dags:
         yield dags
 
 
@@ -464,7 +521,7 @@ def dags_domain_depends_on_another_with_multischeduling(compiled_main_dags):
     """
     A1@hourly -> A2@daily -> B1@hourly
     """
-    with compiled_main_dags('domain_depends_on_another_with_multischeduling') as dags:
+    with compiled_main_dags('domain_depends_on_another_with_multischeduling', with_dbt_run_check=True) as dags:
         yield dags
 
 
@@ -473,19 +530,19 @@ def dags_domain_depends_on_another_with_test(compiled_main_dags):
     """
     A1@hourly(+small test) -> B1@daily
     """
-    with compiled_main_dags('domain_depends_on_another_with_test') as dags:
+    with compiled_main_dags('domain_depends_on_another_with_test', with_dbt_run_check=True) as dags:
         yield dags
 
 
 @pytest.fixture
 def dags_domain_w_enable_disable_models(compiled_main_dags):
-    with compiled_main_dags('domain_w_enable_disable_models') as dags:
+    with compiled_main_dags('domain_w_enable_disable_models', with_dbt_run_check=True) as dags:
         yield dags
 
 
 @pytest.fixture
 def dags_domain_w_source_freshness(compiled_main_dags):
-    with compiled_main_dags('domain_w_source_freshness') as dags:
+    with compiled_main_dags('domain_w_source_freshness', with_dbt_run_check=True) as dags:
         yield dags
 
 
@@ -509,7 +566,7 @@ def dags_domain_model_w_maintenance(compiled_main_dags):
 
 @pytest.fixture
 def dags_task_with_tableau_integration(compiled_main_dags):
-    with compiled_main_dags('task_with_tableau_integration', with_tableau=True) as dags:
+    with compiled_main_dags('task_with_tableau_integration', with_tableau=True, with_dbt_run_check=True) as dags:
         yield dags
 
 
@@ -523,7 +580,7 @@ def dags_domain_with_shift(compiled_main_dags):
     A5@monthly_shift_2_days
     A6@monthly_shift_1_days_6_hours
     """
-    with compiled_main_dags('domain_w_shift') as dags:
+    with compiled_main_dags('domain_w_shift', with_dbt_run_check=True) as dags:
         yield dags
 
 
@@ -532,5 +589,5 @@ def dags_two_domains_with_diff_scheduling_and_shifts(compiled_main_dags):
     """
     A1@hourly_shift_10_minutes -> B1@daily_shift_2_hours
     """
-    with compiled_main_dags('two_domains_with_diff_scheduling_and_shifts') as dags:
+    with compiled_main_dags('two_domains_with_diff_scheduling_and_shifts', with_dbt_run_check=True) as dags:
         yield dags

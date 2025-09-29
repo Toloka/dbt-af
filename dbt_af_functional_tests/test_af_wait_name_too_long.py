@@ -17,5 +17,5 @@ def test_af_wait_name_is_less_250_chars(manifest):
             for dep in node['depends_on']['nodes']:
                 if dep.startswith('model'):
                     model_name_safe_name = '.'.join(dep.split('.')[2:]).replace('.', '__')
-                    wait_name = f"{model_name_safe_name}__group.{node['name']}"
+                    wait_name = f'{model_name_safe_name}__group.{node["name"]}'
                     assert len(wait_name) <= 250

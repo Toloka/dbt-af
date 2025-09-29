@@ -1,12 +1,12 @@
-{{ config(
-    materialized='table',
-    file_format='delta',
-    unique_key='id',
-) }}
+{{
+    config(
+        materialized="table",
+    )
+}}
 
 
 select *
-from {{ ref('a1') }}
+from {{ ref("a1") }}
 union all
 select *
-from {{ ref('b1') }}
+from {{ ref("b1") }}

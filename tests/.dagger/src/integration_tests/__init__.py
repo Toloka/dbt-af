@@ -1,0 +1,1 @@
+from integration_tests.main import IntegrationTests as IntegrationTests

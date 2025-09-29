@@ -1,13 +1,18 @@
 import datetime
+import importlib.metadata
 import logging
 import uuid
 from typing import Sequence
 
 import pendulum
+import pytest
 from airflow import DAG
 from airflow.models.taskinstance import TaskInstance
 from airflow.utils.state import DagRunState, TaskInstanceState
 from airflow.utils.types import DagRunType
+from packaging import version
+
+dbt_core_version = version.parse(importlib.metadata.version('dbt-core'))
 
 try:
     from airflow.utils.types import DagRunTriggeredByType
@@ -748,6 +753,31 @@ def test_two_domains_with_diff_scheduling_and_shifts(
     assert node_ids(b_daily.task_dict['b1'].upstream_list) == [
         'a__hourly_shift_10_minutes__dependencies__group.wait__a1'
     ]
+
+    if run_airflow_tasks:
+        run_all_tasks_in_dag(dags)
+
+
+@pytest.mark.skipif(
+    dbt_core_version < version.parse('1.9.0'),
+    reason='dbt snapshots as yaml are available since dbt-core 1.9.0',
+)
+def test_two_tasks_depend_on_two_w_snapshot_have_correct_dags(
+    dags_two_tasks_depend_on_two_w_snapshot, run_airflow_tasks
+):
+    dags = dags_two_tasks_depend_on_two_w_snapshot
+
+    assert sorted(dags) == ['a__backfill', 'a__daily']
+
+    a = dags['a__daily']
+
+    assert a.dag_id == 'a__daily'
+    assert sorted(a.task_ids) == ['a1', 'a2', 'a3', 'a4', 's1']
+    assert node_ids(a.task_dict['a1'].upstream_list) == []
+    assert node_ids(a.task_dict['a2'].upstream_list) == []
+    assert node_ids(a.task_dict['a3'].upstream_list) == ['a1', 'a2']
+    assert node_ids(a.task_dict['a4'].upstream_list) == ['a1', 'a2']
+    assert node_ids(a.task_dict['s1'].upstream_list) == ['a3']
 
     if run_airflow_tasks:
         run_all_tasks_in_dag(dags)
