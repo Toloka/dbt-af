@@ -1,4 +1,4 @@
-FROM apache/airflow:2.11.0-python3.12
+FROM apache/airflow:3.1.0-python3.12
 
 LABEL maintainer="Nikita Yurasov <nikitayurasov@toloka.ai>"
 SHELL ["/bin/bash", "-o", "pipefail", "-o", "errexit", "-o", "nounset", "-o", "xtrace", "-c"]
@@ -23,4 +23,6 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 USER airflow
 
-RUN uv pip install -e "${AIRFLOW_HOME}/dbt_af[all]"
+WORKDIR ${AIRFLOW_HOME}/dbt_af
+RUN uv export --all-extras --all-packages --all-groups > requirements.txt
+RUN uv pip install -r requirements.txt
