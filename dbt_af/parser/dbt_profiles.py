@@ -9,8 +9,6 @@ except ModuleNotFoundError:
 
 class Target(BaseModel):
     target_type: str = Field(alias='type')
-    target_schema: str = Field(alias='schema')
-    threads: int | str = Field(default=1)
 
     # here could be any database-specific connection details
 
