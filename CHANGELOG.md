@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.14.6
+
+Fixes:
+
+- Removed all required fields from dbt profile parser to make it more flexible for all dbt adapters
+
 ## v0.14.5
 
 Fixes:
