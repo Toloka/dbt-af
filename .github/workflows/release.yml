@@ -29,28 +29,47 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const sha = "${{ steps.sha.outputs.sha }}";
             const testsWorkflowFile = "integrational_tests.yml";
-            
-            // Get last workflow run matching SHA
-            const { data } = await github.rest.actions.listWorkflowRuns({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: testsWorkflowFile,
-              branch: "main",
-              head_sha: sha,
-            });
-            
-            if (data.workflow_runs.length === 0) {
-              core.setFailed(`Could not find workflow run for SHA ${sha}`);
+            const maxWaitTime = 30 * 60 * 1000; // 30 minutes in milliseconds
+            const checkInterval = 30 * 1000; // Check every 30 seconds
+            const startTime = Date.now();
+
+            async function getLatestWorkflowRun() {
+              const { data } = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: testsWorkflowFile,
+                branch: "main",
+                per_page: 1,
+              });
+              return data.workflow_runs[0];
+            }
+
+            let run = await getLatestWorkflowRun();
+
+            if (!run) {
+              core.setFailed(`Could not find any workflow runs for ${testsWorkflowFile}`);
               return;
             }
-            const run = data.workflow_runs[0];
-            
+
+            // Wait for the workflow to complete if it's still running
+            while (run.status !== "completed") {
+              const elapsed = Date.now() - startTime;
+              if (elapsed > maxWaitTime) {
+                core.setFailed(`Timeout: Latest workflow ${testsWorkflowFile} is still running after 30 minutes`);
+                return;
+              }
+
+              core.info(`Latest workflow is still ${run.status}. Waiting... (${Math.floor(elapsed / 1000)}s elapsed)`);
+              await new Promise(resolve => setTimeout(resolve, checkInterval));
+              run = await getLatestWorkflowRun();
+            }
+
+            // Check the conclusion of the completed workflow
             if (run.conclusion !== "success") {
-              core.setFailed(`Workflow ${testsWorkflowFile} for SHA ${sha} finished with status: ${run.conclusion}`);
+              core.setFailed(`Latest workflow ${testsWorkflowFile} finished with status: ${run.conclusion}`);
             } else {
-              core.info(`Workflow ${testsWorkflowFile} for SHA ${sha} finished with status: ${run.conclusion} ✅`);
+              core.info(`Latest workflow ${testsWorkflowFile} finished with status: ${run.conclusion} ✅`);
             }
 
   build:
