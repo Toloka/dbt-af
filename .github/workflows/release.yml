@@ -2,6 +2,7 @@ name: Release
 run-name: PyPI release (triggered by @${{ github.actor }})
 
 on:
+  workflow_dispatch:
   release:
     types: [ published ]
 
