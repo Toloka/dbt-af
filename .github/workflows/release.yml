@@ -22,7 +22,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const testsWorkflowFile = "integrational_tests.yml";
+            const testsWorkflowFile = "integration_tests.yml";
             const maxWaitTime = 30 * 60 * 1000; // 30 minutes in milliseconds
             const checkInterval = 30 * 1000; // Check every 30 seconds
             const startTime = Date.now();
