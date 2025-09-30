@@ -22,7 +22,9 @@ AIRFLOW_2_VERSIONS = [
     Version('2.10.5'),
     Version('2.11.0'),
 ]
-AIRFLOW_3_VERSIONS = []
+AIRFLOW_3_VERSIONS = [
+    Version('3.1.0'),
+]
 
 UV_VERSION = '0.8.19'
 

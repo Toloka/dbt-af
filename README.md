@@ -115,6 +115,7 @@ Check out the documentation for more details [here](docs/docs.md).
 | 2.9.3           | >=3.10,<3.13    | >=1.7,<=1.10        |
 | 2.10.5          | >=3.10,<3.13    | >=1.7,<=1.10        |
 | 2.11.0          | >=3.10,<3.13    | >=1.7,<=1.10        |
+| 3.1.0           | >=3.10,<3.13    | >=1.7,<=1.10        |
 
 ## Project Information
 

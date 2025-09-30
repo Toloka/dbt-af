@@ -1,9 +1,12 @@
 import logging
+from typing import Any, Callable
 
 from dbt_af.conf import Config
 
 
-def prepare_custom_af_callbacks(config: Config) -> tuple[dict[str, callable], dict[str, callable]]:
+def prepare_custom_af_callbacks(
+    config: Config,
+) -> tuple[dict[str, tuple[Callable[..., Any]]], dict[str, tuple[Callable[..., Any]]]]:
     if config.af_callbacks is None:
         logging.warning('No callback were passed')
         return {}, {}
