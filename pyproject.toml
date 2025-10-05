@@ -10,10 +10,13 @@ authors = [
 ]
 readme = "README.md"
 license = "Apache-2.0"
-homepage = "https://github.com/Toloka/dbt-af"
-repository = "https://github.com/Toloka/dbt-af"
-documentation = "https://github.com/Toloka/dbt-af/blob/main/examples/README.md"
 keywords = ["python", "airflow", "dbt"]
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
 requires-python = ">=3.10,<3.13"
 
 dependencies = [
@@ -39,12 +42,15 @@ dev = [
     "pytest==8.4.2",
     "pytest-env==1.1.5",
     "pytest-cov==4.1.0",
-    "dbt-postgres>=1.7.0,<2",
-    "psycopg2-binary>=2.9.0,<2.10; sys_platform == 'linux'",
     "ipython==8.37.0",
     "freezegun>=1.5.1,<1.6.0",
+    { include-group = "examples" },
     { include-group = "lint" },
     { include-group = "pins" }
+]
+examples = [
+    "dbt-postgres>=1.7.0,<2",
+    "psycopg2-binary>=2.9.0,<2.10; sys_platform == 'linux'",
 ]
 lint = [
     "ruff==0.13.1",
@@ -53,6 +59,7 @@ lint = [
 ]
 pins = [
     "flask_limiter>3,<4,!=3.13", # temporarily due to https://github.com/alisaifee/flask-limiter/issues/479
+    "click<8.3.0"
 ]
 
 [project.optional-dependencies]
@@ -68,6 +75,12 @@ all = [
     "dbt-af[mcd]",
     "dbt-af[tableau]"
 ]
+
+[project.urls]
+Homepage = "https://github.com/Toloka/dbt-af"
+Documentation = "https://github.com/Toloka/dbt-af/blob/main/examples/README.md"
+"Release Notes" = "https://github.com/Toloka/dbt-af/blob/main/CHANGELOG.md"
+"Source Code" = "https://github.com/Toloka/dbt-af"
 
 [project.scripts]
 dbt-af-manifest-tests = "dbt_af_functional_tests:cli"
