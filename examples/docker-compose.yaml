@@ -24,7 +24,7 @@
 # The following variables are supported:
 #
 # AIRFLOW_IMAGE_NAME           - Docker image name used to run Airflow.
-#                                Default: apache/airflow:2.5.3
+#                                Default: apache/airflow:2.11.0
 # AIRFLOW_UID                  - User ID in Airflow containers
 #                                Default: 50000
 # AIRFLOW_PROJ_DIR             - Base path to which all the files will be volumed.
@@ -44,7 +44,6 @@
 #
 # Feel free to modify this file to suit your needs.
 ---
-version: '3.8'
 x-airflow-common:
   &airflow-common
   # In order to add custom dependencies or upgrade provider packages you can use your extended image.
@@ -59,7 +58,6 @@ x-airflow-common:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
-    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
     AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
     AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
     AIRFLOW__CORE__FERNET_KEY: ''
@@ -69,9 +67,18 @@ x-airflow-common:
     AIRFLOW__CORE__LOGGING_LEVEL: 'DEBUG'
     AIRFLOW__LOGGING__FAB_LOGGING_LEVEL: 'DEBUG'
     AIRFLOW__LOGGING__LOGGING_LEVEL: 'DEBUG'
+    AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
+    # yamllint disable rule:line-length
+    # Use simple http server on scheduler for health checks
+    # See https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/logging-monitoring/check-health.html#scheduler-health-check-server
+    # yamllint enable rule:line-length
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
-    AIRFLOW__WEBSERVER__WORKERS: '1'
-    AIRFLOW__WEBSERVER__WEB_SERVER_MASTER_TIMEOUT: "360"
+    # WARNING: Use _PIP_ADDITIONAL_REQUIREMENTS option ONLY for a quick checks
+    # for other purpose (development, test and especially production usage) build/extend Airflow image.
+    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
+    # The following line can be used to set a custom config file, stored in the local config folder
+    # If you want to use it, outcomment it and replace airflow.cfg with the name of your config file
+    # AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
     POSTGRES_HOST: "${POSTGRES_HOST:-postgres}"
     POSTGRES_PORT: "${POSTGRES_PORT:-5432}"
     POSTGRES_USER: "${POSTGRES_USER:-airflow}"
@@ -100,19 +107,17 @@ services:
       POSTGRES_DB: airflow
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     healthcheck:
       test: [ "CMD", "pg_isready", "-U", "airflow" ]
       interval: 10s
       retries: 5
       start_period: 5s
     restart: always
-    networks:
-      - default
 
   redis:
-    image: redis:latest
+    # Redis is limited to 7.2-bookworm due to licencing change
+    # https://redis.io/blog/redis-adopts-dual-source-available-licensing/
+    image: redis:7.2-bookworm
     expose:
       - 6379
     healthcheck:
@@ -122,8 +127,6 @@ services:
       retries: 50
       start_period: 30s
     restart: always
-    networks:
-      - default
 
   airflow-webserver:
     <<: *airflow-common
@@ -249,8 +252,6 @@ services:
         exec /entrypoint airflow version
         
         airflow db init
-        
-        airflow pools set dbt_dev 128 "dev"
     # yamllint enable rule:line-length
     environment:
       <<: *airflow-common-env
