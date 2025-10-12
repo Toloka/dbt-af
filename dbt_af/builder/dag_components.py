@@ -226,7 +226,7 @@ class DagModel(DagComponent):
     runner_class = DbtRun
     add_external_dependencies = True
     overlap = True
-    is_dataset_enable = True
+    is_dataset_enable = False
 
     def __init__(self, dbt_node: DbtNode, domain_dag: DomainDag):
         super().__init__(dbt_node.resource_name, domain_dag, node_config=dbt_node.config)

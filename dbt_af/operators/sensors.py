@@ -6,8 +6,10 @@ from functools import cached_property, partial
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Callable, Optional, Sequence
 
+from airflow import __version__ as airflow_version
 from airflow.models.dag import DAG
 from airflow.utils.state import TaskInstanceState
+from packaging.version import Version
 
 try:
     from airflow.hooks.subprocess import SubprocessHook
@@ -134,6 +136,9 @@ class DbtExternalSensor(ExternalTaskSensor):
     ) -> None:
         retry_policy = dbt_af_config.retries_config.sensor_retry_policy.as_dict()
         retry_policy['retries'] = max(_RETRIES_COUNT, retry_policy['retries'])
+
+        if Version(airflow_version) >= Version('2.7.0'):
+            kwargs |= {'deferrable': False}
         super().__init__(
             task_id=task_id,
             task_group=task_group,
@@ -147,7 +152,6 @@ class DbtExternalSensor(ExternalTaskSensor):
             skipped_states=[TaskInstanceState.SKIPPED],
             failed_states=[TaskInstanceState.FAILED, TaskInstanceState.UPSTREAM_FAILED],
             timeout=6 * 60 * 60,
-            deferrable=False,
             poke_interval=_POKE_INTERVALS_SECONDS.get(dep_schedule.base_name, _DEFAULT_POKE_INTERVAL_SECONDS),
             exponential_backoff=False,
             **retry_policy,
