@@ -17,10 +17,19 @@ jobs:
         python-version: [ '3.10', '3.11', '3.12' ]
     steps:
       - uses: actions/checkout@v4
-      - name: Call Dagger Function
+
+      - name: Test airflow v2
         uses: dagger/dagger-for-github@8.0.0
         with:
           version: "latest"
           module: ./tests
           args: test-one-versions-combination --python-version=${{ matrix.python-version }} --airflow-version=2.11.0 --dbt-version=1.10 --with-running-airflow-tasks
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+
+      - name: Test airflow v3
+        uses: dagger/dagger-for-github@8.0.0
+        with:
+          version: "latest"
+          module: ./tests
+          args: test-one-versions-combination --python-version=${{ matrix.python-version }} --airflow-version=3.0.6 --dbt-version=1.10 --with-running-airflow-tasks
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}

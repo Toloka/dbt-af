@@ -6,4 +6,4 @@ __all__ = [
 # note that this version is maintained by the release manager - do not update it manually
 __version__ = '0.14.6'
 
-from . import conf, dags  # noqa
+from dbt_af import conf, dags

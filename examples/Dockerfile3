@@ -1,4 +1,4 @@
-ARG AIRFLOW_VERSION=2.11.0
+ARG AIRFLOW_VERSION=3.0.6
 
 FROM apache/airflow:${AIRFLOW_VERSION}-python3.12
 
@@ -25,6 +25,7 @@ RUN chown -R airflow:0 ${AIRFLOW_HOME}/dbt_af
 USER airflow
 
 RUN pip install --upgrade uv
+
 RUN uv --project "${AIRFLOW_HOME}/dbt_af" add apache-airflow==${AIRFLOW_VERSION}
 
 RUN uv pip install -e "${AIRFLOW_HOME}/dbt_af[all]"

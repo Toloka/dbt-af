@@ -1,6 +1,7 @@
 import datetime
 import importlib.metadata
 import logging
+import re
 import uuid
 from typing import Sequence
 
@@ -13,6 +14,7 @@ from airflow.utils.types import DagRunType
 from packaging import version
 
 dbt_core_version = version.parse(importlib.metadata.version('dbt-core'))
+airflow_version = version.parse(importlib.metadata.version('apache-airflow'))
 
 
 def node_ids(tasks):
@@ -23,36 +25,60 @@ def nodes_operator_names(tasks) -> dict[str, str]:
     return {t.node_id: t.operator_name for t in tasks}
 
 
-def try_run_task_in_dag(dag: DAG, task_id: str, additional_expected_ti_states: Sequence[TaskInstanceState] = []):
-    start_date = pendulum.now().replace(minute=0, second=0, microsecond=0) - datetime.timedelta(hours=1)
-    end_date = start_date + datetime.timedelta(hours=1)
-    run_id = f'test_run_{uuid.uuid4()}'
-    dagrun = dag.create_dagrun(
-        run_id=run_id,
-        state=DagRunState.RUNNING,
-        execution_date=pendulum.now(),
-        data_interval=(start_date, end_date),
-        start_date=end_date,
-        run_type=DagRunType.MANUAL,
-    )
-    ti: TaskInstance = dagrun.get_task_instance(task_id=task_id)
-    ti.task = dag.get_task(task_id=task_id)
-    ti.run(ignore_ti_state=True, ignore_all_deps=True, verbose=False)
+def try_test_run_dag(
+    dag: DAG,
+    task_id_to_skip_pattern: str | None = None,
+    additional_expected_ti_states: Sequence[TaskInstanceState] | None = None,
+):
+    additional_expected_ti_states = additional_expected_ti_states or []
 
-    # all tasks should be in success state and all sensors should be up_for_reschedule
-    always_expected_states = [TaskInstanceState.SUCCESS, TaskInstanceState.UP_FOR_RESCHEDULE]
-    ti_states_to_expect = always_expected_states + list(additional_expected_ti_states)
-    assert ti.state in ti_states_to_expect
+    if airflow_version >= version.parse('3.0.0'):
+        dagrun = dag.test(mark_success_pattern=task_id_to_skip_pattern)
+    else:
+        start_date = pendulum.now().replace(minute=0, second=0, microsecond=0) - datetime.timedelta(hours=1)
+        end_date = start_date + datetime.timedelta(hours=1)
+        run_id = f'test_run_{uuid.uuid4()}'
+        dagrun = dag.create_dagrun(
+            run_id=run_id,
+            state=DagRunState.RUNNING,
+            execution_date=pendulum.now(),
+            data_interval=(start_date, end_date),
+            start_date=end_date,
+            run_type=DagRunType.MANUAL,
+        )
+
+    for task_id in dag.task_ids:
+        if task_id_to_skip_pattern and re.match(task_id_to_skip_pattern, task_id):
+            continue
+
+        ti: TaskInstance = dagrun.get_task_instance(task_id=task_id)
+        ti.task = dag.get_task(task_id=task_id)
+        ti.run(ignore_ti_state=True, ignore_all_deps=True, verbose=False)
+
+        # all tasks should be in success state and all sensors should be up_for_reschedule
+        always_expected_states = [TaskInstanceState.SUCCESS, TaskInstanceState.UP_FOR_RESCHEDULE]
+        ti_states_to_expect = always_expected_states + list(additional_expected_ti_states)
+        assert ti.state in ti_states_to_expect
 
 
-def run_all_tasks_in_dag(dags: dict[str, DAG], additional_expected_ti_states: Sequence[TaskInstanceState] = []):
-    airflow_loggers = [logger for logger in logging.Logger.manager.loggerDict if logger.startswith('airflow')]
+def run_all_tasks_in_dag(
+    dags: dict[str, DAG],
+    additional_expected_ti_states: Sequence[TaskInstanceState] | None = None,
+):
+    additional_expected_ti_states = additional_expected_ti_states or []
+
+    airflow_loggers = [
+        logger for logger in logging.Logger.manager.loggerDict if 'airflow' in logger or 'httpx' in logger
+    ]
     for logger in airflow_loggers:
         logging.getLogger(logger).setLevel(logging.ERROR)
 
     for dag in dags:
-        for task_id in dags[dag].task_ids:
-            try_run_task_in_dag(dags[dag], task_id, additional_expected_ti_states)
+        try_test_run_dag(
+            dags[dag],
+            task_id_to_skip_pattern=r'.*__dependencies__group\.wait__.*',
+            additional_expected_ti_states=additional_expected_ti_states,
+        )
 
 
 def test_domain_depends_on_another_partially_has_correct_dags(

@@ -21,8 +21,7 @@ requires-python = ">=3.10,<3.13"
 
 dependencies = [
     "attrs >=23.1",
-    "apache-airflow >=2.6,<3",
-    "apache-airflow-providers-cncf-kubernetes >=7.0.0",
+    "apache-airflow[fab,cncf-kubernetes] >=2.6,<3.2.0",
     "pydantic >=1.10,<3.0.0",
     "cachetools >=5.3,<7",
     "croniter >=3.0",

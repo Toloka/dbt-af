@@ -2,9 +2,13 @@ import logging
 from typing import Any, Sequence
 
 from airflow import __version__ as airflow_version
-from airflow.operators.python import PythonVirtualenvOperator
 from airflow.utils.context import Context
 from packaging.version import Version
+
+try:
+    from airflow.operators.python import PythonVirtualenvOperator
+except (ModuleNotFoundError, ImportError):
+    from airflow.providers.standard.operators.python import PythonVirtualenvOperator
 
 from dbt_af.conf import Config
 from dbt_af.parser.dbt_profiles import VenvTarget

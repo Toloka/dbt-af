@@ -1,15 +1,25 @@
 import logging
 import os
 import shutil
+from datetime import datetime
 from functools import cached_property, partial
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Optional, Sequence
+from typing import TYPE_CHECKING, Callable, Optional, Sequence
 
-from airflow.hooks.subprocess import SubprocessHook
+from airflow import __version__ as airflow_version
 from airflow.models.dag import DAG
-from airflow.sensors.external_task import ExternalTaskSensor
-from airflow.sensors.python import PythonSensor
-from airflow.utils.state import State
+from airflow.utils.state import TaskInstanceState
+from packaging.version import Version
+
+try:
+    from airflow.hooks.subprocess import SubprocessHook
+    from airflow.sensors.external_task import ExternalTaskSensor
+    from airflow.sensors.python import PythonSensor
+except (ModuleNotFoundError, ImportError):
+    from airflow.providers.standard.hooks.subprocess import SubprocessHook
+    from airflow.providers.standard.sensors.external_task import ExternalTaskSensor
+    from airflow.providers.standard.sensors.python import PythonSensor
+
 
 from dbt_af.common.af_scheduling_utils import (
     GLOBAL_TASK_SCHEDULE_MAPPINGS,
@@ -119,13 +129,16 @@ class DbtExternalSensor(ExternalTaskSensor):
         task_group: 'Optional[TaskGroup]',
         external_dag_id: str,
         external_task_id: str,
-        execution_date_fn: callable,
+        execution_date_fn: Callable[..., Optional[datetime]],
         dep_schedule: BaseScheduleTag,
         dag: 'DAG',
         **kwargs,
     ) -> None:
         retry_policy = dbt_af_config.retries_config.sensor_retry_policy.as_dict()
         retry_policy['retries'] = max(_RETRIES_COUNT, retry_policy['retries'])
+
+        if Version(airflow_version) >= Version('2.7.0'):
+            kwargs |= {'deferrable': False}
         super().__init__(
             task_id=task_id,
             task_group=task_group,
@@ -136,8 +149,8 @@ class DbtExternalSensor(ExternalTaskSensor):
             max_active_tis_per_dag=None,
             pool=DBT_SENSOR_POOL if dbt_af_config.use_dbt_target_specific_pools else None,
             mode='reschedule',
-            skipped_states=[State.NONE, State.SKIPPED],
-            failed_states=[State.FAILED, State.UPSTREAM_FAILED],
+            skipped_states=[TaskInstanceState.SKIPPED],
+            failed_states=[TaskInstanceState.FAILED, TaskInstanceState.UPSTREAM_FAILED],
             timeout=6 * 60 * 60,
             poke_interval=_POKE_INTERVALS_SECONDS.get(dep_schedule.base_name, _DEFAULT_POKE_INTERVAL_SECONDS),
             exponential_backoff=False,

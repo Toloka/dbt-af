@@ -22,7 +22,9 @@ AIRFLOW_2_VERSIONS = [
     Version('2.10.5'),
     Version('2.11.0'),
 ]
-AIRFLOW_3_VERSIONS = []
+AIRFLOW_3_VERSIONS = [
+    Version('3.0.6'),
+]
 
 UV_VERSION = '0.8.19'
 
@@ -91,11 +93,12 @@ class IntegrationTests:
         NOTE! apache-airflow is installed with official constraints file and not as one of the project dependencies.
         """
         pendulum_version = 2 if airflow_version < Version('2.8.0') else 3
+        pydantic_upper_version = 2 if airflow_version < Version('2.7.0') else 3
 
         return (
             env.with_workdir('/dbt_af')
             # remove airflow from main project dependencies to install it from constraints
-            .with_exec(['uv', 'remove', 'apache-airflow'])
+            .with_exec(['uv', 'remove', 'apache-airflow', 'pydantic'])
             # add pendulum and pluggy to main project dependencies
             .with_exec(
                 [
@@ -105,6 +108,8 @@ class IntegrationTests:
                     f'pendulum>={pendulum_version},<{pendulum_version + 1}',
                     # old pluggy version is incompatible with tests
                     'pluggy>=1.3.0',
+                    # pydantic v2.12.0 is incompatible with airflow<2.7.0
+                    f'pydantic>=1.10,<{pydantic_upper_version}',
                 ]
             )
             .with_exec(['uv', 'lock'])

@@ -1,6 +1,6 @@
 import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import attrs
 import pendulum
@@ -20,14 +20,14 @@ class CustomAfCallbacksConfig:
     :param dag_sla_miss_callback: sla miss callback function for DAG (invoked when a task misses its defined SLA)
     """
 
-    task_on_success_callback: tuple[callable] = attrs.field(factory=tuple)
-    task_on_failure_callback: tuple[callable] = attrs.field(factory=tuple)
-    task_on_retry_callback: tuple[callable] = attrs.field(factory=tuple)
-    task_on_execute_callback: tuple[callable] = attrs.field(factory=tuple)
+    task_on_success_callback: tuple[Callable[..., Any]] = attrs.field(factory=tuple)
+    task_on_failure_callback: tuple[Callable[..., Any]] = attrs.field(factory=tuple)
+    task_on_retry_callback: tuple[Callable[..., Any]] = attrs.field(factory=tuple)
+    task_on_execute_callback: tuple[Callable[..., Any]] = attrs.field(factory=tuple)
 
-    dag_on_failure_callback: tuple[callable] = attrs.field(factory=tuple)
-    dag_on_success_callback: tuple[callable] = attrs.field(factory=tuple)
-    dag_sla_miss_callback: tuple[callable] = attrs.field(factory=tuple)
+    dag_on_failure_callback: tuple[Callable[..., Any]] = attrs.field(factory=tuple)
+    dag_on_success_callback: tuple[Callable[..., Any]] = attrs.field(factory=tuple)
+    dag_sla_miss_callback: tuple[Callable[..., Any]] = attrs.field(factory=tuple)
 
 
 @attrs.define(frozen=True)
@@ -326,7 +326,7 @@ class Config:
     retries_config: RetriesConfig = attrs.field(factory=RetriesConfig)
     max_active_dag_runs: int = attrs.field(default=50)
     af_dag_description: str = attrs.field(default='')
-    dag_start_date: pendulum.datetime = attrs.field(default=pendulum.datetime(2023, 10, 1, 0, 0, 0, tz='UTC'))
+    dag_start_date: pendulum.DateTime = attrs.field(factory=lambda: pendulum.today() - pendulum.Duration(days=30))
     dry_run: bool = attrs.field(default=False)
     use_dbt_target_specific_pools: bool = attrs.field(default=True)
 
