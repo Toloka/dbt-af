@@ -17,6 +17,7 @@ It acts as a wrapper around the Airflow DAG,
 allowing you to run the models independently while preserving their dependencies.
 
 ![dbt-af](docs/static/airflow_dag_layout.png)
+![dbt-af3](docs/static/airflow3_dag_layout.png)
 
 ### Why?
 
@@ -117,7 +118,7 @@ Check out the documentation for more details [here](docs/docs.md).
 | 2.11.0          | >=3.10,<3.13    | >=1.7,<=1.10        |
 | 3.0.6           | >=3.10,<3.13    | >=1.7,<=1.10        |
 
-⚠️ `apache-airflow>=3.1.0` was not tested.
+⚠️ `apache-airflow>=3.1.0` could not be tested yet.
 
 ## Project Information
 

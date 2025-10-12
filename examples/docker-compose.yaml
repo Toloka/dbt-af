@@ -49,7 +49,7 @@ x-airflow-common:
   # In order to add custom dependencies or upgrade provider packages you can use your extended image.
   # Comment the image line, place your Dockerfile in the directory where you placed the docker-compose.yaml
   # and uncomment the "build" line below, Then run `docker-compose build` to build the images.
-  image: dbt_af
+  image: dbt_af:2
   build:
     context: ..
     dockerfile: examples/Dockerfile
@@ -263,6 +263,27 @@ services:
     user: "0:0"
     volumes:
       - ${AIRFLOW_PROJ_DIR:-.}:/sources
+
+  airflow-prerequisites:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        su airflow
+        airflow pools set dbt_dev 2 "Pool for dev profile"
+        airflow pools set dbt_sensor_pool 2 "Pool for dbt sensor"
+        airflow pools set dbt_large 2 "Pool for large dbt jobs"
+        airflow pools set dbt_tests 2 "Pool for dbt tests"
+    user: "0:0"
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+      airflow-webserver:
+        condition: service_healthy
+    environment:
+      <<: *airflow-common-env
 
   airflow-cli:
     <<: *airflow-common
