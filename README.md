@@ -1,5 +1,5 @@
 > [!WARNING]
-> ## ⚠️ Project Deprecated
+> #### Project Deprecated
 > This project is no longer actively maintained.
 >
 > It was originally developed by Nikita Yurasov, Evgeny Ermakov and Leonid Kozhinov while employed at Toloka AI BV.
