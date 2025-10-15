@@ -1,3 +1,17 @@
+> [!WARNING]
+> #### Project Deprecated
+> This project is no longer actively maintained.
+>
+> It was originally developed by Nikita Yurasov, Igor Safonov, Evgeny Ermakov and Leonid Kozhinov while employed at
+> Toloka AI BV.
+> Toloka AI BV holds the rights to this codebase.
+>
+> For future updates and active development, please visit:
+> 👉 [https://github.com/dmp-labs/dmp-af](https://github.com/dmp-labs/dmp-af)
+>
+> This repository remains available under the Apache License 2.0.
+
+
 [![PyPI - Version](https://img.shields.io/pypi/v/dbt-af)](https://pypi.org/project/dbt-af/)
 [![GitHub Build](https://github.com/Toloka/dbt-af/workflows/Tests/badge.svg)](https://github.com/Toloka/dbt-af/actions)
 
