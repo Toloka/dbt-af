@@ -2,7 +2,8 @@
 > #### Project Deprecated
 > This project is no longer actively maintained.
 >
-> It was originally developed by Nikita Yurasov, Evgeny Ermakov and Leonid Kozhinov while employed at Toloka AI BV.
+> It was originally developed by Nikita Yurasov, Igor Safonov, Evgeny Ermakov and Leonid Kozhinov while employed at
+> Toloka AI BV.
 > Toloka AI BV holds the rights to this codebase.
 >
 > For future updates and active development, please visit:
