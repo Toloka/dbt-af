@@ -140,7 +140,6 @@ def dbt_run_model_dag(config: Config) -> dict[str, DAG]:
     )
 
     target_environment = "{{ params.target or '" + config.dbt_default_targets.default_target + "' }}"
-
     DbtRun(
         task_id='dbt_model',
         model_name=None,
