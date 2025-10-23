@@ -5,6 +5,7 @@ from typing import Optional
 import yaml
 from airflow.models.dag import DAG
 from airflow.models.param import Param
+from airflow.operators.python import BranchPythonOperator
 
 from dbt_af.builder.dbt_af_builder import BackfillDomainDag, DbtAfGraph, get_domain_dag_start_date
 from dbt_af.common.af_callbacks import collect_af_custom_callbacks
@@ -139,18 +140,63 @@ def dbt_run_model_dag(config: Config) -> dict[str, DAG]:
         **dag_callbacks,
     )
 
+    branch_task = BranchPythonOperator(
+        task_id="branch_on_target",
+        python_callable=lambda **context: (
+            f'dbt_model_{context["params"].get("target") or "postgres"}'
+        ),
+        dag=dag,
+    )
+
     target_environment = config.dbt_default_targets.default_target
-    DbtRun(
-        task_id='dbt_model',
+    task_postgres = DbtRun(
+        task_id='dbt_model_postgres',
         model_name=None,
         dag=dag,
         target_environment=target_environment,
         dbt_af_config=config,
+        pool=f"dbt_postgres",
         **task_callbacks,
     )
 
-    return {dag_name: dag}
+    task_sparksql= DbtRun(
+        task_id='dbt_model_sparksql',
+        model_name=None,
+        dag=dag,
+        target_environment=target_environment,
+        dbt_af_config=config,
+        pool=f"dbt_sparksql",
+        **task_callbacks,
+    )
 
+    task_clickhouse = DbtRun(
+        task_id='dbt_model_clickhouse',
+        model_name=None,
+        dag=dag,
+        target_environment=target_environment,
+        dbt_af_config=config,
+        pool=f"dbt_clickhouse",
+        **task_callbacks,
+    )
+
+    task_pyspark = DbtRun(
+        task_id='dbt_model_pyspark',
+        model_name=None,
+        dag=dag,
+        target_environment=target_environment,
+        dbt_af_config=config,
+        pool=f"dbt_pyspark",
+        **task_callbacks,
+    )
+
+    branch_task >> [
+        task_postgres,
+        task_sparksql,
+        task_clickhouse,
+        task_pyspark,
+    ]
+
+    return {dag_name: dag}
 
 def _compile_dbt_dags(
     manifest_content: dict,
